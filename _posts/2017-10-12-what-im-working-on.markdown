@@ -138,7 +138,8 @@ key to quality results. We’re starting from Saul Pwanson’s [xd](http://xd.sa
 corpus, and thinking of a bunch of ways to filter out low-scoring words as well as
 augment it with fresh new ones. A promising approach to the latter is
 [collocations](http://matpalm.com/blog/2011/10/22/collocations_1/), and as we speak
-I’m replicating those results.
+I’m replicating those results (pairing with [JB Rubinovitz](http://rubinovitz.com/)
+on the analysis code).
 
 ## Smaller things
 
