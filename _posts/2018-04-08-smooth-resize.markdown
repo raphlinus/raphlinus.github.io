@@ -54,6 +54,10 @@ Another issue with the flip swap effect is that it works best with the redirecti
 
 The dxgi branch also has a `PresentStrategy::FlipRedirect` that leaves the redirection surface on, but the performance is significantly degraded, and there is serious artifacting on resize, where it reveals either or both of the GDI background and the swapchain background, depending. It's there as a stopgap but I wouldn't feel comfortable.
 
+## Other discussions
+
+Work on this problem should be tracked in the [github issue](https://github.com/google/xi-win/issues/17). There's also a [gamedev.net thread](https://www.gamedev.net/forums/topic/696236-trying-to-figure-out-smooth-window-resize-with-direct2d/).
+
 ## Other resources
 
 * [PresentMon](https://github.com/GameTechDev/PresentMon): a useful tool for diagnosing swapchain presentation
