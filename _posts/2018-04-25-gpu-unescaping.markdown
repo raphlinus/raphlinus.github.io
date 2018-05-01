@@ -30,7 +30,7 @@ However, it's possible to express it as an associative function, (a monoid homom
 
 Basically, map each symbol to a _function_ from state to state. Since there are only 4 states, there are 256 such functions, strongly suggesting the use of a byte to represent them. In this case, all the functions we care about map 3 to 3 (the error state), so there are only 64 such functions. It'll be convenient to represent them as 3-tuples, one final state for each initial state (if the initial state is 3, then the final state is also always 3).
 
-A quote mark is (1, 0, 2), and a backslash is (3, 2, 1). A regular character (neither quote nor backslash, depicted as "a" in the diagram above) is (0, 1, 1).
+A quote mark is (1, 0, 1), and a backslash is (3, 2, 1). A regular character (neither quote nor backslash, depicted as "a" in the diagram above) is (0, 1, 1).
 
 To make it into a monoid, we need two more things: identity, and an associative operator. Identity (corresponding to the empty string) is simple: it's (0, 1, 2). The associative operator is just a little trickier. Using Python-like notation, if our inputs are `a` and `b`, then the composition is (b[a[0]], b[a[1]], b[a[2]]). I'll give a couple of examples: `aa` evaluates to (0, 1, 1), same as just `a`. But `\a` maps to (3, 1, 1). Outside a string, it maps to the error state. Starting from state 1, the backslash moves to state 2, then the `a` back to state 1. And starting from state 2, the backslash is interepreted as an escaped character, moving us to state 1, then the `a` stays in state 1.
 
