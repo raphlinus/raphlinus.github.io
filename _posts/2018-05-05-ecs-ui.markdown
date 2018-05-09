@@ -72,6 +72,12 @@ An [alternative implementation](https://github.com/google/xi-win/pull/32) uses a
 
 I'm still figuring out the cleanest and most idiomatic ways to wire up UI in this architecture. The point of this subsection is to illustrate that there are multiple reasonable approaches.
 
+## References
+
+Another approach to GUI in Rust is [conrod](https://github.com/PistonDevelopers/conrod). It uses some of the same techniques (including a Rust-idiomatic graph), but makes quite a number of design decisions differently than what I want in xi-win. Potential users and implementers of GUI in Rust should definitely look at that.
+
+The [relm](https://github.com/antoyo/relm) project addresses a higher level of the stack than xi-win-ui, a functional-reactive layer on top of a traditional widget system. The functional reactive style is known for very concise expression of UI. It might be interesting to integrate such a layer on top of xi-win-ui, but for xi-win I plan to just build the widget tree directly.
+
 ## Conclusion
 
 The overuse of `RefCell` is a sign of unidiomatic Rust code. With the right architecture, it can be avoided entirely. The general techniques apply in many cases where there is dynamic interaction between multiple stateful components. These techniques are: use integers as references to nodes within a graph, split state into mutable and immutable parts when diving in, and explicitly export "continuation" state when too deeply borrowed, rather than transferring control flow directly.
