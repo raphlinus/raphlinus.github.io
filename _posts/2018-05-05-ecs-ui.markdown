@@ -1,0 +1,85 @@
+---
+layout: post
+title:  "Entity-Component-System architecture for UI in Rust"
+date:   2018-05-08 11:29:03 -0700
+categories: personal
+---
+For a fun project, I've been tinkering with [xi-win](https://github.com/google/xi-win), an experimental Windows front-end for xi-editor, written in Rust. I'm basically optimizing for performance, so making a number of somewhat unusual decisions. Among other things, I'm writing the UI myself, rather than using an existing toolkit or framework.
+
+Code for this post: [xi-win/xi-win-ui](https://github.com/google/xi-win/tree/master/xi-win-ui). If you're on a Windows machine, try the `calc` example!
+
+I've heard good things about the [Entity-Component-System](https://en.wikipedia.org/wiki/Entity%E2%80%93component%E2%80%93system) (ECS) architecture, so wanted to try it. My experience is very positive, so I wanted to write about that in more detail. I strongly commend ECS for anyone trying to build a GUI from scratch in Rust, and I also think the techniques are more generally useful to avoid fighting the borrow checker and having too much `RefCell`. As evidence, take a look at how simple and concise the code is, compared with most GUI implementations.
+
+## Why is GUI programming hard (in Rust)?
+
+Writing a graphical user interface is considered difficult coding in just about any language, but more so in Rust. Why?
+
+A graphical user interface has lots of _state,_ lots of _interactions,_ and is very _dynamic._ The traditional model for this kind of work is to decompose the interface into widget objects, and have them interact by calling methods on each other. Each widget object encapsulates its fragment of the world state, but all this state is effectively available to all other widgets at all times. Further, all widgets are reachable from all other widgets, as a widget will store references to its parent and children.
+
+That doesn't really work in Rust. In Rust, access to mutable state is very controlled; only one mutable reference to an object can exist at a time.
+
+One approach is to use [_interior mutability,_](https://doc.rust-lang.org/book/second-edition/ch15-05-interior-mutability.html) typically `Rc<RefCell<T>>` as a reference to an object, which can be shared widely. When code needs to mutate state, it borrows a mutable reference, does the mutation, then promptly releases the borrow. The idea that no two mutable references can exist to the same state is enforced at runtime, through panics. (In the thread-safe variant, `Arc<Mutex<T>>` you see a deadlock rather than a panic.)
+
+While it's _possible_ to program in this style, it's not fun. For one, the code is noisy with lots of explicit `.borrow_mut()` calls, extra braces for shorter scopes so borrows get dropped, etc.
+
+Another aspect that makes GUI programming tricky is that, for performance, ideally it should be _incremental._ In response to an input, likely most of the GUI state and appearance stays the same, only a small amount actually changes. The key to performance is to do as little work as possible, meaning only touching the state that's changed, and only repainting the parts of the screen that have changed. In the olden days, an incremental approach was necessary, because repainting the whole window would be noticeably slow. These days, it's a very common simplification to just draw the world, especially in [immediate mode GUI](https://gist.github.com/bkaradzic/853fd21a15542e0ec96f7268150f1b62). I should point out that my current code doesn't do incremental present, but I plan to, and I want the architecture to support it.
+
+## Entity-Component-System architecture
+
+In the Entity-Component-System architecture, the system owns all the components. In their terminology, an entity is a small, lightweight object that serves as a reference to a component. In Rust, it's just a `usize`, an index into the `Vec<>` that the system uses to hold the components.
+
+In ECS (or at least my spin on it), the component is responsible for its specialized behavior, and holds its specialized state (such as the text of a label), but the system holds the state common to all widgets (such as layout geometry). The system also holds the _relationships_ between the components (in this case, widgets are in a tree) and is responsible for their interactions.
+
+In xi-win-ui, most of the interaction is through the [`Widget`](https://github.com/google/xi-win/blob/8c5ef020c846a0a8e152cd8ab5d2b79bdb3e6cb1/xi-win-ui/src/widget/mod.rs#L34) trait. In fact, the component is implemented as a `Box<Widget>`.
+
+## Use integers for graph node id's
+
+At the heart of the UI is the tree of widgets, which really behaves as more of a graph because the parent/child link can be traversed in both directions. There are multiple ways to represent a graph in Rust. I personally really like storing the node contents in a `Vec`, and using `usize` as an identifier. This has all been described before, and I'll refer readers to [Idiomatic tree and graph like structures in Rust](https://rust-leipzig.github.io/architecture/2016/12/20/idiomatic-trees-in-rust/).
+
+There's not really a lot to add here, it's just another datapoint that the pattern works well.
+
+## State splitting
+
+Part of what makes GUI uniquely tricky is that the patterns of mutability are very dynamic. For example, when doing layout, you want the geometry to be mutable, but you also want to take immutable references to the graph. At a different time, when you're adding widgets to the tree, the graph needs to be mutable but there's no reason to touch the geometry.
+
+One approach is to defer all this to runtime - use interior mutability so all the references you pass around are non-mutable, then take a mutable borrow at just the moment needed.
+
+I think a more _idiomatic_ approach is to figure out exactly what mutability is needed, and encode that into the types of the various methods, so it's enforced at compile time. An advantage is that it's impossible to get a multiple-borrowing panic as a result, the borrowing patterns are basically proved correct.
+
+The key to implementing this pattern is _state splitting._ At the entry point, you have a mutable reference to the entire state. Take that state and _split_ it into references to individual fields. Depending on what you're doing, some of the references will be mutable, others not. You can traverse a tree by doing recursive calls, just plumb the references through.
+
+Examples include [layout](https://github.com/google/xi-win/blob/8c5ef020c846a0a8e152cd8ab5d2b79bdb3e6cb1/xi-win-ui/src/lib.rs#L304), which has a mutable references to the component vector and geometry but a non-mutable reference to the graph. The [paint](https://github.com/google/xi-win/blob/8c5ef020c846a0a8e152cd8ab5d2b79bdb3e6cb1/xi-win-ui/src/lib.rs#L295) method is similar but has immutable geometry and a mutable render target for actually drawing the widget's appearance. When calling a handler for input events (mouse keyboard), a _context_ is passed in, which has enough mutable state for a widget to mark itself as needing redraw, and also for sending further events to a listener. More about listeners below.
+
+## Data flow, not control flow
+
+I wanted to adopt the Flutter layout model because it's efficient and flexible. Flutter layout is a one-pass traversal of the tree in which constraints flow down and sizes flow up. I enjoyed Adam Barth's talk, [Flutter's Rendering Pipeline](https://www.youtube.com/watch?v=UUfXWzp0-DU) as a clear description, but [Understanding Flutter Layout (Box)Constraints](https://proandroiddev.com/understanding-flutter-layout-box-constraints-292cc0d5e807) gets the basics across. (I should point out to avoid confusion that a Flutter [RenderObject](https://docs.flutter.io/flutter/rendering/RenderObject-class.html) corresponds most closely to a `Widget` in xi-win-ui; the RenderObject hierarchy is a fairly traditional widget system, while Flutter's [Widget](https://docs.flutter.io/flutter/widgets/Widget-class.html) class can be seen as a react-style layer to manage render objects - this [talk](https://www.youtube.com/watch?v=dkyY9WCGMi0) by Ian Hickson is a good explanation.)
+
+In Flutter, the layout method of a container RenderObject recursively calls its children. However, in Rust this would be a problem; the borrow checker would complain. To call the layout method of the parent widget, we need a mutable borrow, which is derived from a mutable borrow from the container that holds the `Box<Widget>` objects. So to call the child, we'd need another borrow from that container to get a callable reference to the child widget. Oops.
+
+The solution used in xi-win-ui is to "smuggle" enough state out from the borrowed context to make progress. It's something like a continuation, and the style is similar to writing iterators in Rust. For layout specifically, when a widget wants to request the layout of a child, it _returns_ a `RequestChild` result with the id of the child node. The system then computes that layout (traversing into children as needed), then calls the `layout` method again with the result.
+
+A similar approach is used for listeners. In a traditional object-oriented UI, a mouse handler for a button widget would probably call the listeners attached the button. In turn, the listener might do a lot of different things, including adding more widgets to the tree (if the action of the button is open a new tab, say). But none of this would be allowed when the button has a mutable borrow.
+
+The solution is similar to layout; instead of immediately invoking the listeners, the widget adds its output event to a queue (the context passed to the handler includes a mutable reference to this queue). Then, when the handler returns, the events in this queue are dispatched to the listeners. The context given to the listener allows mutable access to pretty much all state, so it can "poke" widgets, mutate the widget graph, etc.
+
+The event queue also illustrates a good use of Rust's [`Any`](https://doc.rust-lang.org/std/any/trait.Any.html) trait. Different widgets will send different concrete types, as there are many types useful in such events, but a specific listener attached to a widget will know what type to expect.
+
+## State for the application logic
+
+In the master branch as of the time of this writing, the [calculator](https://github.com/google/xi-win/blob/8c5ef020c846a0a8e152cd8ab5d2b79bdb3e6cb1/xi-win-ui/examples/calc.rs) uses an `Rc<RefCell<CalcState>>` to store the calculator state, and this reference is shared among all the listeners for the individual calculator buttons. This demonstrates that it's possible to mix the interior mutability pattern with the ECS architecture.
+
+An [alternative implementation](https://github.com/google/xi-win/pull/32) uses a custom widget just to store the application state. Individual button listeners send events that bubble up to this widget. No explicit id is required for this plumbing; it's implicit by being the nearest ancestor that catches the event. The widget cannot directly change the state of other widgets (for example, updating the readout), so it sends events to a listener, which can.
+
+I'm still figuring out the cleanest and most idiomatic ways to wire up UI in this architecture. The point of this subsection is to illustrate that there are multiple reasonable approaches.
+
+## Conclusion
+
+The overuse of `RefCell` is a sign of unidiomatic Rust code. With the right architecture, it can be avoided entirely. The general techniques apply in many cases where there is dynamic interaction between multiple stateful components. These techniques are: use integers as references to nodes within a graph, split state into mutable and immutable parts when diving in, and explicitly export "continuation" state when too deeply borrowed, rather than transferring control flow directly.
+
+The ECS architecture has proved itself valuable in the games world, particularly in C++. It adapts well to Rust, and is equally as suitable to widgets in a UI framework as it is to players in a game.
+
+Though still experimental, the approach of xi-win-ui looks like it will be suitable for the relatively simple UI needs of xi-win. The code is very simple, with basically no "magic" or macros to hide underlying complexity, just vanilla usage of idiomatic Rust concepts. Designers of future Rust GUI toolkits are strongly encouraged to study this code.
+
+## Thanks
+
+Thanks to Connie Hilarides for useful discussions about the ECS architecture, and Rob Tsuk for discussions and prototypes of GUI in Rust.
