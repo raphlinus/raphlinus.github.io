@@ -10,6 +10,14 @@ Code for this post: [xi-win/xi-win-ui](https://github.com/google/xi-win/tree/mas
 
 I've heard good things about the [Entity-Component-System](https://en.wikipedia.org/wiki/Entity%E2%80%93component%E2%80%93system) (ECS) architecture, so wanted to try it. My experience is very positive, so I wanted to write about that in more detail. I strongly commend ECS for anyone trying to build a GUI from scratch in Rust, and I also think the techniques are more generally useful to avoid fighting the borrow checker and having too much `RefCell`. As evidence, take a look at how simple and concise the code is, compared with most GUI implementations.
 
+**Update 2018-05-10:** this post got some really good [discussion on Reddit](https://www.reddit.com/r/rust/comments/8i1z6d/entitycomponentsystem_architecture_for_ui_in_rust/). It was also mentioned in a [Rust internals thread on GUI](https://internals.rust-lang.org/t/thoughts-on-rust-guis/6894). There are a lot of other good resources in there, including a good writeup of [Rust UI Difficulties](https://gist.github.com/csherratt/5ea19414e0f6cc9a4ed8f55d97021c52), which amplifies some of the points I make below.
+
+The consensus of the Reddit thread is that what I'm doing is not really ECS. I think it's more accurate to describe it as a hybrid, inspired by ECS. I'll be changing that description going forward.
+
+Many thanks to the commenters!
+
+(end of update)
+
 ## Why is GUI programming hard (in Rust)?
 
 Writing a graphical user interface is considered difficult coding in just about any language, but more so in Rust. Why?
@@ -26,7 +34,7 @@ Another aspect that makes GUI programming tricky is that, for performance, ideal
 
 ## Entity-Component-System architecture
 
-In the Entity-Component-System architecture, the system owns all the components. In their terminology, an entity is a small, lightweight object that serves as a reference to a component. In Rust, it's just a `usize`, an index into the `Vec<>` that the system uses to hold the components.
+In the Entity-Component-System architecture, the system owns all the components **(update added 2018-05-10: that's not really accurate, in real ECS the components are stored in a database; my UiState is combining the database and systems roles from ECS)**. In their terminology, an entity is a small, lightweight object that serves as a reference to a component. In Rust, it's just a `usize`, an index into the `Vec<>` that the system uses to hold the components.
 
 In ECS (or at least my spin on it), the component is responsible for its specialized behavior, and holds its specialized state (such as the text of a label), but the system holds the state common to all widgets (such as layout geometry). The system also holds the _relationships_ between the components (in this case, widgets are in a tree) and is responsible for their interactions.
 
