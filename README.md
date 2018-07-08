@@ -1,3 +1,3 @@
-# raphlinus.github.io
+# [raphlinus.github.io](https://raphlinus.github.io)
 
 This is the Jekyll source for my blog. Pull requests welcome.
