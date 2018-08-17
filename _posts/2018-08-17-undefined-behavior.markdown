@@ -114,7 +114,7 @@ Also note that “modern C++” when properly applied avoids many of the memory 
 
 If you’ve read this far, now I can reveal that the real point of this post is to flog my [undefined behavior t-shirt](https://teespring.com/undefined-behavior-shirt#pid=369&cid=6521&sid=front), with the rainbow and unicorn artwork from the top of the page. It’s a good way to indicate to your friends and colleagues that you appreciate the finer points of undefined behavior, plus I’d like to think it’s colorful and fun. All profits go to Amnesty International.
 
-## Further reading:
+## Further reading
 
 * [Pointers Are Complicated, or: What's in a Byte?](https://www.ralfj.de/blog/2018/07/24/pointers-and-bytes.html)
 
@@ -125,6 +125,8 @@ If you’ve read this far, now I can reveal that the real point of this post is 
 * [The Problem with Friendly C](https://blog.regehr.org/archives/1287)
 
 * [Reconciling High-level Optimizations and Low-level Code in LLVM](http://sf.snu.ac.kr/llvmtwin/)
+
+* [C Is Not a Low-level Language](https://queue.acm.org/detail.cfm?id=3212479)
 
 ## Artwork credits
 
