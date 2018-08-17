@@ -128,6 +128,10 @@ If you’ve read this far, now I can reveal that the real point of this post is 
 
 * [C Is Not a Low-level Language](https://queue.acm.org/detail.cfm?id=3212479)
 
+## Discuss
+
+Follow the discussion threads on [lobste.rs](https://lobste.rs/s/jrxhr5/with_undefined_behavior_anything_is), [Hacker News](https://news.ycombinator.com/item?id=17785470), and [/r/rust](https://www.reddit.com/r/rust/comments/985id0/with_undefined_behavior_anything_is_possible/).
+
 ## Artwork credits
 
 Top image by [dbeast32](https://www.fiverr.com/dbeast32). Space unicorn by [chrislove95](https://www.fiverr.com/chrislove95).
