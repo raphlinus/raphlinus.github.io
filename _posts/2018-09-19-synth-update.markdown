@@ -24,7 +24,7 @@ A central tenet of the engine is that the real-time audio rendering thread is ri
 
 At the same time, I want the behavior to be dynamic. I want to be able to patch the processing graph in real time, without glitches. I want voice allocation to be fully dynamic. These seem like perhaps irreconcilable wishes.
 
-To that end, I've worked out a highly customized lock-free queue, which I think gets me everything I want. The main thread can be very dynamic and allocate all it wants, while the real-time thread renders the audio using objects allocated by the main thread, and then when it's done with those objects (for example, when they're deleted from the graph), sends them back on a return channel, where the real time thread will drop them at its leisure. The code seems to work.
+To that end, I've worked out a highly customized lock-free queue, which I think gets me everything I want. The main thread can be very dynamic and allocate all it wants, while the real-time thread renders the audio using objects allocated by the main thread, and then when it's done with those objects (for example, when they're deleted from the graph), sends them back on a return channel, where the main thread will drop them at its leisure. The code seems to work.
 
 I hope to blog about this more, and also see below.
 
