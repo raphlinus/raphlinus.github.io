@@ -2,7 +2,9 @@
 layout: post
 title:  "Notes on “Lost in Math”"
 date:   2018-06-23 13:29:03 -0700
-categories: personal, books
+categories: [personal, books]
+# this was published with a wonky url but I want to keep links working
+permalink: "/personal,/books/2018/06/23/lost-in-math.html"
 ---
 As part of my mental and emotional well-being program, I've decided to read more good books and spend (a lot) less time consuming the nooz. This week I read ["Lost in Math: How Beauty Leads Physics Astray"](https://www.amazon.com/Lost-Math-Beauty-Physics-Astray/dp/0465094252) by Sabine Hossenfelder. Recommended, and here are some notes (not really a full review).
 
