@@ -46,7 +46,7 @@ In addition, [WebRender] has a good chunk of 2D graphics rendering functionality
 
 ### Other back-ends
 
-For maximum compatibility, I imagine [cairo] is the most useful back-end when a system-provided library is not available. However, cairo is mostly a software renderer, so performance will be quite poor compared with what GPU hardware can do. (For full disclosure, there are other back-ends, but harder to interface, and none using state of the art renering techniques, so this is unlikely to be a major effort.)
+For maximum compatibility, I imagine [cairo] is the most useful back-end when a system-provided library is not available. However, cairo is mostly a software renderer, so performance will be quite poor compared with what GPU hardware can do. (For full disclosure, there are other back-ends, but harder to interface, and none using state of the art rendering techniques, so this is unlikely to be a major effort.)
 
 ## The web
 
@@ -105,6 +105,8 @@ Having such an abstraction is on the critical path for my game eventually, but i
 I don't have a lot of extra bandwidth for open source projects right now, but I'm definitely willing to help guide a serious effort. It'd be out of my own pocket, but modest funding might also be available if it would make the difference between this happening or not.
 
 Ideally, it's something a lot of people could benefit from, and would help the Rust ecosystem as a whole.
+
+Please follow the discussion at [/r/rust](https://www.reddit.com/r/rust/comments/9nhhh8/a_crate_i_want_2d_graphics/?ref=share&ref_source=link).
 
 [draw2d]: https://github.com/draw2d/rfcs/issues/1
 
