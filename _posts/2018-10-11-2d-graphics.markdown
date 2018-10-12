@@ -1,0 +1,141 @@
+---
+layout: post
+title:  "A crate I want: 2d graphics"
+date:   2018-10-11 15:44:03 -0700
+categories: [rust, graphics]
+---
+The Rust ecosystem has lot of excellent crates, and many more new ones being published. I believe one is missing, though, and I'd really like to see it happen: a cross-platform abstraction for 2D graphics. In this post I will set out what I want.
+
+## Cross-platform abstractions
+
+An enduring pattern in Rust is a cross-platform abstraction to wrap a system service. Many system services (audio, window creation, networking) require plumbing through to the system. The usual structure is to have platform-specific wrappers as a bottom layer, sometimes a wrapper to add safety and a more Rust idiomatic API, and then a cross-platform abstraction.
+
+For reference, here are some examples of the pattern, for basic system services. In many cases, there are other options, this is mostly to illustrate the kinds of things available.
+
+|--------------+--------------+--------------+--------------+--------------+--------------|
+| service  | cross-platform crate | macOS    | Linux        | Windows      | Web          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| audio        | [cpal]       | [coreaudio]  | [alsa]       | [winapi]     | [stdweb]     |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| midi         | [midir]      | [coremidi]   | [alsa]       | [winapi]     | N/A          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| window creation | [winit]   | [core-graphics] | [wayland] / [x11] | [winapi] | [(in winit)][we] |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| 3D graphics  | [gfx-rs]     | [metal]      | [ash]        | [d3d12]      | N/A          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| entropy      | [rand]       | [libc]       | [libc]       | [winapi]     | [stdweb]     |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+
+The near-magical result of this pattern is that, very often, it's possible to `git clone` a project, run `cargo run`, and have it "just work," even if running on a different platform than it was developed for.
+
+## Build vs buy
+
+As with many things, there is a choice between building a 2D graphics engine, or using one that already exists, in particular one provided with the system. And as usual, there are tradeoffs either way.
+
+An advantage of "build" is that rendering is more likely to be consistent across multiple platforms; similarly, the testing burden is reduced. In addition, a state-of-the art renderer has the potential to be more performant.
+
+An advantage of "buy" is that the amount of Rust code to be compiled is potentially a lot smaller. As an extreme, [Skia](https://skia.org/) is a 349MB git clone, not counting any of the dependencies (which of course are managed with a [bespoke tool](https://skia.org/user/download)). Also, depending on relative quality of implementation, it might also be more performant, as there's potential. Finally, very mature 2D graphics libraries already exist, while there's a lot to do to build a new one.
+
+Ultimately I think both choices are valid, it comes down to quantitative issues, and, in an ideal world, it's a config choice.
+
+### Some potential Rust-native back-ends
+
+Given a cross-platform abstraction for 2D graphics, several promising projects, both existing and future, could potentially be a back-end. The gfx team is starting discussions on [draw2d], which would sit on top of the gfx-rs 3d abstraction.
+
+In addition, [WebRender] has a good chunk of 2D graphics rendering functionality, though itself is missing general Bezier path rendering. Both [Pathfinder] and [lyon] provide the needed path functionality, using different approaches to use 3D graphics hardware.
+
+### Other back-ends
+
+For maximum compatibility, I imagine [cairo] is the most useful back-end when a system-provided library is not available. However, cairo is mostly a software renderer, so performance will be quite poor compared with what GPU hardware can do. (For full disclosure, there are other back-ends, but harder to interface, and none using state of the art renering techniques, so this is unlikely to be a major effort.)
+
+## The web
+
+An exciting and recent development is the rightmost column in the above table. Increasingly, through wasm, the web is just another compilation target for Rust.
+
+I think this is an especially good opportunity for a 2D graphics abstraction, as 2D graphics is central to the web. There are lots of applications that could potentially target the web: charts, diagrams, and visualizations.
+
+## Porting xi-win-ui
+
+I'm making good, steady progress with xi-win-ui. In addition to xi-win, I'm also building the GUI for my [synthesizer] using it, and plan to use it for the game UI and interaction when I get to that.
+
+Right now, I'm using [direct2d], and it's going well. That said, I'm not happy about the fact that this code is Windows-only. I'd like this 2D graphics abstraction crate to exist sooner rather than later, so I can port the code over.
+
+## Design choices
+
+As is being discussed on the [draw2d] thread, there are a number of design choices. Personally, I'd like to see the API generally close to Direct2D, not only because that minimizes porting cost, but also because it's a relatively modern, performant implementation.
+
+Most 2D APIs are immediate mode, but WebRender is moving in the direction of retained mode, as they find some performance optimizations when painting similar content from frame to frame. A possible compromise is to use a fundamentally immediate mode API, but with functionality to record and display into a display list; this gives the renderer the possibility to preprocess the elements (tesselating polygons, computing overlap for the purpose of reordering to optimize batching, etc) in the display list.
+
+The classic 2D API (I believe most are derived from Java2D, which in turn is inspired by PostScript) is very stateful, generally with push/pop operations to change the transform, set a crop, etc. This style is not ideal for multithreaded apps, and modern 3D APIs have moved very far away from it, Vulkan being an extreme. It could be quite interesting to design a high performance 2D API based on similar ideas, but I'm not sure how important it is in practice; certainly when using existing libraries.
+
+## Other related projects
+
+One project to look at is [resvg], a pure-Rust SVG implementation. It currently has both a [cairo] and a [Qt] backend. It is probably worth looking at its implementation to see what kind of interface it uses for multiple backends. SVG is also quite a rich graphical model. If the new crate is successful, resvg could perhaps be adapted to use it.
+
+## Testing and performance evaluation
+
+A major part of the work for this project is evaluating correctness and performance across the multiple backends. The Skia project has an extremely extensive test suite and performance dashboard infrastructure. It might be worth borrowing some of that. Ideally, all backends produce identical results, but of course there will be subtle differences with roundoff, gamma correction, etc.
+
+Having such a test suite would also be highly useful for the development of new backends such as draw2d - in my experience, one of the most productive applications of test driven development is when the tests already exist.
+
+## Text
+
+While 2D graphics with only geometric elements and is possible, usually a lot of the content is text. For xi-win-ui, I'm using DirectWrite as a companion to Direct2D.
+
+Text is complex, and has many subfunctions:
+
+* Enumerating the system fonts (often with metadata, such as figuring out which fonts are suitable for which scripts).
+
+* Shaping text into glyphs ([HarfBuzz] is the gold standard here).
+
+* Rasterizing the glyphs (traditionally [FreeType], but [rusttype] and [font-rs] are also viable).
+
+* Maintaining a glyph cache in a texture atlas.
+
+* Painting text.
+
+Even painting can be complex, as to match high quality desktop rendering both RGB subpixel rendering and gamma correct blending is desirable. But these aren't required for games or mobile usage, and even desktop systems are migrating away from RGB subpixel rendering (it's [off](https://news.ycombinator.com/item?id=17476873) by default in Mojave 10.14).
+
+Using a texture atlas is the classic technique, but the library should be designed not to force this architecture. I think the future is to do the text rasterizing directly on the GPU, which is potentially much faster when the transform is changing continuously (as in pinch-to-zoom or perspective animation).
+
+## Prospects
+
+Having such an abstraction is on the critical path for my game eventually, but it won't be for a while, as I'm happy doing the prototyping Windows-only for now. Thus, I'd love for the Rust community to step up and build this, one way or other.
+
+I don't have a lot of extra bandwidth for open source projects right now, but I'm definitely willing to help guide a serious effort. It'd be out of my own pocket, but modest funding might also be available if it would make the difference between this happening or not.
+
+Ideally, it's something a lot of people could benefit from, and would help the Rust ecosystem as a whole.
+
+[draw2d]: https://github.com/draw2d/rfcs/issues/1
+
+[cpal]: https://github.com/tomaka/cpal
+[winapi]: https://github.com/retep998/winapi-rs
+[stdweb]: https://github.com/koute/stdweb
+[metal]: https://github.com/gfx-rs/metal-rs
+[ash]: https://github.com/MaikKlein/ash
+[d3d12]: https://github.com/gfx-rs/d3d12-rs
+[coreaudio]: https://github.com/RustAudio/coreaudio-rs
+[alsa]: https://github.com/diwic/alsa-rs
+[wayland]: https://github.com/Smithay/wayland-rs
+[winit]: https://github.com/tomaka/winit
+[x11]: https://github.com/erlepereira/x11-rs
+[libc]: https://github.com/rust-lang/libc
+[midir]: https://github.com/Boddlnagg/midir
+[we]: https://github.com/tomaka/winit/tree/master/src/platform/emscripten
+[gfx-rs]: https://github.com/gfx-rs/gfx
+[core-graphics]: https://github.com/servo/core-foundation-rs
+[coremidi]: https://github.com/chris-zen/coremidi
+[rand]: https://crates.io/crates/rand
+[direct2d]: https://github.com/Connicpu/direct2d-rs
+[WebRender]: https://github.com/servo/webrender
+[Pathfinder]: https://github.com/pcwalton/pathfinder
+[lyon]: https://github.com/nical/lyon
+
+[resvg]: https://github.com/RazrFalcon/resvg
+[synthesizer]: https://github.com/raphlinus/synthesizer-io
+[HarfBuzz]: https://www.freedesktop.org/wiki/Software/HarfBuzz/
+[cairo]: https://cairographics.org/
+[Qt]: https://www.qt.io/
+[rusttype]: https://github.com/redox-os/rusttype
+[font-rs]: https://github.com/raphlinus/font-rs
+[FreeType]: https://www.freetype.org/
