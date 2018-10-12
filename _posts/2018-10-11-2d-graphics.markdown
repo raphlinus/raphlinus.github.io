@@ -1,0 +1,92 @@
+---
+layout: post
+title:  "A crate I want: 2d graphics"
+date:   2018-10-11 15:44:03 -0700
+categories: [rust, graphics]
+---
+The Rust ecosystem has lot of excellent crates, and many more new ones being published. I believe one is missing, though, and I'd really like to see it happen: a cross-platform abstraction for 2D graphics. In this post I will set out what I want.
+
+## Cross-platform abstractions
+
+An enduring pattern in Rust is a cross-platform abstraction to wrap a system service. Many system services (audio, window creation, networking) require plumbing through to the system. The usual structure is to have platform-specific wrappers as a bottom layer, sometimes a wrapper to add safety and a more Rust idiomatic API, and then a cross-platform abstraction.
+
+For reference, here are some examples of the pattern, for basic system services. In many cases, there are other options, this is mostly to illustrate the kinds of things available.
+
+|--------------+--------------+--------------+--------------+--------------+--------------|
+| service  | cross-platform crate | macOS    | Linux        | Windows      | Web          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| audio        | [cpal]       | [coreaudio]  | [alsa]       | [winapi]     | [stdweb]     |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| midi         | [midir]      | [coremidi]   | [alsa]       | [winapi]     | N/A          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| window creation | [winit]   | [core-graphics] | [wayland] / [x11] | [winapi] | [(in winit)][we] |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| 3D graphics  | [gfx-rs]     | [metal]      | [ash]        | [d3d12]      | N/A          |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+| entropy      | [rand]       | [libc]       | [libc]       | [winapi]     | [stdweb]     |
+|--------------|--------------|--------------|--------------|--------------|--------------|
+
+The near-magical result of this pattern is that, very often, it's possible to `git clone` a project, run `cargo run`, and have it "just work," even if running on a different platform than it was developed for.
+
+## Build vs buy
+
+As with many things, there is a choice between building a 2D graphics engine, or using one that already exists, in particular one provided with the system. And as usual, there are tradeoffs either way.
+
+An advantage of "build" is that rendering is more likely to be consistent across multiple platforms; similarly, the testing burden is reduced. In addition, a state-of-the art renderer has the potential to be more performant.
+
+An advantage of "buy" is that the amount of Rust code to be compiled is potentially a lot smaller. As an extreme, [Skia](https://skia.org/) is a 349MB git clone, not counting any of the dependencies (which of course are managed with a [bespoke tool](https://skia.org/user/download)). Also, depending on relative quality of implementation, it might also be more performant, as there's potential. Finally, very mature 2D graphics libraries already exist, while there's a lot to do to build a new one.
+
+Ultimately I think both choices are valid, it comes down to quantitative issues, and, in an ideal world, it's a config choice.
+
+### Some potential Rust-native back-ends
+
+Given a cross-platform abstraction for 2D graphics, several promising projects, both existing and future, could potentially be a back-end. The gfx team is starting discussions on [draw2d], which would sit on top of the gfx-rs 3d abstraction.
+
+In addition, [WebRender] has a good chunk of 2D graphics rendering functionality, though itself is missing general Bezier path rendering. Both [Pathfinder] and [lyon] provide the needed path functionality, using different approaches to use 3D graphics hardware.
+
+## The web
+
+An exciting and recent development is the rightmost column in the above table. Increasingly, through wasm, the web is just another compilation target for Rust.
+
+I think this is an especially good opportunity for a 2D graphics abstraction, as 2D graphics is central to the web. There are lots of applications that could potentially target the web: charts, diagrams, and visualizations.
+
+## Porting xi-win-ui
+
+I'm making good, steady progress with xi-win-ui. In addition to xi-win, I'm also building the GUI for my [synthesizer] using it, and plan to use it for the game UI and interaction when I get to that.
+
+Right now, I'm using [direct2d], and it's going well. That said, I'm not happy about the fact that this code is Windows-only. I'd like this 2D graphics abstraction crate to exist sooner rather than later, so I can port the code over.
+
+## Design choices
+
+As is being discussed on the [draw2d] thread, there are a number of design choices. Personally, I'd like to see the API generally close to Direct2D, not only because that minimizes porting cost, but also because it's a relatively modern, performant implementation.
+
+## Text
+
+TODO
+
+[draw2d]: https://github.com/draw2d/rfcs/issues/1
+
+[cpal]: https://github.com/tomaka/cpal
+[winapi]: https://github.com/retep998/winapi-rs
+[stdweb]: https://github.com/koute/stdweb
+[metal]: https://github.com/gfx-rs/metal-rs
+[ash]: https://github.com/MaikKlein/ash
+[d3d12]: https://github.com/gfx-rs/d3d12-rs
+[coreaudio]: https://github.com/RustAudio/coreaudio-rs
+[alsa]: https://github.com/diwic/alsa-rs
+[wayland]: https://github.com/Smithay/wayland-rs
+[winit]: https://github.com/tomaka/winit
+[x11]: https://github.com/erlepereira/x11-rs
+[libc]: https://github.com/rust-lang/libc
+[midir]: https://github.com/Boddlnagg/midir
+[we]: https://github.com/tomaka/winit/tree/master/src/platform/emscripten
+[gfx-rs]: https://github.com/gfx-rs/gfx
+[core-graphics]: https://github.com/servo/core-foundation-rs
+[coremidi]: https://github.com/chris-zen/coremidi
+[rand]: https://crates.io/crates/rand
+[direct2d]: https://github.com/Connicpu/direct2d-rs
+[WebRender]: https://github.com/servo/webrender
+[Pathfinder]: https://github.com/pcwalton/pathfinder
+[lyon]: https://github.com/nical/lyon
+
+[synthesizer]: https://github.com/raphlinus/synthesizer-io
