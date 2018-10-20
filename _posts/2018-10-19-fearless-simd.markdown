@@ -6,11 +6,13 @@ categories: [rust, simd]
 ---
 [SIMD] is a powerful performance technique, and is especially valuable in signal and image processing applications. I will be using it very extensively in my [synthesizer], and also it's increasingly used in [xi-editor] to optimize string comparisons and similar primitives.
 
-Traditionally, programming SIMD has been very difficult, for a variety of reasons. Until recently, the most practical approach was writing assembly code, which is very arcane. Today, probably most SIMD code is written in C using processor-specific intrinsics. The future is portable, high level code, but tools aren't quite there yet. Rust has the potential to be one of the leading langauges for SIMD, but the current state is fairly rough. In this post, I'll set out the challenges, results of some of my explorations, and suggestions for things to improve.
+Traditionally, programming SIMD has been very difficult, for a variety of reasons. Until recently, the most practical approach was writing assembly code, which is very arcane. Today, probably most SIMD code is written in C using processor-specific intrinsics. The future is portable, high level code, but tools aren't quite there yet. Rust has the potential to be one of the leading languages for SIMD, but the current state is fairly rough. In this post, I'll set out the challenges, results of some of my explorations, and suggestions for things to improve.
 
 I call my vision for what I'd like Rust to accomplish "fearless SIMD," in analogy with "[fearless concurrency]". In this vision, the programmer writes the computation using high-level, safe, composable primitives, which then compile down to nearly perfect code for each SIMD capability level of the target architecture, with automatic runtime selection. Simple operations (like doing a map of a scalar function evaluation across a vector) can be written simply. More exotic SIMD operations are exposed, portably if possible, but also with an escape hatch of using processor-specific intrinsics when they're truly needed.
 
 I'm very excited by the fact that SIMD is now part of stable Rust, but the current state is very far from "fearless". I've published a crate called [fearless_simd], but that name is more of an aspiration than a promise fulfilled. Even so, I think it points one possible way. I plan to use it for music synthesis and visualization in my synthesizer, and invite the commnunity to adapt the ideas, or come up with something better!
+
+**Update 2018-10-20:** See the discussion on [/r/rust](https://www.reddit.com/r/rust/comments/9pmwrv/towards_fearless_simd/). Updated this post to fix small typos and add references to [simdeez] and [ISPC].
 
 ## Why is SIMD hard?
 
@@ -47,11 +49,17 @@ There are two crates which aim to provide a higher level SIMD experience: [packe
 
 Both of these show significant promise in allowing higher level code, but neither address the problem of runtime selection of SIMD capability level.
 
+Another crate, with considerable overlap in goals, is [simdeez]. This crate is designed to facilitate runtime detection, and writing the actual logic without duplication, but leaves the actual writing of architecture specific shims to the user, and still requires nontrivial unsafe code.
+
 It's also worth taking a deeper look at what the C/C++ world is doing, as that's currently by far the most mature ecosystem for SIMD development. Though SIMD is not part of the standard language, both GCC and Clang have vector extensions. There's also support for [Function Multi Versioning](https://lwn.net/Articles/691932/), which is particularly well supported on Linux (not sure about other platforms, but I wouldn't be surprised). I think one of the larger discussions going forward is to what extent to adapt these language and runtime level features into the Rust language.
+
+Intel's [ISPC] takes the idea of language extensions for SIMD even further, and is essentially an extension of C designed specifically around compiling portable code to high-performance SIMD. It even targets multi-core parallelism, with similar goals to [rayon]. There is even support for ARM Neon, but of course the major focus is Intel chips.
+
+Lastly, the [Halide] language is designed primarily for image processing, and targets not only SIMD but also GPU compute. In playing with it, I'm not sure it's suitable for audio workloads (smaller chunk sizes, more data dependencies than images), but it's worth looking at.
 
 ## Approaching fearless SIMD
 
-In the meantime, I wanted to explore how far it's possible to go using Rust as it exists today. Indeed, [fearless_simd] works on stable Rust. It's certainly not a general purpose solution to the problem, but based on my experiments so far, I think it might be usable for some things. I hope to write synthesis and visualization algorithms for my synthesizer using it, and so far it seems to be working - I have samples for both [waveform generation] and [IIR filtering]
+While I think it's likely that Rust should evolve to better support SIMD, I wanted to explore how far it's possible to go using Rust as it exists today. Indeed, [fearless_simd] works on stable Rust. It's certainly not a general purpose solution to the problem, but based on my experiments so far, I think it might be usable for some things. I hope to write synthesis and visualization algorithms for my synthesizer using it, and so far it seems to be working - I have samples for both [waveform generation] and [IIR filtering]
 
 The main theme of this crate is to provide _traits_ at two levels. On the lowest level are traits representing some SIMD vector, either of a particular width (`F32x4`) or the native width of the underlying vector (`SimdF32`). The latter is particularly useful for a simple map operation of a scalar function. Then there are implementations (simple newtypes over arch-specific types such as `__m256`) that implement these traits. The usual arithmetic operations are provided (using std::ops traits, so you can write `a + b` rather than having to do `a.add_(b)`), They also provide more specialized SIMD operations such as approximate reciprocal square root (see my [sigmoid] post for an application of these; also note that at that time I was only using SSE so not seeing a dramatic improvement, but with AVX it's almost 2x).
 
@@ -116,6 +124,10 @@ I'm not proposing [fearless_simd] for general usage yet. On the other hand, I do
 
 I certainly encourage people to experiment with and explore different ways of writing SIMD code. It's exciting that writing high quality SIMD code in Rust is now possible. The beauty and power of Rust is composing low-level components into higher level systems, using zero-cost abstractions. What are the best traits to represent generic computations that can be implemented efficiently in SIMD? How far can we go using currently stable Rust, and to what extent will extensions to the language enable an even better SIMD experience, perhaps someday fulfilling the promise of fearless SIMD? I'd like to think my exploration contributes to this discussion, and am really looking forward to seeing where it goes.
 
+## Acknowledgements
+
+Errors (including in judgment for going down this path) are my own, but I've benefitted from discussions with many people, including with James McCartney, Andrew Gallant (burntsushi), talchas, Colin Rofls, and Alex Crichton. The approach to newtype wrappers to safely encode both SIMD type and detected SIMD capability is due to burntsushi and is used to good effect in his fast string search crates.
+
 [SIMD]: https://en.wikipedia.org/wiki/SIMD
 [xi-editor]: https://github.com/xi-editor/xi-editor
 [popcnt]: https://en.wikipedia.org/wiki/Hamming_weight
@@ -134,4 +146,8 @@ I certainly encourage people to experiment with and explore different ways of wr
 [rust-lang/rust#23856]: https://github.com/rust-lang/rust/issues/23856
 [packed_simd]: https://github.com/rust-lang-nursery/packed_simd
 [faster]: https://github.com/AdamNiederer/faster
-[sigmoids]: https://raphlinus.github.io/audio/2018/09/05/sigmoid.html
+[sigmoid]: https://raphlinus.github.io/audio/2018/09/05/sigmoid.html
+[simdeez]: https://github.com/jackmott/simdeez
+[ISPC]: https://github.com/ispc/ispc/
+[rayon]: https://github.com/rayon-rs/rayon
+[Halide]: http://halide-lang.org/
