@@ -32,6 +32,8 @@ I now also have some insight into where exactly the jump between the two domains
 
 One way of thinking about this exploration is that cubic Béziers have a large parameter space encompassing both lumpy and smooth curves. The very smoothest are the ones that minimize the Minimum Curvature Variation functional, and we can plot all of them. This map tells you where to look to find them. Happy hunting!
 
+Discuss on [lobste.rs](https://lobste.rs/s/up2aoc/secrets_smooth_beziers_revealed) or [Hacker News](https://news.ycombinator.com/item?id=18635700).
+
 [PhD thesis]: https://levien.com/phd/thesis.pdf
 [crunching font file sizes down]: https://github.com/googlefonts/fontcrunch
 [tweeted]: https://twitter.com/hhpapazian/status/1061668526224637952
