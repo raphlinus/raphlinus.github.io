@@ -54,7 +54,7 @@ I personally feel we should consider Rust GUI in the "research" phase. There are
 
 I've started [Druid] to provide the GUI for my synthesizer and game, but also as a research project on building GUI in Rust. It represents a particular vision, choosing answers to each of the questions above, and I believe it has significant advantages. But it's a research prototype, it would be very silly for other projects to adopt it at this stage.
 
-There are lots of other cool GUI projects out there too. I personally feel [Azul] is one of the most promising, as I think WebRender is a good basis for building GUI. But there are things to be learned from [Conrod], [ggez], as well as wrappers for toolkits in other languages.
+There are lots of other cool GUI projects out there too. I personally feel [Azul] is one of the most promising, as I think WebRender is a good basis for building GUI. Another very promising project is [OrbTK], which originates from Redox but is cross platform, and is fairly advanced. There are also good things to be learned from [Conrod], [ggez], as well as wrappers for toolkits in other languages.
 
 It's not surprising that much of the activity on GUI in Rust has a focus on games, and I think that's a good thing. It's easier to innovate in the game space, and the reasons to use mature toolkits are less urgent. But if an excellent approach to GUI emerges, I think it will be useful for a broad range of applications. Also note that Druid started out as the GUI layer in [the Windows front-end for xi-editor][xi-win].
 
@@ -85,6 +85,7 @@ Thanks to everyone and the Rust community for making the language a place I love
 [Druid]: https://github.com/xi-editor/druid
 [Azul]: https://github.com/maps4print/azul
 [Conrod]: https://github.com/PistonDevelopers/conrod
+[OrbTK]: https://gitlab.redox-os.org/redox-os/orbtk
 [ggez]: https://github.com/ggez/ggez
 [pulldown-cmark]: https://github.com/raphlinus/pulldown-cmark
 [Patreon]: https://www.patreon.com/raphlinus
