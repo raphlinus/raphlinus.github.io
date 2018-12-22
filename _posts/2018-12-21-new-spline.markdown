@@ -36,7 +36,7 @@ The net effect is more flexibility over the resulting shapes, intuitive control,
 
 The online demo is a research prototype, sparse in features and still with some rough edges. For example, I'm still fine-tuning the exact curve family, and believe I can get blending even smoother than it is now. But it's good enough I wanted to share it with the world. The numerical methods aren't perfect, and if you push it hard it'll sometimes get a slightly wrong answer. It still can't do multiple subpaths, so it can't *quite* be used to draw font shapes (hence the lack of an inner subpath in the screenshot above), but I think it's possible to start to get a feel with what I have now.
 
-The code is in a [research repo], and is in JavaScript with a GPL license. This is *not* the production code yet, which I intend to port to at least C++ so that it can be more easily integrated into real systems.
+The code is in a [research repo], and is in JavaScript with a GPL license. This is *not* the production code yet, which I intend to port to at least C++ so that it can be more easily integrated into existing font and vector curve editor codebases.
 
 The repo contains a [writeup] of the spline itself, but I haven't yet written up a good account of the curvature blending. That's mostly because I just today got it working well enough that I felt confident sharing it.
 
