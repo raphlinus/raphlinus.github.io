@@ -6,7 +6,7 @@ categories: [curves]
 ---
 I've been heads-down for the last month or so working on a new spline, and now I'm excited to show it to the world. It is a continuation of the [Spiro] work I did for my PhD thesis, and solves most of the problems that held that back from wider popularity.
 
-For the impatient, click on the screenshot below to try the demo yourself.
+For the impatient, click on the screenshot below to try the [demo] yourself.
 
 [<img src="/assets/spline_screenshot.png" alt="spline screenshot" width="359" height="405">][demo]
 
@@ -14,7 +14,7 @@ For the impatient, click on the screenshot below to try the demo yourself.
 
 One of the biggest problems with Spiro was that the underlying constraint system didn't always have a unique solution. The solver would often fail to converge, making wild patterns reminiscent of particle accelerator tracks. That didn't give the impression of a reliable tool; it felt like a rough research prototype.
 
-The new spline solves this problem, smoothly going through cusps in the cases where Spiro would suddenly reverse the direction of loops. I was inspired by [κ-Curves], the technology underlying the new "curvature tool" in Adobe Illustrator, which also uses cusps to achieve robustness (and, kindly enough, cites my work as an example of the problem it solves). The exact approach I used was more similar to [Hobby's splines], originally designed for Metafont, and 
+The new spline solves this problem, smoothly going through cusps in the cases where Spiro would suddenly reverse the direction of loops. I was inspired by [κ-Curves], the technology underlying the new "curvature tool" in Adobe Illustrator, which also uses cusps to achieve robustness (and, kindly enough, cites my work as an example of the problem it solves). The exact approach I used was more similar to [Hobby's splines], originally designed for Metafont, and also uses cubic segments that somewhat approximate Euler spirals as the basic curve family.
 
 ## More supple curves
 
@@ -47,6 +47,8 @@ I also want people to play with this prototype, if for no other purpose than to 
 ## Acknowledgments
 
 I'd like to thank Jacob Rus and Carlo Séquin for stimulating discussions during the development of this spline; they've both helped refine the ideas.
+
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=18738275) and [Lobsters](https://lobste.rs/s/t51wqm/new_spline).
 
 [Spiro]: https://levien.com/spiro
 [demo]: https://spline.technology/demo
