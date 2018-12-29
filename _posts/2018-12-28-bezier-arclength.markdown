@@ -39,12 +39,16 @@ In that Stack Overflow post was a reference to "[Adaptive subdivision and the le
 
 The insight of the Gravesen paper is that the actual length is always somewhere between the distance between the endpoints (the length of the chord) and the perimeter of the control polygon. And, for a quadratic Bézier, 2/3 the first + 1/3 the second is a reasonably good estimate.
 
-<svg width="320" height="240">
+<svg width="480" height="240">
     <path d="m100 10 q100 0 200 200" stroke="black" fill="none" />
-    <path d="m100 10 l100 0 100 200" stroke="black" stroke-dasharray="5,5" fill="none" />
-    <text x="150" y="110">Lc</text>
+    <path d="m100 10 l100 0 100 200" stroke="black" stroke-dasharray="4, 6" fill="none" />
+    <text x="90" y="110">Lc = 0.956 L</text>
     <path d="m100 10 l200 200" stroke="black" stroke-dasharray="5,5" fill="none" />
-    <text x="210" y="10">Lp</text>
+    <text x="210" y="20">Lp =1.094 L</text>
+    <text x="260" y="80">(2Lc + Lp)/3 = 1.002 L</text>
+    <circle cx="100" cy="10" r="2" fill="black" />
+    <circle cx="200" cy="10" r="2" fill="black" />
+    <circle cx="300" cy="210" r="2" fill="black" />
 </svg>
 
 More to the point, Gravesen's approach gives hard error bounds, which is the basis of a subdivision approach. At each step, you test whether the estimate is within the desired tolerance. If so, you use the approximation. If not, you subdivide (using [de Casteljau], of course), and run the algorithm on each half. This metric has 1/16 the error for each subdivision, so we're at $O(N^\frac{1}{4})$ worst case, decidedly better than above.
@@ -249,7 +253,7 @@ $$
 {\Large]}
 $$
 
-Easy! In this formula, $a$, $b$, and $c$ represent squared norms of the second and first derivatives at $t=0$, and c is the squared norm of chord length. Details are of course on the linked page.
+Easy! In this formula, $a$, $b$, and $c$ represent squared norms of the second and first derivatives at $t=0$, and $c$ is the squared norm of chord length. Details are of course on the linked page.
 
 I had several concerns about this approach. One is numerical stability; the formula has several divide operations, which mostly are mostly over powers of the second derivative norm. Given that, it's likely that accuracy will degrade as the curve gets closer to a straight line. And inded, for an exact straight line this code gives `NaN`. Zooming in, we can see the problem:
 
@@ -266,7 +270,7 @@ There's another numerical instability for curves with a sharp kink (surprise, su
 Does the extra accuracy of the analytical approach (with the fixes in place for numerical stability) come at a cost? Let's benchmark:
 
 ```
-test bench_quad_arclen_kurbo       ... bench:          49 ns/iter (+/- 13)
+test bench_quad_arclen             ... bench:          46 ns/iter (+/- 17)
 ```
 
 I'm impressed. It's quite a bit faster (21ns) without the numerical stability fixes and with `target-cpu=native`, but for a library I think it's much more important to be robust than absolutely at the edge of performance.
@@ -331,9 +335,25 @@ This is especially true when working from academic papers. Having lots of theore
 
 Another lesson is that simpler curves such as quadratics are easier to work with and ultimately give better results in spite of needing more of them to accurately represent a curve. I found this holds for the [nearest point] method; for quadratics there's an exact solution based on solving a cubic equation, but cubics require subdivision. I suspect the same will be true of other algorithms including offset curve.
 
+## Other resources
+
+Behdad has a great [TYPO Labs 2017 presentation] on the math used for variational fonts. The implementation of [arclength in FontTools] uses the same basic analytical approach, and this is shown in the video along with low-order Legendre-Gauss Quadrature and recursive perimeter-chord subdivision. The presentation also shows exact calculation of area using Green's theorem (also [implemented][kurbo-area] in kurbo) and the use of SymPy to compute curve properties symbolically.
+
+Jacob Rus has an interactive [Bézier Segment Arclength] Observable notebook. It uses high-degree Chebyshev polynomials, which are closely related to Legendre polynomials, and there's a sophisticated inverse solver (needed for dashing). The inverse solver in kurbo is bisection, which is robust but not as fast in smooth cases.
+
+## Future work
+
+I think arclength of quadratics is pretty much settled at this point. For cubics, the current solution is pretty good, but can likely be improved a bit more. Certainly I make no claims the error metric is perfect, and a tighter bound on that would unlock exploiting higher degree quadrature, which could converge a lot faster. One promising approach is to identify problematic inputs (ones for which the actual error is worse than what a simplistic error metric would predict). If, as seems likely, curves with cusps are an important category of those, then using the [Stone and DeRose geometric characterization] could help find those (thanks Pomax for the idea). Another idea (thanks to Jacob Rus) is to search for curvature maxima and use that to guide the subdivision. Determining maximum curvature should be fairly tractable, but as always there's a tradeoff between the cost of computing the error metric vs the savings in subdivision.
+
+Applying a Newton method is likely to speed up the inverse method. That shouldn't be too hard.
+
+Perhaps an enterprising math enthusiast will be inspired to take up these problems. If so, I'll happily incorporate the work into kurbo.
+
+I personally am inclined to declare victory and move on. There are other interesting curve problems to solve!
+
 ## Thanks
 
-Thanks to Pomax for the primer, Legendre-Gauss quadrature resources, and encouraging me to write this blog. Thanks to Behdad for the shared intellectual curiosity about Bézier math and the application to fonts. Thanks to Mateusz Malczak for his derivation of the analytical quadratic Bézier arclength formula and permission to adapt his code.
+Thanks to Pomax for the primer, Legendre-Gauss quadrature resources, and encouraging me to write this blog, as well as some feedback. Thanks to Behdad for the shared intellectual curiosity about Bézier math and the application to fonts, plus resource suggestions. Thanks to Mateusz Malczak for his derivation of the analytical quadratic Bézier arclength formula and permission to adapt his code. Thanks to Jacob Rus for feedback and suggestions.
 
 And thanks to you for reading!
 
@@ -351,3 +371,9 @@ And thanks to you for reading!
 [Mateusz Malczak]: https://web.archive.org/web/20180418075534/http://www.malczak.linuxpl.com/blog/quadratic-bezier-curve-length/
 [Abel–Ruffini theorem]: https://en.wikipedia.org/wiki/Abel%E2%80%93Ruffini_theorem
 [nearest point]: https://docs.rs/kurbo/0.1.0/kurbo/trait.ParamCurveNearest.html#tymethod.nearest
+[TYPO Labs 2017 presentation]: https://www.youtube.com/watch?v=4_Dy3-_MyiA&feature=youtu.be&t=24m5s
+[arclength in fontTools]: https://github.com/fonttools/fonttools/blob/master/Lib/fontTools/misc/bezierTools.py#L98
+[Bézier Segment Arclength]: https://beta.observablehq.com/@jrus/bezier-segment-arclength
+[kurbo-area]: https://docs.rs/kurbo/0.1.0/kurbo/trait.ParamCurveArea.html
+[SymPy]: https://www.sympy.org/en/index.html
+[Stone and DeRose geometric characterization]: https://pomax.github.io/bezierinfo/#canonical
