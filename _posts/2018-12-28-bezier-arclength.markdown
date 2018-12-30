@@ -21,7 +21,7 @@ First, if you haven't read [A Primer on Bézier Curves], go do that now. In part
 
 Why is arclength important? One important traditional application is rendering strokes with dashed patterns. My main interest is part of generating optimized Béziers to closely fit a given curve. My research has shown that the optimum Bézier tends to have an arclength very close to the original curve. Thus, searching only for Béziers with matching arclength is a good way to reduce the parameter space when searching for optimum fit. I use this technique in the [Euler explorer], as well as optimized conversion from Spiro to cubic Béziers in my [PhD thesis]. I'm embarrassed to admit, though, that the code I used for that is very slow and not all that precise — generating the full map for the Euler explorer took hours.
 
-The most obvious approach to computing arclength is to sample the curve at a sequence of points, then add up all the distances. This is equivalent to flattening the curve into lines and adding up all the line lengths. It's simple and robust (it doesn't care too much about the presence of kinks), so fairly widely implemented. The only problem is, it's not very accurate. Or, to put it another way, it's astonishingly slow when high accuracy is desired. The accuracy quadruples with every doubling of the number of samples, or another way of putting it, the number of samples is $O(\sqrt(N))$ where $N$ is the reciprocal of the error tolerance.
+The most obvious approach to computing arclength is to sample the curve at a sequence of points, then add up all the distances. This is equivalent to flattening the curve into lines and adding up all the line lengths. It's simple and robust (it doesn't care too much about the presence of kinks), so fairly widely implemented. The only problem is, it's not very accurate. Or, to put it another way, it's astonishingly slow when high accuracy is desired. The accuracy quadruples with every doubling of the number of samples, or another way of putting it, the number of samples is $O(\sqrt{N})$ where $N$ is the reciprocal of the error tolerance.
 
 Let's try to find a better way. This [question](https://math.stackexchange.com/questions/12186/arc-length-of-b%C3%A9zier-curves) was posed on Stack Overflow, specifically for quadratic Béziers, so to a large extent this post is an extended answer to that question, though we will also give a solution for cubic Béziers.
 
@@ -199,7 +199,7 @@ Now to compare to Legendre-Gauss quadrature. Fortunately there's code for that i
 
 <img src="/assets/3rd_order_quadrature_error_plot.png" width="570" height="520">
 
-It's quite a bit better; the region where it's very accurate is bigger. Interestingly enough, though, it doesn't do a lot better for extreme cases. Intuitively, it should be possible to get accurate results with fewer subdivisions. The problem is: how do you compute such a metric? The advantage of the Gravesen approach is that it has the metric built-in.
+It's quite a bit better; the region where it's very accurate is bigger. Interestingly enough, though, it doesn't do a lot better for extreme cases. Intuitively, it should be possible to get accurate results with fewer subdivisions. The problem is: how do you compute a bound on the error? The advantage of the Gravesen approach is that it has the error metric built-in.
 
 Or does it? Let's verify that. I implemented the adaptive subdivision from the Gravesen paper and then made this plot, with the accuracy threshold set to 1e-4:
 
@@ -229,7 +229,7 @@ One way to move forward is to cook up an error metric that absolutely bounds the
     let est_err = 0.06 * (lp - lc) * (x * x + y * y).powi(2);
 ```
 
-Here the `lp` and `lc` variables represent the length of the perimeter and chord; these ideas are borrowed from the Greveson paper, and including that gives us a tighter bound for values near the bottom edge of our plot. Other than that, it's basically the norm of the second derivative raised to the power that matches the scaling of our quadrature.
+Here the `lp` and `lc` variables represent the length of the perimeter and chord; these ideas are borrowed from the Gravesen paper, and including that gives us a tighter bound for values near the bottom edge of our plot. Other than that, it's basically the norm of the second derivative raised to the power that matches the scaling of our quadrature.
 
 One good way to validate such a function is scatter plots; for each point we plot the estimated error on the x axis, and the actual error on the y axis. No point is allowed to be above the x=y line, and ideally every point is pretty close to it. Let's see how we did:
 
@@ -281,7 +281,7 @@ Of course, the analytical solution is only applicable to quadratics. The [Abel�
 
 Again, the tricky part is the error metric. The error metric for a quadratic Bézier is based on the norm of the second derivative. For a quadratic, the second derivative is constant, so it's easy to write expressions in terms of it. For a cubic, the second derivative is linear in $t$, so we want to somehow capture the fact that it varies across the parameter space.
 
-Unlike quadratics, it's hard to visualize the space of all possible cubics; it's a four-parameter space, and my ability to visualize fields in four dimensions is limited. Thus, instead of 2d maps I mostly used randomly generated cubics, and scatterplots of whatever I wanted to measure from those. Cubics are also trickier, it's not going to be easy to get as tight in the error bounds.
+Unlike quadratics, it's hard to visualize the space of all possible cubics; it's a four-parameter space, and my ability to visualize fields in four dimensions is limited. Thus, instead of 2d maps I mostly used randomly generated cubics, and scatterplots of whatever I wanted to measure from those. Cubics are also trickier, it's not going to be easy to get error bounds as tight.
 
 After some experimentation, mostly iterating on those scatter plots and trying things that either improved the tightness of the error bound or made it worse, I found that working with the *integral* of the second derivative norm was both tractable and gave a decent error bound.
 
@@ -356,6 +356,8 @@ I personally am inclined to declare victory and move on. There are other interes
 Thanks to Pomax for the primer, Legendre-Gauss quadrature resources, and encouraging me to write this blog, as well as some feedback. Thanks to Behdad for the shared intellectual curiosity about Bézier math and the application to fonts, plus resource suggestions. Thanks to Mateusz Malczak for his derivation of the analytical quadratic Bézier arclength formula and permission to adapt his code. Thanks to Jacob Rus for feedback and suggestions.
 
 And thanks to you for reading!
+
+Discuss on [lobste.rs](https://lobste.rs/s/ysgy3e/how_long_is_bezier) and [Hacker News](https://news.ycombinator.com/item?id=18786583).
 
 [kurbo]: http://github.com/linebender/kurbo
 [A Primer on Bézier Curves]: https://pomax.github.io/bezierinfo/
