@@ -308,7 +308,7 @@ There are a few ways to evaluate performance. One is a scatterplot of the number
 
 <img src="/assets/cubic_arclen_performance.png" width="630" height="478">
 
-The vertical axis has the number of subdivisions, and the horizontal axis the actual error. Obviously we don't want any points to the right of the specified tolerance. The majority of cases are handled with 4 or fewer subdivisions. It would be nicer to have them bunched closer to the right, but that would require a better error bound. Perhaps some enterprising reader will take up this work :).
+The vertical axis has the number of subdivisions, and the horizontal axis the actual error. Obviously we don't want any points to the right of the specified tolerance. The majority of cases are handled with 4 or fewer subdivisions (in fact the mean is about 3.4 over my sample). It would be nicer to have them bunched closer to the right, but that would require a better error bound. Perhaps some enterprising reader will take up this work :).
 
 We can benchmark the time taken as well:
 
@@ -343,7 +343,7 @@ Jacob Rus has an interactive [Bézier Segment Arclength] Observable notebook. It
 
 ## Future work
 
-I think arclength of quadratics is pretty much settled at this point. For cubics, the current solution is pretty good, but can likely be improved a bit more. Certainly I make no claims the error metric is perfect, and a tighter bound on that would unlock exploiting higher degree quadrature, which could converge a lot faster. One promising approach is to identify problematic inputs (ones for which the actual error is worse than what a simplistic error metric would predict). If, as seems likely, curves with cusps are an important category of those, then using the [Stone and DeRose geometric characterization] could help find those (thanks Pomax for the idea). Another idea (thanks to Jacob Rus) is to search for curvature maxima and use that to guide the subdivision. Determining maximum curvature should be fairly tractable, but as always there's a tradeoff between the cost of computing the error metric vs the savings in subdivision.
+I think arclength of quadratics is pretty much settled at this point. For cubics, the current solution is pretty good, but can likely be improved a bit more. Certainly I make no claims the error metric is perfect, and a tighter bound on that would unlock exploiting higher degree quadrature, which could converge a lot faster. One promising approach is to identify problematic inputs (ones for which the actual error is worse than what a simplistic error metric would predict). If, as seems likely, curves with cusps are an important category of those, then using the [Stone and DeRose geometric characterization] could help find those (thanks Pomax for the idea). Another idea (thanks to Jacob Rus) is to search for curvature maxima and use that to guide the subdivision. Determining maximum curvature (at least approximately) should be fairly tractable, but as always there's a tradeoff between the cost of computing the error metric vs the savings in subdivision.
 
 Applying a Newton method is likely to speed up the inverse method. That shouldn't be too hard.
 
