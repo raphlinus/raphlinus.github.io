@@ -28,7 +28,7 @@ One of the deeper topics I've been engaging is whether to use [winit] for cross-
 
 I have decided to do window creation myself. I believe winit is fundamentally based on an architectural decision which is ok for 3D games but not for general GUI work: a separate Rust event loop thread that coordinates asynchronously with the host's UI loop. However, some UI events require synchronous handling. This comes up visibly in smooth resize, but there are other instances. I filed an [issue against winit] about smooth resizing specifically.
 
-Another reason not to use winit is the VST use case. The [Rust DSP] community has also decided not to use winit, because they need finer grained access to the window creation process; a VST is given a handle to the host UI, and needs to instantiate a view within that, as opposed to creating a window and view from scratch; winit has architectural decisions that basically assume the latter case. I'm in touch with that community and am hoping the druid work will meet their needs.
+Another reason not to use winit is the VST use case. The [Rust DSP] community has also decided not to use winit, because they need finer grained access to the window creation process. A VST is given a handle to the host UI, and needs to instantiate a view within that, as opposed to creating a window and view from scratch; winit has architectural decisions that basically assume the latter case. I'm in touch with that community and am hoping the druid work will meet their needs.
 
 There's a bit more info in the [druid-shell roadmap].
 
@@ -65,3 +65,4 @@ Again, if you want me to dig into any of these topics, let me know. Combining th
 [issue against winit]: https://github.com/tomaka/winit/issues/786
 [pulldown-cmark roadmap]: https://github.com/raphlinus/pulldown-cmark/issues/154
 [Patreon]: https://www.patreon.com/raphlinus
+[piet]: https://github.com/linebender/piet
