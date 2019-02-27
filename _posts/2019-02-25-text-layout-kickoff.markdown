@@ -12,11 +12,15 @@ The skribo library doesn't do shaping itself; it is basically a glue library on 
 
 The choice of whether to use HarfBuzz or platform shaping is a tradeoff. Using HarfBuzz means more consistency across platforms, and thus an easier testing story. Using platform text means more consistency with other apps on the platform, and less code in the critical path (so shorter compile times and smaller executables).
 
+Shaping is essential to complex scripts such as Devanagari and Arabic, but important even in Latin to improve quality through ligatures and kerning. On the left is text without shaping (rendered with Cairo's "toy text API"), on the right properly shaped text (rendered with DirectWrite):
+
+<img src="/assets/shaping_comparison.png" width="480" height="120" alt="CJK shaping example" style="margin-left: auto; margin-right: auto; display: block">
+
 ## Expected users
 
-This work is being funded by Mozilla Research to be used in Servo. Doing text layout for the Web is a very complex problem. The higher level representation of rich text is very tightly bound to the DOM and CSS. All that logic needs to live in Servo, with the lower level providing a clean interface to lay out a span of text with a *single* style and a single [BiDi] direction.
+This work is funded by Mozilla Research to be used in Servo. Doing text layout for the Web is a very complex problem. The higher level representation of rich text is very tightly bound to the DOM and CSS. All that logic needs to live in Servo, with the lower level providing a clean interface to lay out a span of text with a *single* style and a single [BiDi] direction.
 
-The second major use case is [piet], the 2D graphics abstraction I've been working on. Currently for the Cairo back-end piet uses the "toy text API," which is of course [inadequate][piet#10]. The idea is that skribo handles text layout for Cairo and all future low-level drawing back-ends (including any future back-end using WebRender or direct Vulkan drawing).
+The second major use case is [piet], the 2D graphics abstraction I've been working on. Currently for the Cairo back-end piet uses the "toy text API," which is of course [inadequate][piet#10]. The idea is that skribo handles text layout for Cairo and all future low-level drawing back-ends (including any future back-end using WebRender or direct Vulkan drawing). A requirement for both Web layout and text editing within GUI apps (including potential front-end work for [xi-editor]) is fine-grained measurement of text, including positioning of carets within text as well as width measurement of spans of text.
 
 Additionally, just about every game engine currently being implemented in Rust uses a simplistic approach to text layout, just looking up each codepoint in the font's cmap and then using its advance width to build a layout. I want to encourage all such engines to migrate to skribo, and want to make that experience smooth. In short, if you're using [rusttype], you should consider using skribo.
 
@@ -26,9 +30,13 @@ Aside from being glue abstracting over implementation details, the main actual p
 
 Another major problem is making sure locale information affects layout properly. One of the most important to solve is [Han unification], which is the fact that Chinese, Japanese, and Korean share unicode codepoints even though they can be considered different scripts. Often, they should be rendered with different fonts (meaning that Unicode coverage is not the only criterion for selecting fonts). Alternatively, fonts like [Source Han Sans] have variant glyphs for all CJK languages, and use the "locl" OpenType feature to select them. A good layout library handles both, transparently to applications.
 
-Other problems within scope are figuring out logic for "fake bold" and "fake italic" when the font collection doesn't provide true versions and adding [letter-spacing].
+Here's a visual example of the effect of locale on the rendering of CJK text. In all cases, the ideographs are the same sequence of Unicode code points:
 
-Looking forward, [font variations] affect layout, so one of the goals is to plumb this through to the underlying shaping engine, as supported.
+<img src="/assets/shaping_cjk_locale.png" width="341" height="171" alt="CJK shaping example" style="margin-left: auto; margin-right: auto; display: block">
+
+Other problems within scope are figuring out logic for "fake bold" and "fake italic" when the font collection doesn't provide true versions, as well as adding [letter-spacing].
+
+Looking forward, [font variations] affect layout, so one of the goals is to plumb this through to the underlying shaping engine, where supported.
 
 ## Performance
 
@@ -79,3 +87,5 @@ This project is explicitly intended to teach and engage the community, rather th
 [Unicode presentation on Chrome text]: http://www.unicodeconference.org/presentations/S5T2-R%C3%B6ttsches-Esfahbod.pdf
 [skribo]: https://github.com/linebender/skribo
 [eliminating simple text]: https://www.chromium.org/teams/layout-team/eliminating-simple-text
+[Han unification]: https://en.wikipedia.org/wiki/Han_unification
+[xi-editor]: https://xi-editor.io/
