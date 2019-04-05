@@ -6,7 +6,7 @@ categories: [rust, skribo, text]
 ---
 One of the main functions of [skribo] is "font fallback," or choosing fonts to render an arbitrary string of text. This post is a deep dive into the topic, motivating the problem and explaining the approaches to solve it.
 
-When buying fully into the platform's text stack, font fallback is usually handled transparently. But when taking doing the layout ourselves, as is done in skribo (and as is generally necessary in Web browsers), we have to query deeply into the system to find the fonts.
+When buying fully into the platform's text stack, font fallback is usually handled transparently. But when doing the layout ourselves, as is done in skribo (and as is generally necessary in Web browsers), we have to query deeply into the system to find the fonts.
 
 To some extent, this blog post is explaining what's going on in [font-kit#37]. Feel free to dig into that issue for more detail, or of course if you'd like to help out.
 
