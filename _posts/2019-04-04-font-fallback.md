@@ -10,6 +10,8 @@ When buying fully into the platform's text stack, font fallback is usually handl
 
 To some extent, this blog post is explaining what's going on in [font-kit#37]. Feel free to dig into that issue for more detail, or of course if you'd like to help out.
 
+There are two crates involved in this work: font-kit wraps the system functions for enumerating and loading fonts, and skribo does text layout using fonts obtained from font-kit; skribo contains no platform-specific code.
+
 ## What is font fallback?
 
 No one font can cover all of Unicode, so text stacks rely on a patchwork, each of which covers some subset of scripts. A typical modern system has around 30 to 80 such fonts. Depending on the scripts used, a string might then require a bunch of different fonts to render. The problem of font fallback is to choose the fonts needed. That breaks down into the following main subproblems:
@@ -48,7 +50,7 @@ The methods for finding fallback fonts vary by system, and within a system vary 
 
 ### Windows
 
-For Windows 8.1 and later, there is a pretty good API for finding the fallback fonts: the [IDWriteFontFallback] interace. This is a query *by string,* so it will need to be queried often, and it is difficult to cache the results. A good feature is that it doesn't bother with unused fonts.
+For Windows 8.1 and later, there is a pretty good API for finding the fallback fonts: the [IDWriteFontFallback] interface. This is a query *by string,* so it will need to be queried often, and it is difficult to cache the results. A good feature is that it doesn't bother with unused fonts.
 
 On older versions of Windows, there are a number of approaches, probably the best is to do layout for the string using the platform renderer, and then use a custom "renderer" that doesn't actually render, but instead collects references to the fonts. Firefox does a version of this. Chrome does something similar but uses the older Uniscribe as well (this is compatible all the way back to XP).
 
@@ -60,7 +62,7 @@ Most of the time an app uses only one locale. In that case, it's possible to cal
 
 ### Linux / Fontconfig
 
-I haven't researched this as much as the others, but already I see some big problems. The [Fontconfig] API is rich enough to enumerate the fallback fonts, and contains language metadata, but it seems to me that at least Debian simply doesn't have a correct config. I've found a number of blog posts ([Tuning Fontconfig](http://www.linuxfromscratch.org/blfs/view/svn/x/tuning-fontconfig.html), [Ubunto better CJK](https://wiki.ubuntu.com/BetterCJKSupportSpecification/FontConfig), [Picking CJK fonts](https://utcc.utoronto.ca/~cks/space/blog/linux/LinuxXTermFreeTypeCJKFonts)) explaining how users can tweak their configs, but this seems like it shouldn't be necessary. I also haven't done a survey of distros other than Debian.
+I haven't researched this as much as the others, but already I see some big problems. The [Fontconfig] API is rich enough to enumerate the fallback fonts, and contains language metadata, but it seems to me that at least Debian simply doesn't have a correct config. I've found a number of blog posts ([Tuning Fontconfig](http://www.linuxfromscratch.org/blfs/view/svn/x/tuning-fontconfig.html), [Ubuntu better CJK](https://wiki.ubuntu.com/BetterCJKSupportSpecification/FontConfig), [Picking CJK fonts](https://utcc.utoronto.ca/~cks/space/blog/linux/LinuxXTermFreeTypeCJKFonts)) explaining how users can tweak their configs, but this seems like it shouldn't be necessary. I also haven't done a survey of distros other than Debian.
 
 Meanwhile, it seems that browsers work around this by hardcoding the names of common CJK fonts at least, which in turn reduces the pressure to fix the configs - things kinda work most of the time, as is typical for Linux.
 
