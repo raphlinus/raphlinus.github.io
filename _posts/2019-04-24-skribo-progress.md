@@ -4,7 +4,7 @@ title:  "Skribo progress update"
 date:   2019-04-26 15:05:42 -0700
 categories: [rust, skribo, text]
 ---
-I'm wrapping up my contract from Mozilla Research on Skribo. I was hoping to be farther along. Even so, I've made good progress; mostly the problems where harder than I anticipated. But I think I've moved the ball quite a bit down the field, and I'll talk about the current state of play here.
+I'm wrapping up my contract from Mozilla Research on Skribo. I was hoping to be farther along. Even so, I've made good progress; mostly the problems were harder than I anticipated. But I think I've moved the ball quite a bit down the field, and I'll talk about the current state of play here.
 
 I'm moving my main focus on to other things (about which more soon), so this leaves the skribo work very much in an unfinished state. I think it is interesting to a lot of people, so the major point of this blog post is a call to action for community involvement. If you're interested in working on this, please get in touch.
 
