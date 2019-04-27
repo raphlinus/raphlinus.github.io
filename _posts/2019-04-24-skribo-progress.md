@@ -44,7 +44,7 @@ The cache works pretty well, but relies on some assumptions. In particular, it d
 
 ## Layout sessions
 
-Inspired largely by more recent work on Chromium layout, we reconsidered the entire approach to retaining layout state in a global cache, with a focus on resuing work during layout (and rendering) of a single paragraph. The idea is a [`LayoutSession`], which retains that state as long as the client needs. In a single session, the client can measure substrings for line breaking, query cursor positions, and iterate glyphs for rendering, ideally while doing very little additional work or allocation.
+Inspired largely by more recent work on Chromium layout, we reconsidered the entire approach to retaining layout state in a global cache, with a focus on reusing work during layout (and rendering) of a single paragraph. The idea is a [`LayoutSession`], which retains that state as long as the client needs. In a single session, the client can measure substrings for line breaking, query cursor positions, and iterate glyphs for rendering, ideally while doing very little additional work or allocation.
 
 I was thinking that a fast-case query for substring width can be done in O(log n) time, where n is the size of the full string. Basically, you binary search for the endpoints of the string, and take the difference of the cumulative width to each point. But, in the unlikely case that the binary search takes more than a trivial amount of the total time, it's possible to improve asymptotic complexity even further, likely at the cost of more memory.
 
