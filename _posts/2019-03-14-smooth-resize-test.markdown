@@ -10,6 +10,8 @@ Today is an exciting point in the evolution of native GUI in Rust. There is much
 
 In my work, I have come across a problem that is as seemingly simple, yet as difficult to get right, as making decent tea: handling smooth window resizing. Very few GUI toolkits get it perfect, with some failing spectacularly. This is true across platforms, though Windows poses special challenges. It's also pretty easy to test (as opposed to requiring sophisticated latency measurements, which I also plan to develop). I suggest it become one of the basic tests to evaluate a GUI toolkit.
 
+To apply the test, open an app built in your favorite GUI toolkit, and grab the *left* edge of the window. Drag it back and forth, and check to see whether the right edge of the app is stable, especially if it has scrollbars.
+
 Why this particular test? Among other things, it's at the confluence of a number of subsystems, including interfaces with the underlying desktop OS. It also exposes some fundamental architectural decisions, especially regarding asynchrony.
 
 The smooth resizing test also exposes issues at multiple layers – the staging of layout vs drawing within the GUI toolkit, whether requests from the platform can be handled synchronously, and complex interactions between graphics and window management in the platform itself, which the app *may* be able to control to at least some extent. I'll go through these from low level to high level.
