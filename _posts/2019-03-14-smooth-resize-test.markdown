@@ -52,7 +52,7 @@ I use imgui as an example because this phenomenon is well known, and is a tradeo
 
 ## Discussion
 
-There are many things that can go wrong when doing window resizing. Therefore, it is a sensitive test for careful platform integration and architectural issues. I've tried hard to get it right in winit, and hope the result of that exploration can be useful to others trying to build desktop GUI.
+There are many things that can go wrong when doing window resizing. Therefore, it is a sensitive test for careful platform integration and architectural issues. I've tried hard to get it right in druid, and hope the result of that exploration can be useful to others trying to build desktop GUI.
 
 Thanks to Tristan Hume for making the triangle GIF, and for figuring out the correct recipe on macOS Metal.
 
