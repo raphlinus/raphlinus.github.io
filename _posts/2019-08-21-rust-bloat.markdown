@@ -4,7 +4,7 @@ title:  "Thoughts on Rust bloat"
 date:   2009-08-21 10:17:42 -0700
 categories: [rust]
 ---
-I'm about to accept a [PR][druid#124] that will bloat druid's compile time about 3x and its executable size almost 2x. In this case, I think the tradeoff is worth it (without localization, a GUI toolkit is strictly a toy), but the bloat makes me unhappy and I think there is room for improvement in the Rust ecosystem.
+I'm about to accept a [PR][druid#124] that will increase druid's compile time about 3x and its executable size almost 2x. In this case, I think the tradeoff is worth it (without localization, a GUI toolkit is strictly a toy), but the bloat makes me unhappy and I think there is room for improvement in the Rust ecosystem.
 
 ## Should we care?
 
@@ -58,7 +58,7 @@ Digging into xi-editor, the biggest single source of bloat is serde, and in gene
 
 The *particular* reason serde is so bloated is that it monomorphizes everything. There are alternatives; [miniserde] in particular yields smaller binaries and compile times by using dynamic dispatch (trait objects) in place of monomorphization. But it has other limitations and so hasn't caught on yet.
 
-In general, overuse of polymorphism is a leading cause of bloat. For example, resvg [switched from lyon to kurbo](https://github.com/RazrFalcon/resvg/commit/708d0fff2bf47939587e0d562085a65f6dbf794f) for this reason. We don't the lyon / euclid ecosystem, also for this reason, which is something of a shame because now there's more fragmentation. When working on [kurbo], I did experiments indicating there was no real benefit to allowing floating point types other than `f64`, so just decided that would be the type for coordinates. I'm happy with this choice.
+In general, overuse of polymorphism is a leading cause of bloat. For example, resvg [switched from lyon to kurbo](https://github.com/RazrFalcon/resvg/commit/708d0fff2bf47939587e0d562085a65f6dbf794f) for this reason. We don't adopt the lyon / euclid ecosystem, also for this reason, which is something of a shame because now there's more fragmentation. When working on [kurbo], I did experiments indicating there was no real benefit to allowing floating point types other than `f64`, so just decided that would be the type for coordinates. I'm happy with this choice.
 
 ## Use async sparingly
 
@@ -91,6 +91,8 @@ Once you accept bloat, it's very hard to claw it back. If your project has multi
 ## Conclusion
 
 As druid develops into a real GUI, I'll be facing many more of these kinds of choices, and both compile times and executable sizes will inevitably get larger. But avoiding bloat is just another place to apply engineering skill. In writing this blog post, I'm hoping to raise awareness of the issue, give useful tips, and enlist the help of the community to keep the Rust ecosystem as bloat-free as possible.
+
+As with all engineering, it's a matter of tradeoffs. Which is more important for druid, having fast compiles, or being on board with the abundance of features provided by the Rust ecosystem such as fluent? That doesn't have an obvious answer, so I intend to mostly listen to feedback from users and other developers.
 
 [druid#124]: https://github.com/xi-editor/druid/pull/124#issuecomment-523211377
 [performance culture]: http://joeduffyblog.com/2016/04/10/performance-culture/
