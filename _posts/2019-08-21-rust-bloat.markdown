@@ -58,13 +58,15 @@ Digging into xi-editor, the biggest single source of bloat is serde, and in gene
 
 The *particular* reason serde is so bloated is that it monomorphizes everything. There are alternatives; [miniserde] in particular yields smaller binaries and compile times by using dynamic dispatch (trait objects) in place of monomorphization. But it has other limitations and so hasn't caught on yet.
 
-In general, overuse of polymorphism is a leading cause of bloat. For example, resvg [switched from lyon to kurbo](https://github.com/RazrFalcon/resvg/commit/708d0fff2bf47939587e0d562085a65f6dbf794f) for this reason. We don't adopt the lyon / euclid ecosystem, also for this reason, which is something of a shame because now there's more fragmentation. When working on [kurbo], I did experiments indicating there was no real benefit to allowing floating point types other than `f64`, so just decided that would be the type for coordinates. I'm happy with this choice.
+In general, overuse of polymorphism is a leading cause of bloat. For example, resvg [switched from lyon to kurbo](https://github.com/RazrFalcon/resvg/commit/708d0fff2bf47939587e0d562085a65f6dbf794f) ~~for this reason~~ [Note added: RazrFalcon [points out](https://www.reddit.com/r/rust/comments/ctlt16/thoughts_on_rust_bloat/exlpd78/) that the big contribution to lyon compile times is proc macros, not polymorphism, and that's [since been fixed](https://github.com/servo/euclid/issues/345)]. We don't adopt the lyon / euclid ecosystem, also for this reason, which is something of a shame because now there's more fragmentation. When working on [kurbo], I did experiments indicating there was no real benefit to allowing floating point types other than `f64`, so just decided that would be the type for coordinates. I'm happy with this choice.
 
 ## Use async sparingly
 
 For a variety of reasons, async code is considerably slower to compile than corresponding sync code, though the compiler team has been [making great progress]. Even though async/await is the shiny new feature, it's important to realize that old-fashioned sync code is still better in a lot of cases. Sure, if you're writing high-scale Internet servers, you need async, but there are a lot of other cases.
 
 I'll pick on [Zola] for this one. A release build is over 9 minutes and 15M in size. (Debug builds are about twice as fast but 3-5x bigger). Watching the compile (over 400 crates total!) it's clear that its web serving (actix based) accounts for a lot of that, pulling in a big chunk of the tokio ecosystem as well. For just previewing static websites built with the tool, it might be overkill. That said, for this particular application perhaps bloat is not as important, and there are benefits to using a popular, featureful web serving framework.
+
+As a result, I've chosen *not* to use async in druid, but rather a simpler, single-threaded approach, even though async approaches have been [proposed](https://www.reddit.com/r/rust/comments/agaees/rusts_native_gui_story_it_starts_with_the_main/).
 
 ## Use feature gates
 
