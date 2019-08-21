@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Thoughts on Rust bloat"
-date:   2009-08-21 10:17:42 -0700
+date:   2019-08-21 10:17:42 -0700
 categories: [rust]
 ---
 I'm about to accept a [PR][druid#124] that will increase druid's compile time about 3x and its executable size almost 2x. In this case, I think the tradeoff is worth it (without localization, a GUI toolkit is strictly a toy), but the bloat makes me unhappy and I think there is room for improvement in the Rust ecosystem.
