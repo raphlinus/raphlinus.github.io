@@ -76,7 +76,7 @@ An alternative is to fragment the crate into finer grains; [rand] is a particula
 
 ## Compile-time work
 
-Another crate that often shows up in Rust builds is [phf], an implementation of perfect hashing. That's often a great idea and what you want in your binaries, but it also accounts for \~13s of compile time when using the macro version (again bringing in two separate copies of quote and syn).
+Another crate that often shows up in Rust builds is [phf], an implementation of perfect hashing. That's often a great idea and what you want in your binaries, but it also accounts for \~13s of compile time when using the macro version (again bringing in two separate copies of quote and syn). [Note added: sfackler points out that you can use phf-codegen to generate Rust source and check that into your repos.]
 
 For optimizing compile times in [unicode-normalization][unicode-normalization#37], I decided to build the hash tables using a custom tool, and check those into the repo. That way, the work is done only when the data actually changes (about once a year, as Unicode revs), as opposed to every single compile. I'm proud of this work, as it improved the compile time for unicode-normalization by about 3x, and I do consider that an important foundational crate.
 
@@ -95,6 +95,10 @@ Once you accept bloat, it's very hard to claw it back. If your project has multi
 As druid develops into a real GUI, I'll be facing many more of these kinds of choices, and both compile times and executable sizes will inevitably get larger. But avoiding bloat is just another place to apply engineering skill. In writing this blog post, I'm hoping to raise awareness of the issue, give useful tips, and enlist the help of the community to keep the Rust ecosystem as bloat-free as possible.
 
 As with all engineering, it's a matter of tradeoffs. Which is more important for druid, having fast compiles, or being on board with the abundance of features provided by the Rust ecosystem such as fluent? That doesn't have an obvious answer, so I intend to mostly listen to feedback from users and other developers.
+
+## Discuss
+
+Lively discussion on [Reddit](https://www.reddit.com/r/rust/comments/ctlt16/thoughts_on_rust_bloat/), [Hacker News](https://news.ycombinator.com/item?id=20761449), and [lobste.rs](https://lobste.rs/s/dxik3b/thoughts_on_rust_bloat).
 
 [druid#124]: https://github.com/xi-editor/druid/pull/124#issuecomment-523211377
 [performance culture]: http://joeduffyblog.com/2016/04/10/performance-culture/
