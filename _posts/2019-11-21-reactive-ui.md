@@ -59,9 +59,13 @@ I'll sketch out a typical UI pipeline, then get into how to express transformati
 <img src="/assets/reactive-ui-pipeline.svg" width="600" style="margin: auto; display: block;">
 
 
-So this is one of the dimensions on which to characterize the diversity of UI frameworks. At each stage in this pipeline, is the tree represented as a data structure or a trace? Both choices are generally viable, and in any pipeline when the tree is a trace, you can convert it pretty easily to a data structure by putting in a record/playback mechanism. This makes the stages more loosely coupled, but comes with costs: the memory for storing the tree nodes, and, often, some increased complexity, because trees can be messy to deal with. (Towards the end of this rant, I'll characterize some important examples of UI frameworks along this dimension and others)
+So this is one of the dimensions on which to characterize the diversity of UI frameworks. At each stage in this pipeline, is the tree represented as a data structure or a trace? Both choices are generally viable, and in any pipeline when the tree is a trace, you can convert it pretty easily to a data structure by putting in a record/playback mechanism. This makes the stages more loosely coupled, but comes with costs: the memory for storing the tree nodes, and, often, some increased complexity, because trees can be messy to deal with. Later in this post, I'll characterize some important examples of UI frameworks along this dimension and others.
+
+There are a number of reasons to analyze the problem of UI as a pipeline of tree stages. Basically, the end-to-end transformation is so complicated it would be very difficult to express directly. So it's best to break it down into smaller chunks, stitched together in a pipeline. This is especially true when the transformation is stateful, as it makes sense to attribute that state to a particular stage in the pipeline. A good example is the position of a draggable splitter pane – that's clearly a concern of the "render object" stage of the pipeline; storing it with the application logic would clutter that, and dealing with it at the draw object stage is too low level. There are other reasons to deal explicitly with independent trees, for example to make clear interface boundaries between different parts of the system, such as stitching together multiple languages (the DOM is a sharp example, as we'll see below).
 
 Now let's get into the details of the transformations a bit. Generally you want to express this in code, because you need the flexibility. But the exact structure of the code depends on the representation of the tree, particularly data structure or trace, as well as other details.
+
+### Push vs pull interfaces
 
 Now is a good time to bring up "push" and "pull," I think. I was trying to make this concept apply to the entire pipeline, but found that real systems are hybrids. It makes more sense to apply it to a pipeline stage, or a sequence of pipeline stages. Since an in-memory data structure supports both push and pull, the most common structure you'll see is a sequence of stages pulling from the left and pushing to the right, with in-memory data structures at both ends.
 
@@ -75,6 +79,8 @@ I'll also note that push-based iterators are also possible (called "internal ite
 
 One more thing to say about the interplay between sequence iterators and trees: it's certainly possible to express a tree as its *flattening* into a sequence of events, particularly "push" and "pop" (also commonly "start" and "end" in parser lingo) to represent the tree structure. In fact, this is exactly what pulldown-cmark does, and one of the stated goals is to allow a class of tree transformations as transformations on this flattening, expressible as (composable) iterators. Again, applying a map function to nodes is a particularly easy transformation, and there are examples of that in the [pulldown-cmark README](https://github.com/raphlinus/pulldown-cmark). I'm not sure yet how generally useful this is in the context of UI, though.
 
+### Incremental transformations
+
 So one thing I haven't really mentioned yet is the fact that you want these tree-to-tree transformations to be *incremental.* In a UI, you're not dealing with one tree, but a time sequence of them, and most of the tree is not changing, just a small *delta.* One of the fundamental goals of a UI framework is to keep the deltas flowing down the pipeline small. (Though of course this is a tradeoff and imgui is an example of a framework that doesn't emphasize this aspect)
 
 In general this is a pretty hard problem, because a change to some node on the input can have nontrivial effects on other nodes in the output. This is the problem of "tracking dependencies" and probably accounts for most of the variation between frameworks.
@@ -87,7 +93,7 @@ One measure of any given transformation is how tangled this graph of dependencie
 
 I think one of the most general and useful strategies is *diffing,* and there's good reason to believe this strategy applies well in UI domains. To sketch out briefly, you do a traversal (of some kind) of the output tree, and at each node you keep track of the *focus,* specifically which subtree of the input can possibly affect the result. Then you compare that input subtree to its previous state, and if it's the same you skip the output subtree, keeping the same value as before.
 
-I use this term "focus" purposefully, as it's also a description of what a lens does. And indeed, one way to view lenses is that they're a way to explicitly encode dependencies. I'd say it's an "opt-out" expression of a dependency, an assertion that the stuff outside the focus is not a dependency, as opposed to the perhaps more intuitive "opt-in" expression that you see in, for example, explicit "onclick" handlers.
+I use this term "focus" purposefully, as it's also a description of what a [lens] does. And indeed, one way to view lenses is that they're a way to explicitly encode dependencies. I'd say it's an "opt-out" expression of a dependency, an assertion that the stuff outside the focus is not a dependency, as opposed to the perhaps more intuitive "opt-in" expression that you see in, for example, explicit "onclick" handlers.
 
 Diffing is also available in a less clever, more brute-force form, by actually going over the trees and comparing their contents. This is, I think, quite the common pattern in JS reactive frameworks, and, because it places the least burden on the programmer expressing the transformation logic, is often a good starting point. (More clever incremental strategies are often available as an opt-in, for when it matters to performance)
 
@@ -103,6 +109,8 @@ Using object references is possible in Rust but makes ownership a lot messier, b
 
 Ok, since the above was so abstract I think a way to solidify the theory is to talk about particular cases in UI world. Not a systematic survey of every framework (that would be a major effort!) but examples that are especially illuminating.
 
+### druid
+
 In current druid, the pipeline looks like this: the data tree is stored, and explicitly designed to be diffable (the `Data` trait). The transformation to the widget tree is largely done in the `update` method, pulling diffs from the data tree, and results in a stored widget graph. (This might sound a little funny, as in the toy examples most of the building of the widget tree happens on app startup. But as apps become more dynamic more of the work is on update, so it's perhaps best to think of static startup as a special case where update is the constant function)
 
 In current druid, the widget tree and render object tree are fused (one way to think of this is an identity transformation). The next stage is "render objects annotated with layout", and that's also a stored tree (the layout annotations are stored in `WidgetPod` structs, being a major motivation for that struct to exist). This stage is done in the `layout` method, and again pulls from the input tree. Right now, it's not very incremental, it runs the whole tree from the top, but that's very much planned, and that will be mostly diff based.
@@ -111,7 +119,7 @@ The next stage, is going from the (layout annotated) render object tree to the d
 
 I actually want to say a lot more about this, because longer term plans include moving this from trace to stored, and in particular with the stored nodes resident on the GPU. But this is, as you might imagine, a pretty big topic.
 
-Actually talking about the render object to draw stage reminds me of some more general things I wanted to say about this stage. While this is basically the place to apply theme state, it tends to be a fairly local transformation. And I would say this transformation generally follows common patterns: basically each node type *expands* to generally more nodes in the draw tree. So one button node will transform to nodes for the button background, the outline, the button text, etc.
+Actually talking about the render object to draw stage reminds me of some more general things I wanted to say about this stage. While this is basically the place to apply theme state, it tends to be a fairly local transformation. And I would say this transformation generally follows common patterns: basically each node type *expands* to generally more nodes in the draw tree. So one button node will transform to nodes for the button background, the outline, the button text, etc. I'll call this an "expand-style" transformation, and when the output stage is implemented by calling "emit" functions on an API, the most natural representation is just functions that call other functions.
 
 The other general topic I left out was the question of how a schema for the trees might be represented in the language's type system (if it has one). In druid, the app state tree has a particular type, `T` with a `Data` bound. The widget tree is an interesting hybrid, each node is a `Box<dyn Widget>`, but then those widgets have an additional type parameter, which represents the focus of the corresponding data subtree. So at that stage the types include bits and pieces reflecting the transformation from app state to widgets. And the schema of the draw tree is represented as the signature of the piet RenderContext trait.
 
@@ -119,11 +127,17 @@ An interesting observation is that there's a fairly clean mapping between the st
 
 So that, I think, is a snapshot of druid within this theoretical framework. I'll touch on a couple others, largely to show contrasts.
 
+### Imgui
+
 Imgui is, as one can infer from the name, very much based on traces rather than stored trees. You can see basically the whole pipeline as a fused traversal of the app state, pushing draw objects to a GL context.
 
 The "expand" pattern I identified above for the render object to draw transformation is expressed in a particularly clean way in imgui, it's just function calls. But I think the patterns here are relatively common in the different frameworks, and "expand" transformations are not especially difficult to express.
 
+### Flutter
+
 Touching just highlights, one of the most notable things about Flutter is that it does *not* fuse the widget and render object trees, having separate stored trees for both, and using the [createElement()](https://api.flutter.dev/flutter/widgets/Widget/createElement.html) method to do an expand-style transformation from one to the other.
+
+### Jetpack Compose
 
 There are a few notable things about [Jetpack Compose](http://intelligiblebabble.com/compose-from-first-principles/). Where Flutter favors stored trees for both widgets and render objects, Jetpack Compose favors a trace style, but its compose buffer is actually something of a hybrid. The main structure expression of the output tree is trace (with our friends push and pop visible as [startGroup()](https://developer.android.com/reference/kotlin/androidx/compose/Composer.html#startGroup(kotlin.Any)) and [endGroup()](https://developer.android.com/reference/kotlin/androidx/compose/Composer.html#endGroup()), respectively, also note the key path fragment in that API), but this is not the whole story. The composer can also hold *state* associated with a particular node, with a fairly rich API for accessing the state, for example, [changed()](https://developer.android.com/reference/kotlin/androidx/compose/Composer.html#changed(androidx.compose.Composer.changed.T)) to do some diffing based on that state.
 
@@ -136,6 +150,8 @@ The intermediate trees are pretty invisible, but you certainly could visualize t
 For one, you do put startGroup and endGroup calls in (these are mostly magically inserted by a compiler plugin, doing source transformation of the original logic). These help the Composer keep track of the key path at all times, which, recall, is an identifier to a specific position in the tree.
 
 And the Composer internally maps that to a *slot,* which can be used to store state as needed. So basically, even though there's not a tree data structure in memory, when you're in the middle of a transformation stage, you can get access to state for your node as *if* the tree was materialized.
+
+### makepad
 
 People watching the Rust GUI space, or just GUI in general, should be aware of [makepad]. It is generally fairly similar to imgui, but with its own twists, and also serves as a reminder that the pipeline I sketched above is not set in stone. As with imgui, many of the pipeline stages are fused, so they're not apparent, but intermediate tree structures are encoded as begin/end pairs. The main fused pass is a traversal of the app state (represented as a tree of Rust structs), emitting nodes as a trace to the next stage. One unique feature is that layout doesn't happen before painting (transformation of render objects to draw objects) as in most systems, but rather is interleaved. Another major innovation of makepad is having a separate control flow for events. This is important for fixing a number of the issues with imgui, but for the most part in this post I'm ignoring event. In many systems, once the pipeline is in place for rendering, it's reasonably straightforward to reuse this mechanism to also have event flows in the opposite direction (and this is what imgui tries to do), but it's not rare to have more specialized mechanisms. Makepad also exposes styling via GPU shaders written in Rust syntax, with data flowing nearly transparently from the widget state to the GPU.
 
@@ -182,3 +198,4 @@ In this post I went into a bit of detail on druid's framework. I plan to [give a
 [Runebender]: https://github.com/linebender/runebender
 [areweguiyet]: https://areweguiyet.com/
 [Rust 2020 blog post]: https://raphlinus.github.io/rust/druid/2019/10/31/rust-2020.html
+[lens]: https://en.wikibooks.org/wiki/Haskell/Lenses_and_functional_references
