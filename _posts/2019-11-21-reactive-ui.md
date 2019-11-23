@@ -167,7 +167,7 @@ People watching the Rust GUI space, or just GUI in general, should be aware of [
 
 ### moxie
 
-There have been a number of attempts to adapt React-style patterns to Rust. Probably the most interesting is [moxie](moxie.rs). Like React and Jetpack Compose, it builds key paths to identify nodes in the output tree, and emits the output tree as a trace. Like Imgui, Jetpack Compose, and makepad, it mostly uses function calls to represent the application logic. I look forward to seeing how it progresses.
+There have been a number of attempts to adapt React-style patterns to Rust. Probably the most interesting is [moxie](https://moxie.rs). Like React and Jetpack Compose, it builds key paths to identify nodes in the output tree, and emits the output tree as a trace. Like Imgui, Jetpack Compose, and makepad, it mostly uses function calls to represent the application logic. I look forward to seeing how it progresses.
 
 And so on for the other major reactive frameworks. I believe that you can analyze most of them and put them on this chart. They're all at heart a sequence of tree transformations, but sometimes the trees are stored, sometimes traced, and lots of details different as discussed above.
 
