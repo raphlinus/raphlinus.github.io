@@ -155,10 +155,19 @@ And the Composer internally maps that to a *slot,* which can be used to store st
 
 I highly recommend Leland Richardson's [Compose From First Principles](http://intelligiblebabble.com/compose-from-first-principles/), as it goes into a fair amount of detail about general tree transformations, and the concept of "positional memoization" as a way to (in the lingo of this blog post) access state of intermediate tree stages in a transformation pipeline.
 
+### React
+
+Obviously, React has been one of the most influential systems, but I found it hard to explain, in part because it allows a bunch of different systems. You can write class-based components or use hooks. You can do either `useState` or use a Redux-style reducer. In any case, the best resource for understanding React more deeply is [React as a UI Runtime].
+
+React is most famous for introducing the "virtual DOM," discussed a bit below. It works well for small systems, but causes serious performance issue as the UI scales up. React has a number of techniques for bypassing full tree diffs, which is pragmatic but again makes it harder to form a clean mental model.
+
 ### makepad
 
 People watching the Rust GUI space, or just GUI in general, should be aware of [makepad]. It is generally fairly similar to imgui, but with its own twists, and also serves as a reminder that the pipeline I sketched above is not set in stone. As with imgui, many of the pipeline stages are fused, so they're not apparent, but intermediate tree structures are encoded as begin/end pairs. The main fused pass is a traversal of the app state (represented as a tree of Rust structs), emitting nodes as a trace to the next stage. One unique feature is that layout doesn't happen before painting (transformation of render objects to draw objects) as in most systems, but rather is interleaved. Another major innovation of makepad is having a separate control flow for events. This is important for fixing a number of the issues with imgui, but for the most part in this post I'm ignoring event. In many systems, once the pipeline is in place for rendering, it's reasonably straightforward to reuse this mechanism to also have event flows in the opposite direction (and this is what imgui tries to do), but it's not rare to have more specialized mechanisms. Makepad also exposes styling via GPU shaders written in Rust syntax, with data flowing nearly transparently from the widget state to the GPU.
 
+### moxie
+
+There have been a number of attempts to adapt React-style patterns to Rust. Probably the most interesting is [moxie](moxie.rs). Like React and Jetpack Compose, it builds key paths to identify nodes in the output tree, and emits the output tree as a trace. Like Imgui, Jetpack Compose, and makepad, it mostly uses function calls to represent the application logic. I look forward to seeing how it progresses.
 
 And so on for the other major reactive frameworks. I believe that you can analyze most of them and put them on this chart. They're all at heart a sequence of tree transformations, but sometimes the trees are stored, sometimes traced, and lots of details different as discussed above.
 
@@ -187,6 +196,8 @@ My goal in posting this is to start a conversation. I'm not claiming to have all
 I'm also curious if there's good academic literature I'm missing. I'm familiar with some, particularly from the [FRP][Breaking down FRP] community, but it's rare to come across something that gives a good picture of exactly what happens from mouse clicks to pixels.
 
 In this post I went into a bit of detail on druid's framework. I plan to [give a talk](https://www.meetup.com/Rust-Bay-Area/events/266571982/) soon, which hopefully will convey the ideas behind that (particularly the approach to lensing), and of course not be so theoretical. In general, I'm looking forward to refining the patterns in druid to make them general and powerful (including building in good escape hatches), and also explaining the design as I go along.
+
+Discuss on [/r/rust](https://www.reddit.com/r/rust/comments/e04b1p/towards_a_unified_theory_of_reactive_ui/) or [Hacker News](https://news.ycombinator.com/item?id=21607818).
 
 [piet]: https://github.com/linebender/piet
 [druid]: https://github.com/xi-editor/druid
