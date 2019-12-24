@@ -498,7 +498,7 @@ $$
 f^{-1}(x) \approx x (0.61 + \sqrt{0.39^2 + \tfrac{1}{4}x^2})
 $$
 
-![Approximation of the inverse of the integral](/assets/flatten_inv_approx.png)
+![Approximation of the inverse of the integral](/assets/flatten_inverse_approx.png)
 
 Essentially, the first approximation gives a direct and fairly accurate solution to determining the number of segments needed, and the second gives a direct and even more accurate solution to determining the $t$ parameter values for the subdivision, so that the error is evenly divided among all the segments.
 
