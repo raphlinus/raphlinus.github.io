@@ -467,17 +467,21 @@ Now we need to come up with $t$ values to know *where* to subdivide. Fortunately
 
 ```javascript
     my_subdiv(tol) {
+        // Map quadratic bezier segment to y = x^2 parabola.
         const params = this.map_to_basic();
+        // Compute approximate integral for x at both endpoints.
         const a0 = approx_myint(params.x0);
         const a2 = approx_myint(params.x2);
         const count = 0.5 * Math.abs(a2 - a0) * Math.sqrt(params.scale / tol);
         const n = Math.ceil(count);
-        const u0 = approx_inv_myint(a0);
-        const u2 = approx_inv_myint(a2);
+        const x0 = approx_inv_myint(a0);
+        const x2 = approx_inv_myint(a2);
         let result = [0];
+        // Subdivide evenly and compute approximate inverse integral.
         for (let i = 1; i < n; i++) {
-            const u = approx_inv_myint(a0 + ((a2 - a0) * i) / n);
-            const t = (u - u0) / (u2 - u0);
+            const x = approx_inv_myint(a0 + ((a2 - a0) * i) / n);
+            // Map x parameter back to t parameter for the original segment.
+            const t = (x - x0) / (x2 - x0);
             result.push(t);
         }
         result.push(1);
