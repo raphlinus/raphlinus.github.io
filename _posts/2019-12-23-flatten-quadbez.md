@@ -244,9 +244,17 @@ class QuadUi {
         this.current_obj = null;
     }
 
+    getCoords(e) {
+        const rect = this.root.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        return new Point(x, y);
+    }
+
     onPointerDown(e) {
-        const x = e.offsetX;
-        const y = e.offsetY;
+        const pt = this.getCoords(e);
+        const x = pt.x;
+        const y = pt.y;
         if (x >= 50 && x <= 130 && y >= 30 && y <= 60) {
             if (this.method == "analytic") {
                 this.method = "recursive";
@@ -283,13 +291,12 @@ class QuadUi {
     }
 
     onPointerMove(e) {
+        const pt = this.getCoords(e);
         if (this.current_obj !== null) {
             const i = this.current_obj;
-            const x = e.offsetX;
-            const y = e.offsetY;
-            this.pts[i] = new Point(x, y);
-            this.handles[i].setAttribute("cx", x);
-            this.handles[i].setAttribute("cy", y);
+            this.pts[i] = pt;
+            this.handles[i].setAttribute("cx", pt.x);
+            this.handles[i].setAttribute("cy", pt.y);
             this.update();
         }
     }
@@ -449,7 +456,7 @@ $$
 As it turns out, this integral has a closed form solution, thanks to [hypergeometric functions][Hypergeometric function], though we won't be making too much use of this fact; we'll be doing numerical approximations instead. (I've left out the constant and am making the natural assumption that $f(0) = 0$, as it's an odd function).
 
 $$
-f(x) = \int \frac{1}{\sqrt[4]{1 + 4x^2}} dx = x\; {}_2F_1(\tfrac{1}{4}, \tfrac{1}{2}; \tfrac{3}{2}; -4x^2)
+f(x) = \int \frac{1}{\sqrt[4]{1 + 4x^2}} dx = x\; {}_2F_1\left(\tfrac{1}{4}, \tfrac{1}{2}; \tfrac{3}{2}; -4x^2\right)
 $$
 
 But no matter how we evaluate this integral, here we have an expression that tells us how many segments we need. To make sure the solution meets or exceeds the error tolerance, we round up to the nearest integer.
@@ -495,7 +502,7 @@ Reading this graph is fairly intuitive; the slope is the rate at which subdivisi
 I actually had even better luck with the inverse function of the integral, which is in some ways more important; this is the one that's evaluated (potentially in parallel) for each intermediate point.
 
 $$
-f^{-1}(x) \approx x (0.61 + \sqrt{0.39^2 + \tfrac{1}{4}x^2})
+f^{-1}(x) \approx x \left(0.61 + \sqrt{0.39^2 + \tfrac{1}{4}x^2}\right)
 $$
 
 ![Approximation of the inverse of the integral](/assets/flatten_inverse_approx.png)
