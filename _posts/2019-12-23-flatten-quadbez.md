@@ -564,6 +564,8 @@ Though the theory is perhaps a bit math-intensive, the code is refreshingly simp
 
 And of course, the fact that it can be evaluated in parallel, as well as predict the number of generated segments in advance, means that it's especially well suited for GPU. I'll very likely use this technique as I reboot [piet-metal], though I'll likely be exploring analytical approaches to rendering quadratic Béziers.
 
+**Update 2019-12-25:** Alan MacKinnon pointed me to Sederberg's [CAGD notes](https://scholarsarchive.byu.edu/cgi/viewcontent.cgi?article=1000&context=facpub#section.10.6), which has a simpler approach to the problem based on an error bound computed from the second derivative. This solution *is* quite well suited to parallel evaluation, and is easy to understand, but is less than optimum especially when the curvature varies a lot within the segment. Alan also pointed to a reference to Wang's method in the book "Pyramid Algorithms" by Ron Goldman. You can experiment with these by pressing the "s" or "w" key in the demo above.
+
 [Random Access Vector Graphics]: http://hhoppe.com/proj/ravg/
 [caffeineowl]: http://www.caffeineowl.com/graphics/2d/vectorial/bezierintro.html
 [Piecewise Linear Approximation]: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.86.162&rep=rep1&type=pdf
