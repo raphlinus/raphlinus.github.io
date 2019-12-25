@@ -191,6 +191,24 @@ class QuadBez {
         result.push(1);
         return result;
     }
+
+    // Subdivide using method from Sederberg's CAGD notes
+    subdiv_sederberg(tol, round_to_pow2) {
+        const ddx = 2 * this.x1 - this.x0 - this.x2;
+        const ddy = 2 * this.y1 - this.y0 - this.y2;
+        const dd = Math.hypot(ddx, ddy);
+        let n = Math.ceil(Math.sqrt(0.25 * dd / tol));
+        if (round_to_pow2) {
+            n = 1 << 32 - Math.clz32(n - 1);
+        }
+        let result = [];
+        for (let i = 0; i < n; i++) {
+            const t = i / n;
+            result.push(t);
+        }
+        result.push(1);
+        return result;
+    }
 }
 
 //for (let i = 0; i < sub.length - 1; i++) {
@@ -218,6 +236,7 @@ class QuadUi {
             e.preventDefault();
             e.stopPropagation();
         });
+        window.addEventListener("keydown", e => this.onKeyDown(e));
 
         this.pts = [new Point(200, 450), new Point(400, 450), new Point(600, 50)];
         this.quad = this.make_stroke();
@@ -305,6 +324,22 @@ class QuadUi {
         this.current_obj = null;
     }
 
+    onKeyDown(e) {
+        if (e.key == 's') {
+            this.method = "sederberg";
+            this.update();
+        } else if (e.key == 'r') {
+            this.method = "recursive";
+            this.update();
+        } else if (e.key == 'a') {
+            this.method = "analytic";
+            this.update();
+        } else if (e.key == 'w') {
+            this.method = "wang";
+            this.update();
+        }
+    }
+
     renderGrid(visible) {
         let grid = document.getElementById("grid");
         //this.ui.removeAllChildren(grid);
@@ -379,8 +414,12 @@ class QuadUi {
         let sub;
         if (this.method == "analytic") {
             sub = qb.my_subdiv(tol);
-        } else {
+        } else if (this.method == "recursive") {
             sub = qb.recurse_subdiv(tol);
+        } else if (this.method == "sederberg") {
+            sub = qb.subdiv_sederberg(tol, false);
+        } else if (this.method == "wang") {
+            sub = qb.subdiv_sederberg(tol, true);
         }
         const n = sub.length - 1;
         let p = "";
@@ -488,7 +527,7 @@ Now we need to come up with $t$ values to know *where* to subdivide. Fortunately
         return result;
     }
 ```
-Essentially we're subdividing the interval in "count space" into $n$ equal parts, then evaluating the *inverse function* of the interval at each of those points. This loop could easily be evaluated in parallel, and, as we'll see below, the actual formula for the approximate inverse integral is quite simple.
+Essentially we're subdividing the interval in "count space" into $n$ equal parts, then evaluating the *inverse function* of the integral at each of those points. This loop could easily be evaluated in parallel, and, as we'll see below, the actual formula for the approximate inverse integral is quite simple.
 
 ## Numerical techniques
 
