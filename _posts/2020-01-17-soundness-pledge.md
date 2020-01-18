@@ -4,7 +4,7 @@ title:  "The Soundness Pledge"
 date:   2019-01-17 19:46:42 -0800
 categories: [rust]
 ---
-Lately there has been considerable drama around Actix-web, of which I'll point to Steve Klabnik's [A sad day for Rust]. This is an opportunity to share some thoughts I've had about soundness, Rust, and open source community.
+Lately there has been considerable drama around Actix-web, for which I'll point to Steve Klabnik's [A sad day for Rust] to explain. This post is an opportunity to share some thoughts I've had about soundness, Rust, and open source community.
 
 I believe one of the most important contributions of Rust is the *cultural* ideal of perfect soundness: that code using a sound library, no matter how devious, is unable to trigger undefined behavior (which is often thought of in terms of crashes but can be [far more insidious][UB]). Any deviation from this is a bug. The Rust language itself clearly subscribes to this ideal, even as it sometimes falls short of attaining it (at this writing, there are 44 [I-unsound] bugs, the oldest of which is more than 6 years old).
 
@@ -112,6 +112,24 @@ Higher levels of the soundness pledge might involve some form of commitment of e
 
 This is a whole nother discussion, but I think these higher commitments of effort should come with some kind of material incentive. Though there are exceptions, most open source Rust development is done as a volunteer effort, a labor of love. It is not fun responding to reports of vulnerabilities in one's code, or having a feeling of responsibility for security issues in users of the code. I think there are opportunities here to make the incentives match up more closely with the value provided.
 
+## Implications outside Rust
+
+I've been talking extensively about Rust here for obvious reasons, but I believe reasoning about soundness and safety is valuable in other languages as well. Some other language cultures are way ahead of the game, particularly Java and JVM languages (provided you don't do JNI, ugh!), as the language itself provides very strong soundness guarantees, even in the face of race conditions and the like.
+
+It *is* possible to write safe C and C++ code. It just takes a *lot* of effort, using the tools I've outlined above such as sanitizers. Certain codebases, I'm thinking [SQLite](https://www.sqlite.org/index.html), as their [testing methodology](https://www.sqlite.org/testing.html) in particular is likely to catch most of the soundness bugs that motivate the use of safe Rust.
+
+But ultimately I think some of the most productive interactions around soundness may result from the attempt to write safe Rust wrappers for other runtimes. I have to wonder how different Vulkan might be if it had been informed by an effort to build safe Rust wrappers without significant runtime costs.
+
+Similarly for COM. Many soundness issues are discussed in informal documentation, such as whether a method is "thread-safe" or not. The Rust concepts of [Send and Sync] are much more precise ways of talking about behavior in multithreaded concepts, and together with questions of whether `Clone` is allowed and which methods are `&self` vs `&mut self`, plus the cases where it's impossible to avoid the need for `unsafe`, the type signature for a Rust wrapper tells you a *lot* about how to safely use a COM interface. Just doing an audit of various COM libraries to document the corresponding safe Rust types would be a major effort, but one that I think could pay off.
+
+## Conclusion
+
+While almost everyone would agree that soundness is better than unsoundness, different people will have different priorities for how important it is, especially as a tradeoff for coding effort and performance. Most of the Rust community highly values soundness, but even within the community there is significant variation. I've proposed a "pledge," a statement of intent really, which I hope could be used to clearly communicate the level of priority for Rust projects.
+
+Right now, I'm inviting discussion rather than proposing it as a formal badge. Perhaps it's not really a good idea, or has downsides I don't foresee, or perhaps the idea needs tweaking. But I think it's worth talking about.
+
+Discussion on /r/rust (no link yet) and Hacker News (no link yet).
+
 [A sad day for Rust]: https://words.steveklabnik.com/a-sad-day-for-rust
 [soundness bugs]: https://docs.rs/dtolnay/0.0.7/dtolnay/macro._03__soundness_bugs.html
 [UB]: https://raphlinus.github.io/programming/rust/2018/08/17/undefined-behavior.html
@@ -128,3 +146,4 @@ This is a whole nother discussion, but I think these higher commitments of effor
 [vulkano]: https://github.com/vulkano-rs/vulkano
 [Ash]: https://github.com/MaikKlein/ash
 [pulldown-cmark]: https://github.com/raphlinus/pulldown-cmark
+[Send and Sync]: https://doc.rust-lang.org/nomicon/send-and-sync.html
