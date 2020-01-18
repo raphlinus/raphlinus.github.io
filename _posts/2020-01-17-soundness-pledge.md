@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "The Soundness Pledge"
-date:   2019-01-17 19:46:42 -0800
+date:   2020-01-17 19:46:42 -0800
 categories: [rust]
 ---
 Lately there has been considerable drama around Actix-web, for which I'll point to Steve Klabnik's [A sad day for Rust] to explain. This post is an opportunity to share some thoughts I've had about soundness, Rust, and open source community.
