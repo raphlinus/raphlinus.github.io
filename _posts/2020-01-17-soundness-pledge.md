@@ -74,9 +74,9 @@ impl D3DBlob {
 }
 ```
 
-This is a simple example. I've come across a lot more interesting stuff, involving [temporary objects that have an implicit lifetime dependency](https://docs.microsoft.com/en-us/windows/win32/api/d2d1/nn-d2d1-id2d1pathgeometry), [callbacks with interesting pointer lifetime requirements](https://docs.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwritetextanalysissource-getlocalename), and more. Many of these have resulted in either unsoundness in published "safe" wrapper crates.
+This is a simple example. I've come across a lot more interesting stuff, involving [temporary objects that have an implicit lifetime dependency](https://docs.microsoft.com/en-us/windows/win32/api/d2d1/nn-d2d1-id2d1pathgeometry), [callbacks with interesting pointer lifetime requirements](https://docs.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwritetextanalysissource-getlocalename), and more. Many of these have resulted in unsoundness in published "safe" wrapper crates.
 
-Because of the difficulties I've outlined above, my own preferred style is increasingly to wrap platform functions using an *unsafe* API, then verify that uses of these functions are conservative. In druid in particular, the druid-shell layer (which abstracts platform capabilities) has significant amounts of unsafe code, while the druid layer above it (UI logic) has absolutely none. I don't know of a better way to manage this.
+Because of the difficulties I've outlined above, my own preferred style is increasingly to wrap platform functions using an *unsafe* API, then verify that uses of these functions are conservative. In druid in particular, the druid-shell layer (which abstracts platform capabilities but is not a simple wrapper) has significant amounts of unsafe code, while the druid layer above it (UI logic) has absolutely none. I don't know of a better way to manage this.
 
 ## Mitigating unsoundness
 
@@ -110,15 +110,15 @@ As mentioned above, I think it's fine for a library *not* to subscribe to this p
 
 Higher levels of the soundness pledge might involve some form of commitment of effort to attain the goal: independent review, extensive use of fuzzers and sanitizers, and, hopefully at some point, formal proofs of soundness.
 
-This is a whole nother discussion, but I think these higher commitments of effort should come with some kind of material incentive. Though there are exceptions, most open source Rust development is done as a volunteer effort, a labor of love. It is not fun responding to reports of vulnerabilities in one's code, or having a feeling of responsibility for security issues in users of the code. I think there are opportunities here to make the incentives match up more closely with the value provided.
+This is a whole ’nother discussion, but I think these higher commitments of effort should come with some kind of material incentive. Though there are exceptions, most open source Rust development is done as a volunteer effort, a labor of love. It is not fun responding to reports of vulnerabilities in one's code, or having a feeling of responsibility for security issues in users of the code. I think there are opportunities here to make the incentives match up more closely with the value provided.
 
 ## Implications outside Rust
 
 I've been talking extensively about Rust here for obvious reasons, but I believe reasoning about soundness and safety is valuable in other languages as well. Some other language cultures are way ahead of the game, particularly Java and JVM languages (provided you don't do JNI, ugh!), as the language itself provides very strong soundness guarantees, even in the face of race conditions and the like.
 
-It *is* possible to write safe C and C++ code. It just takes a *lot* of effort, using the tools I've outlined above such as sanitizers. Certain codebases, I'm thinking [SQLite](https://www.sqlite.org/index.html), as their [testing methodology](https://www.sqlite.org/testing.html) in particular is likely to catch most of the soundness bugs that motivate the use of safe Rust.
+It *is* possible to write safe C and C++ code. It just takes a *lot* of effort, using the tools I've outlined above such as sanitizers. Certain codebases might already be considered honorary pledges, I'm thinking [SQLite](https://www.sqlite.org/index.html), as their [testing methodology](https://www.sqlite.org/testing.html) in particular is likely to catch most of the soundness bugs that motivate the use of safe Rust.
 
-But ultimately I think some of the most productive interactions around soundness may result from the attempt to write safe Rust wrappers for other runtimes. I have to wonder how different Vulkan might be if it had been informed by an effort to build safe Rust wrappers without significant runtime costs.
+But ultimately I think some of the most productive interactions around soundness may result from the attempt to write safe Rust wrappers for other runtimes. I have to wonder how different Vulkan might be if it had been informed by an effort to build safe Rust wrappers without significant runtime costs, and how much that might have made it easier to base WebGPU on it.
 
 Similarly for COM. Many soundness issues are discussed in informal documentation, such as whether a method is "thread-safe" or not. The Rust concepts of [Send and Sync] are much more precise ways of talking about behavior in multithreaded concepts, and together with questions of whether `Clone` is allowed and which methods are `&self` vs `&mut self`, plus the cases where it's impossible to avoid the need for `unsafe`, the type signature for a Rust wrapper tells you a *lot* about how to safely use a COM interface. Just doing an audit of various COM libraries to document the corresponding safe Rust types would be a major effort, but one that I think could pay off.
 
