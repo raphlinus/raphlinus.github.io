@@ -128,7 +128,7 @@ While almost everyone would agree that soundness is better than unsoundness, dif
 
 Right now, I'm inviting discussion rather than proposing it as a formal badge. Perhaps it's not really a good idea, or has downsides I don't foresee, or perhaps the idea needs tweaking. But I think it's worth talking about.
 
-Discussion on /r/rust (no link yet) and Hacker News (no link yet).
+Discussion on [/r/rust](https://www.reddit.com/r/rust/comments/eqcefv/the_soundness_pledge/) and [Lobsters](https://lobste.rs/s/ksjy7n/soundness_pledge).
 
 [A sad day for Rust]: https://words.steveklabnik.com/a-sad-day-for-rust
 [soundness bugs]: https://docs.rs/dtolnay/0.0.7/dtolnay/macro._03__soundness_bugs.html
