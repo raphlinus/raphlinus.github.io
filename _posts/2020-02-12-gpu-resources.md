@@ -102,4 +102,12 @@ Subgroup/warp/SIMD/shuffle operations are very fast, but less compatible (nonuni
 
 * [Get started with GPU Compute on the Web](https://developers.google.com/web/updates/2019/08/get-started-with-gpu-compute-on-the-web) - Google (Chromium/Dawn)
 
-* Choice of shader language remains very [contentious](https://news.ycombinator.com/item?id=22020511).
+### WebGPU shader language
+
+The discussion of shader language had been very [contentious](https://news.ycombinator.com/item?id=22020511). As of very recently there is a proposal for a textual language that is semantically equivalent to SPIR-V, and there seems to be agreement that this is the path forward.
+
+* [Tint - WebGPU F2F - Feb 12, 2020](https://docs.google.com/presentation/d/1qHhFq0GJtY_59rNjpiHU--JW4bW4Ji3zWei-gM6cabs/edit)
+
+* [Minutes for GPU Web meeting 2020-02-12 Redmond F2F](https://docs.google.com/document/d/1vQPA1JSOvfCHjBrkAEDLA1qCqQXe72vGen_1quoHZV8/edit#)
+
+The previous proposals were some profile of SPIR-V, a binary format, and Apple's [Web High Level Shading Language](https://webkit.org/blog/8482/web-high-level-shading-language/) proposal, which evolved into [Web Shading Language](https://github.com/gpuweb/WSL). Both of these had disadvantages that made them unacceptable to various people. It's not possible to use SPIR-V directly, largely because it has undefined behavior and other unsafe stuff. The Google and Mozilla implementations addressed this by doing a rewrite pass. Conversely, Apple's proposal met with considerable resistance because it didn't deal with the diversity of GPU hardware in the field. There's a lot of ecosystem work centered around Vulkan and SPIR-V, and leveraging that will help WebGPU considerably.
