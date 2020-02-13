@@ -4,7 +4,7 @@ title:  "GPU resources"
 date:   2020-02-12 10:20:42 -0800
 categories: [gpu]
 ---
-This post is basically a dump of resources I've encountered while doing a deep dive into GPU programming.
+This post is basically a dump of resources I've encountered while doing a deep dive into GPU programming. I welcome pull requests against the [repo](https://github.com/raphlinus/raphlinus.github.io) for other useful resources. Also feel free to ask questions in issues, particularly if the answer might be in the form of a patch to this post.
 
 ## Understanding the hardware
 
@@ -35,6 +35,8 @@ There's a lot of interest and activity around NVidia, but much of it is reverse 
 ## Understanding API capabilities
 
 * [vulkan.gpuinfo.org](https://vulkan.gpuinfo.org/) - a detailed database of what extensions are available on what hardware/driver/platform combinations.
+
+* [Metal Feature Set Tables](https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf) has similar info for Metal.
 
 ## Subgroups
 
