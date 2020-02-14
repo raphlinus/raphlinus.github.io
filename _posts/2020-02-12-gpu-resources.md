@@ -98,9 +98,11 @@ Subgroup/warp/SIMD/shuffle operations are very fast, but less compatible (nonuni
 
 * [Building WebGPU with Rust](https://fosdem.org/2020/schedule/event/rust_webgpu/) - FOSDEM talk
 
-* [wgpu](https://github.com/gfx-rs/wgpu)
+* [wgpu](https://github.com/gfx-rs/wgpu) - Rust WebGPU implementation
 
-* [dawn](https://dawn.googlesource.com/dawn) - Google's WebGPU implementation
+* [dawn](https://dawn.googlesource.com/dawn) - Google's WebGPU implementation in C++
+
+* Work-in-progress [specification](https://gpuweb.github.io/gpuweb/)
 
 * [Get started with GPU Compute on the Web](https://developers.google.com/web/updates/2019/08/get-started-with-gpu-compute-on-the-web) - Google (Chromium/Dawn)
 
