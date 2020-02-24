@@ -32,6 +32,12 @@ There's a lot of interest and activity around NVidia, but much of it is reverse 
 
 * [Dissecting the NVidia Turing T4 GPU via Microbenchmarking](https://arxiv.org/pdf/1903.07486.pdf)
 
+### AMD
+
+* ["Vega" Instruction Set Architecture Reference Guide](https://developer.amd.com/wp-content/resources/Vega_Shader_ISA_28July2017.pdf)
+
+* [Optimizing GPU occupancy and resource usage with large thread groups](https://gpuopen.com/optimizing-gpu-occupancy-resource-usage-large-thread-groups/)
+
 ## Understanding API capabilities
 
 * [vulkan.gpuinfo.org](https://vulkan.gpuinfo.org/) - a detailed database of what extensions are available on what hardware/driver/platform combinations.
