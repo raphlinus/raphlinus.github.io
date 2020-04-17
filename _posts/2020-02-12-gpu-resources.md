@@ -92,7 +92,7 @@ Subgroup/warp/SIMD/shuffle operations are very fast, but less compatible (nonuni
 
 * [Co-dfns](https://github.com/Co-dfns/Co-dfns)
 
-* [Julia on GPU](https://juliacomputing.com/domains/gpus.html) - layered on CUDA
+* [Julia on GPU](https://juliacomputing.com/industries/gpus.html) - layered on CUDA
 
 ## SPIR-V
 
