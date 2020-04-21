@@ -15,6 +15,11 @@ categories: [graphics]
 
 Note: I'm publishing this with inadequate visuals, as it's been stuck in my queue for 3 weeks and I want to get it out there. I'd like to return to making proper images, but make no promises when.
 
+For now, a quick comparison of exact (computed with numerical integration) results (on the left) with my approximation:
+
+![Comparison of exact and approximate solutions](/assets/blurrr_comparison.png)
+
+
 There are two basic ways to render blur in 2D graphics. The general technique is to render the objects into an offscreen buffer, compute a blur, and composite that into the target surface. But in special cases, it's possible to compute the blurred image directly from the source object, which is much faster.
 
 Some shapes are easy, particularly rectangles; they have a straightforward closed-form analytical solution. But others require numerical approximations. A few years ago, Evan Wallace posted a solution for [fast rounded rectangle shadows], using an analytical solution in one direction and numerical integration in the other. This is a good solution, but I was curious whether it is possible to do better.
@@ -93,6 +98,12 @@ Here what we want to do is adapt the distance field approach to use a distance-l
 * Increase exponent from 2 (circle) to make superellipse shape.
 
 * Cross-section is as above.
+
+Increasing the exponent clearly solves the main issues with the pure rounded rectangle shape, namely the sharp interior corners (which generate a visible "x" structure) and the abrupt straight to curved transitions:
+
+![Distance field of rounded rectangle with exponent 4](/assets/rounded_rect_distfield_exp.png)
+
+A more complete writeup of the final code is a TODO for this blog (along with better visuals), but see [the code](https://git.sr.ht/~raph/blurrr/tree/master/src/distfield.rs) for the detailed solution.
 
 ### Further refinements
 
