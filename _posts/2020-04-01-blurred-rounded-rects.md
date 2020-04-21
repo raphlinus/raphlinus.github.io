@@ -19,7 +19,6 @@ For now, a quick comparison of exact (computed with numerical integration) resul
 
 ![Comparison of exact and approximate solutions](/assets/blurrr_comparison.png)
 
-
 There are two basic ways to render blur in 2D graphics. The general technique is to render the objects into an offscreen buffer, compute a blur, and composite that into the target surface. But in special cases, it's possible to compute the blurred image directly from the source object, which is much faster.
 
 Some shapes are easy, particularly rectangles; they have a straightforward closed-form analytical solution. But others require numerical approximations. A few years ago, Evan Wallace posted a solution for [fast rounded rectangle shadows], using an analytical solution in one direction and numerical integration in the other. This is a good solution, but I was curious whether it is possible to do better.
@@ -59,7 +58,7 @@ The combination cited in the second step is $ \sqrt{r_c^2 + 1.25 r_b^2} $. The c
 The distance field for a rounded rectangle can be computed exactly, and Inigo Quilez includes the formula in his catalog of [2D distance functions]. In shader language:
 
 ```glsl
-float sdRoundedBox( in vec2 p, in vec2 b, in float r )
+float sdRoundedBox( in vec2 p, in vec2 b, in float r ) {
     vec2 q = abs(p)-b+r;
     return min(max(q.x,q.y),0.0) + length(max(q,0.0)) - r;
 }
@@ -79,9 +78,12 @@ pub fn compute_erf7(x: f64) -> f64 {
     let x = x + (0.24295 + (0.03395 + 0.0104 * xx) * xx) * (x * xx);
     x / (1.0 + x * x).sqrt()
 }
-```
+``` 
 
 Evan's version is based on an approximation from Abramowitz and Stegun, which has [similar accuracy][Desmos calculator for erf approximations] and likely similar performance, but I like using reciprocal square root - it is particularly well supported in [SIMD](https://www.felixcloutier.com/x86/rsqrtps) and [GPU](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/inversesqrt.xhtml) and is generally about the same speed as simple division.
+
+[![Comparison of exact and approximate solutions](/assets/erf_approx.png)][Desmos calculator for erf approximations]
+
 
 ### Evaluation
 
