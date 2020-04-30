@@ -23,7 +23,7 @@ def prefix_sum(a):
     s = 0
     result = []
     for x in a:
-        s += a
+        s += x
         result.append(s)
     return result
 ```
@@ -80,13 +80,13 @@ My prototype code uses subgroups extensively. One serious limitation is that it 
 
 By default, when compiling a compute kernel, the Intel drivers use a [heuristic] to determine the subgroup size, which can then be 8, 16, or 32. It actually makes sense they use a heuristic, as there's a complex tradeoff. A bigger subgroup means bigger chunks of work, which means less per-chunk overhead, but also fewer registers available per thread, and potentially more wasted work due to divergence. Again, that depends on workloads. For low-probability, expensive conditional work, generally not a good fit for GPU but sometimes unavoidable, wasted work tends to scale with subgroup size.
 
-It might be *possible* to write a kernel that adapts to subgroup size, but there are a number of considerations that make this tricky. One is whether the number of items processed by a workgroup adapts to subgroup size. If so, then the size of the dispatch must be adapted as well. There is an [extension](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#features-pipelineExecutableInfo) for the CPU side to query subgroup size of a pipeline, but, sadly, it doesn't seem to be implemented on Intel drivers, where it would be most useful.
+It might be *possible* to write a kernel that adapts to subgroup size, but there are a number of considerations that make this tricky. One is whether the number of items processed by a workgroup adapts to subgroup size. If so, then the size of the dispatch must be adapted as well. There is an [extension](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#features-pipelineExecutableInfo) for the CPU side to query subgroup size of a pipeline, but, sadly, it doesn't seem to be implemented on Intel drivers on Windows, where it would be most useful. (It is, thankfully, in the latest Linux Intel drivers, so hopefully will be coming soon.)
 
-Another problem is querying the subgroup size from inside the kernel. It would be reasonable to assume that `gl_SubgroupSize` contains the subgroup size, but in practice it always returns 32 on Intel. I personally consider this a straight-up bug, but it can be traced to defects in the Vulkan spec, which is written to assume that subgroup size is constant per-device (gl_SubgroupSize is defined to be equal to the subgroupSize field in the [VkPhysicalDeviceSubgroupProperties](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceSubgroupProperties.html) structure). A workaround is to compute `gl_WorkgroupSize/gl_NumSubgroups`, which does seem to be valid.
+Another problem is querying the subgroup size from inside the kernel, which has a surprising gotcha. Unless the `VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT_EXT` flag is set at pipeline creation time, the `gl_SubgroupSize` variable is defined to have the value from [VkPhysicalDeviceSubgroupProperties](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkPhysicalDeviceSubgroupProperties.html), which in my experiment is always 32 on Intel no matter the actual subgroup size. But setting that flag makes it give the value expected. 
 
-Fortunately, newer (Vulkan 1.2) Intel drivers offer a way out of this mess, which is the [VK_EXT_subgroup_size_control] extension. With that, I can set the subgroup size to 32, and the kernel works fine.
+Newer (Vulkan 1.2) Intel driver offer finer control over the subgroup size, with the [VK_EXT_subgroup_size_control] extension. With that, I can set the subgroup size to 32, and the kernel works fine. Note though that in general, setting a too-large subgroup size can actually make performance worse, as it increases the chance of register spilling.
 
-In practice, the programmer will write multiple versions of the kernel, each tuned for a different subgroup size, then on CPU side the code will query the hardware for supported subgroup sizes and choose the best one that can run on the hardware. Note that this query requires the subgroup size extension to be reliable, though you do string-matching on the device name to come up with a good guess. In any case, the cost and difficulty of this kind of performance tuning is one reason Nvidia has such a strong first-mover advantage.
+In practice, the programmer will write multiple versions of the kernel, each tuned for a different subgroup size, then on CPU side the code will query the hardware for supported subgroup sizes and choose the best one that can run on the hardware. Note that, in general, querying the range of supported subgroup sizes requires the subgroup size extension to be reliable, though you do string-matching on the device name to come up with a good guess. In any case, the cost and difficulty of this kind of performance tuning is one reason Nvidia has such a strong first-mover advantage.
 
 Brian Merchant has done more exploration into the tradeoff between subgroups and threadgroup shared memory, for a different primitive operation, transpose of 32x32 boolean matrices. That [transpose timing writeup] contains measurements on a variety of hardware, and is recommended to the interested reader.
 
@@ -104,13 +104,15 @@ It is tempting to use a portability layer such as gfx-hal to run compute workloa
 
 Here are some of the pain points for DX12:
 
-* No subgroup size control. But at least [WaveGetLaneCount](https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/wavegetlanecount) seems not to lie.
+* No subgroup size control.
 
 * No subgroup shuffle operations — use threadgroup shared memory instead.
 
 * No memory model — use `volatile` and explicit barriers instead.
 
 * No pointers (not particularly useful for this workload, but important for others).
+
+Also note that gfx-hal currently doesn't give access to Shader Model 6 intrinsics (subgroup operations), but there's an [issue](https://github.com/gfx-rs/gfx/issues/3238) and hopefully that will be fixed.
 
 ### Portability considerations: Metal
 
@@ -145,6 +147,8 @@ Also, I think it's a great benchmark for the emerging field of GPU-friendly lang
 ## Conclusion
 
 I've showed that Vulkan can do prefix sum with near state of the art performance. However, I've also outlined some of the challenges involved in writing Vulkan compute kernels that run portably and with high performance. The lower levels of the stack are becoming solid, enabling a determined programmer to ship high performance compute across a wide range of the hardware, but there is also an opportunity for much better tooling at the higher levels. I see a bright future ahead for this approach, as the performance of GPU compute is potentially massive compared with CPU-bound approaches.
+
+Thanks to Brian Merchant, Matt Keeter, and msiglreith for discussions on these topics, and Jason Ekstrand for setting me straight on subgroup size concerns on Intel.
 
 [prefix sum]: https://en.wikipedia.org/wiki/Prefix_sum
 [Taste of GPU compute]: https://news.ycombinator.com/item?id=22880502
