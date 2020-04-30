@@ -80,6 +80,9 @@ Subgroup/warp/SIMD/shuffle operations are very fast, but less compatible (nonuni
 
   * To me, this is evidence that Vulkan will simply eat OpenCL's lunch. This is still [controversial](https://github.com/KhronosGroup/Vulkan-Ecosystem/issues/42), but Khronos people are insisting there's an "OpenCL Next" roadmap.
 
+* [OpenCL 3.0](https://www.khronos.org/news/press/khronos-group-releases-opencl-3.0) is recently announced, and their plans do include clspv and related tools to run on a Vulkan.
+
+
 ### TensorFlow
 
 * [MLIR](https://blog.tensorflow.org/2019/04/mlir-new-intermediate-representation.html)
