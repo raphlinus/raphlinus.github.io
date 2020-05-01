@@ -88,8 +88,7 @@ Newer (Vulkan 1.2) Intel drivers offer the ability to both accurately query and 
 
 On RDNA-based AMD cards, the subgroup size extension lets you get subgroups of 32 on RDNA-based AMD cards, though the default is 64.
 
-In practice, the programmer will write multiple versions of the kernel, each tuned for a different subgroup size, then on CPU side the code will query the hardware for supported subgroup sizes and choose the best one that can run on the hardware. Note that, in general, querying the range of supported subgroup sizes requires the subgroup size extension to be reliable, though you do string-matching on the device name to come up with a good guess. In any case, the cost and difficulty of this kind of performance tuning is one reason Nvidia has such a strong first-mover advantage.
-
+In practice, the programmer will write multiple versions of the kernel, each tuned for a different subgroup size, then on CPU side the code will query the hardware for supported subgroup sizes and choose the best one that can run on the hardware. Note that, in general, querying the range of supported subgroup sizes requires the subgroup size extension to be reliable, though you do string-matching on the device name to come up with a good guess. Note that the [specialization constants] mechanism is also a good way to tune constant factors like workgroup or buffer sizes without having to recompile kernel source. In any case, the cost and difficulty of this kind of performance tuning is one reason Nvidia has such a strong first-mover advantage.
 
 Brian Merchant has done more exploration into the tradeoff between subgroups and threadgroup shared memory, for a different primitive operation, transpose of 32x32 boolean matrices. That [transpose timing writeup] contains measurements on a variety of hardware, and is recommended to the interested reader.
 
@@ -125,7 +124,7 @@ Metal is closer to Vulkan in capabilities (especially newer versions), but still
 
 I covered a fair number of GPU compute infrastructure projects in my talk and the associated [GPU resources] list. Since then I've learned of quite a few more:
 
-* [vuda](https://github.com/jgbit/vuda), which promises to run CUDA workloads on Vulkan.
+* [vuda](https://github.com/jgbit/vuda), which runs (SPIR-V) compute workloads using an API similar to the CUDA host API.
 
 * [clvk](https://github.com/kpet/clvk) and [clspv](https://github.com/google/clspv), which run OpenCL workloads on Vulkan.
 
@@ -153,6 +152,8 @@ I've showed that Vulkan can do prefix sum with near state of the art performance
 
 Thanks to Brian Merchant, Matt Keeter, and msiglreith for discussions on these topics, and Jason Ekstrand for setting me straight on subgroup size concerns on Intel.
 
+There's a small amount of [HN discussion](https://news.ycombinator.com/item?id=23035194) of this post.
+
 [prefix sum]: https://en.wikipedia.org/wiki/Prefix_sum
 [Taste of GPU compute]: https://news.ycombinator.com/item?id=22880502
 [font-rs]: https://github.com/raphlinus/font-rs
@@ -179,3 +180,4 @@ Thanks to Brian Merchant, Matt Keeter, and msiglreith for discussions on these t
 [implementation]: https://github.com/linebender/piet-gpu/blob/prefix/piet-gpu-hal/examples/shader/prefix.comp
 [prefix]: https://github.com/linebender/piet-gpu/tree/prefix
 [piet-gpu]: https://github.com/linebender/piet-gpu
+[specialization constants]: https://blogs.igalia.com/itoral/2018/03/20/improving-shader-performance-with-vulkans-specialization-constants/
