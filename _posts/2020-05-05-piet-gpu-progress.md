@@ -12,7 +12,7 @@ The design of [piet-gpu] is adapted primarily to UI, in particular applications 
 
 Basically, piet-gpu explores these hypotheses:
 
-* It's better to for the GPU to consume the scene in a format friendly to CPU-side encoding.
+* It's better for the GPU to consume the scene in a format friendly to CPU-side encoding.
 
 * It's possible to performantly generate tiles on the GPU rather than the CPU.
 
@@ -38,7 +38,7 @@ At one extreme, we have fully static content, which might be rendered with diffe
 
 At the other extreme, the 2D scene is generated from scratch every frame, and might share nothing with the previous frame. Precomputation just adds to the frame time, so the emphasis must be on getting the scene into the pipeline as quickly as possible. A good example of this type of content is scientific visualization.
 
-In the middle is rendering for UI. Most frames resemble the previous frame, maybe with some transformations of some of the scene (for example the contents of a scrolling window), maybe with some animation of parameters such as alpha opacity. Of course, some of the time the changes might be more dynamic, and it's important not to add to the latency of inflating a new view. A major approach to improving the performance in this use case is *layers.*
+In the middle is rendering for UI. Most frames resemble the previous frame, maybe with some transformations of some of the scene (for example the contents of a scrolling window), maybe with some animation of parameters such as alpha opacity. Of course, some of the time the changes might be more dynamic, and it's important not to add to the latency of creating a new view and instantiating all its resources. A major approach to improving the performance in this use case is *layers.*
 
 Text rendering also has this mixed nature; the text itself is dynamic, but often it's possible to precompute the font. Signed distance fields are a very popular approach for text rendering in games, but the approach has significant drawbacks.
 
@@ -70,7 +70,7 @@ One open question for flattening is exactly where in the pipeline it should be a
 
 ## The piet-gpu architecture
 
-The piet-gpu is a relatively simple pipeline of compute kernels. A general theme is that each stage in the pipeline is responsible for a larger geometric area, and distributes pieces of work to smaller tiles for the successive stages.
+The piet-gpu architecture is a relatively simple pipeline of compute kernels. A general theme is that each stage in the pipeline is responsible for a larger geometric area, and distributes pieces of work to smaller tiles for the successive stages.
 
 The first stage is on CPU and is the encoding of the scene to a buffer which will then be uploaded to the GPU. This encoding is vaguely reminiscent of flatbuffers, and is driven by "derive" code that automatically generates both Rust-side encoding and GLSL headers to access the data. As discussed in considerably more detail below, the encoding of curves also involves flattening, but that's not essential to the architecture. After the encoded scene buffer is uploaded, successive stages run on the GPU.
 
@@ -82,7 +82,7 @@ The third compute kernel is responsible for generating a per-tile command list (
 
 The fourth compute kernel reads its per-tile command list and generates all the pixels in a 16x16 tile, writing them to the output image. This stage is effectively identical to the pixel shader in the RAVG paper, but with one small twist. Because it's a compute shader, each thread can read the input commands and generate a chunk of pixels (currently 8), amortizing the nontrivial cost of reading the tape over more pixels. Of course it would be possible to run this in a fragment shader if compute were not available.
 
-These kernels are relatively straightforward, but purely brute-force. A common theme is that all threads in a workgroup cooperate to read the input in parallel, then there is a "block shuffle" approach to distribute that work to the individual threads responsible for writing out work for smaller subregions. I described an approach based on 32x32 boolean matrix transpose in my [Taste of GPU Compute] talk, but in practice we find that using atomic operations to assign work is slightly faster.
+These kernels are relatively straightforward, but purely brute-force. A common theme is that all threads in a workgroup cooperate to read the input in parallel, then there is a "block shuffle" approach to distribute that work to the individual threads responsible for writing out work for smaller subregions. I described an approach based on 32x32 boolean matrix transpose in my [Taste of GPU Compute] talk, but in practice we find that using atomic operations (TODO: point to code, [current place](https://github.com/linebender/piet-gpu/blob/simpler_k2_tg/piet-gpu/shader/kernel2f.comp#L149-L151) is dev branch) to assign work is slightly faster.
 
 ### Layers
 
@@ -109,6 +109,18 @@ In a game, the GPU might be spending every possible GFLOP drawing a beautiful, d
 Again, the assumptions driving piet-gpu are primarily for UI, where latency is the primary concern, and keeping work off the main UI thread is a major part of the strategy to avoid jank. Under this set of assumptions, offloading any work from the CPU to the GPU is a win, even if the GPU is not super-efficient, as long as the whole scene comes in under the 16ms (or 8ms, now that 120Hz displays are becoming more mainstream) frame budget. The current piet-gpu codebase addresses this well, and will do so even better as flattening is also moved to GPU.
 
 The relative tradeoff is also affected by the speed of the graphics card. Single threaded CPU performance is probably close to stuck, but GPUs will get faster and faster; already we're seeing Intel integrated GPU go from anemic to serious competitors to low-end discrete graphics cards.
+
+## Performance evaluation
+
+TODO: most of this section. A few highlights:
+
+* paris-30k example runs *with rendering errors* in about 13ms on 1060. I'm not aware of any existing renderer that comes close. ([Spinel] may be the exception, might be good to try to get that running)
+
+* paper-1 example runs in about 2.5ms on 1060, doing all font rendering from scratch. This is pretty good evidence that doing font rendering on the fly, rather than texture cache, is viable.
+
+* In general, kernel 4 (rendering) takes about 1/3 to 1/4 of the total time. It would be nice to get earlier stages faster, but not clear that's possible. The speed of k4 is probably close to as fast as it might get.
+
+* Comparison to Pathfinder, though this needs to be done carefully. Entire piet-gpu pipeline runs in about the same time as PF's GPU component. Tiling pipeline runs 5x-10x faster than PF's CPU-side tiling, but caveat this isn't measuring the same thing, PF also includes flattening. Scope of PF's GPU-side rendering is roughly equivalent to k4.
 
 ## Prospects
 
