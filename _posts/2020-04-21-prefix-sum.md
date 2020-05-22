@@ -4,6 +4,8 @@ title:  "Prefix sum on Vulkan"
 date:   2020-04-30 09:16:42 -0700
 categories: [gpu]
 ---
+**Update 2020-05-22:** A new section on [forward progress](#forward-progress) has been added, and the discussion of synchronized shuffles has been improved.
+
 Today, there are two main ways to run compute workloads on GPU. One is CUDA, which has a fantastic ecosystem including highly tuned libraries, but is (in practice) tied to Nvidia hardware. The other is graphics APIs used primarily for gaming, which run on a wide variety of hardware, but historically offer much less power than CUDA. Also, the tooling for compute in that space is terrible. Historically, a lot of compute has also been done with OpenCL, but its future is cloudy as it's been officially deprecated by Apple, and GPU vendors are not consistently keeping their OpenCL implementations up to date.
 
 Vulkan has been catching up fast in its raw capabilities, with recent extensions supporting more advanced GPU compute features such as subgroups, pointers, and a memory model. Is it getting to the point where it can run serious compute workloads?
@@ -54,9 +56,23 @@ The new [Vulkan memory model] brings the same idea to GPU compute. I used it in 
 
 Is a memory model absolutely required to run this code? If you replace the atomic loads and stores with simple array accesses, it deadlocks. However, at least on my hardware, correct operation can be recovered by adding the `volatile` qualifier to the `WorkBuf` array. As with older style C++, there are two risks. Though it seems to work reliably and efficiently on my hardware, it's possible the `volatile` qualifier and explicit fences cause more cache flushing than is needed, or suppress other optimizations that might be possible with a more precise expression of the memory semantics. Alternatively, other hardware or drivers might optimize even more aggressively and break the code.
 
-We're already seeing variation in hardware that requires different levels of vigilance for memory semantics. On most GPU hardware, the invocations (threads) within a subgroup (warp) execute in lock-step, and thus don't require any synchronization. However, as of Nvidia Volta, the hardware is capable of [independent thread scheduling](https://docs.nvidia.com/cuda/volta-tuning-guide/index.html#sm-independent-thread-scheduling). Correct code will add explicit memory semantics even within a subgroup, which will, as in total store order on x86, compile to nothing on hardware that runs invocations in lockstep. (It's not obvious to me yet that the capabilities of Vulkan, even with the subgroup and memory model extensions, have the same power to generate code optimized for independent thread scheduling as, say, the `__shfl_sync` intrinsic, as the Vulkan subgroup operations don't take a mask argument. Maybe someone who knows can illuminate me.)
+We're already seeing variation in hardware that requires different levels of vigilance for memory semantics. On most GPU hardware, the invocations (threads) within a subgroup (warp) execute in lock-step, and thus don't require any synchronization. However, as of Nvidia Volta, the hardware is capable of [independent thread scheduling](https://docs.nvidia.com/cuda/volta-tuning-guide/index.html#sm-independent-thread-scheduling). Correct code will add explicit memory semantics even within a subgroup, which will, as in total store order on x86, compile to nothing on hardware that runs invocations in lock-step, while code which just assumes lock-step execution of subgroups will start failing as Vulkan implementations on newer GPUs start scheduling invocations on a more fine grained basis, just as code that assumed total store order failed on CPUs with more relaxed memory consistency, such as ARM.
+
+Note that Vulkan with independent thread scheduling is still work in progress. Shuffles (and related subgroup operations) must synchronize so that all active threads can participate. CUDA 9 solves this problem by introducing new intrinsics such as `__shfl_sync`, which take an additional argument identifying which threads are active. The Vulkan subgroup operations aren't defined this way, and instead implicitly operate on active threads (invocations). Supporting this functionality correctly stresses current compiler technology, including preventing illegal code motion of shuffle intrinsics, and there are threads on the LLVM mailing list discussing this in some detail.
 
 In my research for this blog post, I did not come across any evidence of people actually using the Vulkan memory model, i.e. no search hits for the relevant identifiers other than work associated with the spec. Thus, one contribution of this blog post is to show a concrete example of code that uses it.
+
+### Forward progress
+
+The prototype code has one important flaw, though it appears to run fine on my hardware: it depends on other workgroups making forward progress while it's waiting for the aggregate to be published. The Vulkan spec is careful to make only a [limited forward progress guarantee], and this is not strong enough to reliably run the prefix sum algorithm as written.
+
+Forward progress is a complex problem, and still in flux. A very good summary of the issue is the paper [GPU schedulers: how fair is fair enough?], which describes the needed forward progress guarantee as "occupancy-bound." In their experiments, all GPUs they tested meet this guarantee, so it sounds like a good property to standardize. Apple mobile GPUs (and possibly some others), however, do not provide this guarantee, though it might take a great deal of testing to uncover a counterexample.
+
+Meanwhile, other devices provide even stronger guarantees. CUDA 9 on Volta and above provides the much stronger [parallel forward progress] guarantee as standardized in C++, and they are able to do this because of independent thread scheduling (see the relevant section of [Inside Volta] for more discussion). This allows even individual threads in a "warp" (subgroup) to hold a mutex and block on other threads without fear of starvation. Another great resource on how Volta improved forward progress is the CppCon 2017 talk [Designing (New) C++ Hardware](https://youtu.be/86seb-iZCnI?t=2043), which I've timestamped for the forward progress discussion. Unfortunately, currently this guarantee is only valid for CUDA, not (yet) Vulkan. In the meantime, from what I understand, Nvidia hardware meets the occupancy-bound guarantee in both CUDA and Vulkan, which is good enough to run prefix sum.
+
+I think it's likely that over time, a consensus will emerge on formalizing the occupancy-bound guarantee, because it's so useful, and at the least you'll be able to query the GPU to determine the level of forward progress guarantee it provides.
+
+In the meantime, it's best to be conservative. Fortunately, for prefix sum, there is a fix (not yet implemented) that restores correct operation even on devices with the weakest forward progress properties: instead of simply spinning waiting from the aggregate from another partition, do a small bit of work towards recomputing the aggregate yourself. After a finite number of cycles, the aggregate for the partition will be done, then you can give up spinning and go to the next partition. This will guarantee getting the result eventually, and hopefully such performance-sapping events are rare.
 
 ### Dynamic allocation on GPU
 
@@ -150,9 +166,9 @@ Also, I think it's a great benchmark for the emerging field of GPU-friendly lang
 
 I've showed that Vulkan can do prefix sum with near state of the art performance. However, I've also outlined some of the challenges involved in writing Vulkan compute kernels that run portably and with high performance. The lower levels of the stack are becoming solid, enabling a determined programmer to ship high performance compute across a wide range of the hardware, but there is also an opportunity for much better tooling at the higher levels. I see a bright future ahead for this approach, as the performance of GPU compute is potentially massive compared with CPU-bound approaches.
 
-Thanks to Brian Merchant, Matt Keeter, and msiglreith for discussions on these topics, and Jason Ekstrand for setting me straight on subgroup size concerns on Intel.
+Thanks to Brian Merchant, Matt Keeter, and msiglreith for discussions on these topics, and Jason Ekstrand for setting me straight on subgroup size concerns on Intel. I've also enjoyed the benefit of talking with a number of other people working on GPU drivers, which informs the section on forward progress in particular, though of course any mistakes remain my own.
 
-There's a small amount of [HN discussion](https://news.ycombinator.com/item?id=23035194) of this post.
+There is some interesting [HN discussion](https://news.ycombinator.com/item?id=23035194) of this post.
 
 [prefix sum]: https://en.wikipedia.org/wiki/Prefix_sum
 [Taste of GPU compute]: https://news.ycombinator.com/item?id=22880502
@@ -181,3 +197,7 @@ There's a small amount of [HN discussion](https://news.ycombinator.com/item?id=2
 [prefix]: https://github.com/linebender/piet-gpu/tree/prefix
 [piet-gpu]: https://github.com/linebender/piet-gpu
 [specialization constants]: https://blogs.igalia.com/itoral/2018/03/20/improving-shader-performance-with-vulkans-specialization-constants/
+[limited forward progress guarantee]: https://www.khronos.org/blog/comparing-the-vulkan-spir-v-memory-model-to-cs#_limited_forward_progress_guarantees
+[GPU schedulers: how fair is fair enough?]: https://www.cs.princeton.edu/~ts20/files/concur2018.pdf
+[parallel forward progress]: https://en.cppreference.com/w/cpp/language/memory_model#Parallel_forward_progress
+[Inside Volta]: https://devblogs.nvidia.com/inside-volta/
