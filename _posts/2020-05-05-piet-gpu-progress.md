@@ -1,24 +1,18 @@
 ---
 layout: post
 title:  "piet-gpu progress report"
-date:   2020-09-05 9:58:42 -0700
+date:   2020-05-28 08:59:42 -0700
 categories: [rust, graphics, gpu]
 ---
 This post is an update to [2D Graphics on Modern GPU], a year ago. How time flies!
 
-I have refined the ideas in that post, and will argue that the new architecture is very performant compared with alternatives. There's new implementation work, basing the prototype on Vulkan and GLSL rather than Metal, which I think has much greater potential for portability.
+That post set out a vision of rendering 2D graphics on a GPU, using compute kernels rather than the rasterization pipeline, and offloading as much work as possible from the CPU to the GPU. It was also a rough research prototype, and I've spent some time trying to improve it in various ways. This blog post represents a checkpoint of that work - it' still a research prototype, but improved.
 
-The design of [piet-gpu] is adapted primarily to UI, in particular applications that display very complex documents. This blog will go into some detail.
+One of the limitations of that prototype is that it was implemented in Metal, which was chosen for ease of development, but is challenging to port to other APIs. I've spent considerable time in the last year exploring issues around portable, advanced GPU programming, and among other things gave a talk entitled [A taste of GPU compute]. As part of the evolution of the work, the new prototype is in Vulkan with the compute kernels written in GLSL.
 
-Basically, piet-gpu explores these hypotheses:
+This blog post represents a checkpoint of the work; the code is in [piet-gpu#15]. Some aspects are very promising indeed, in particular the performance of "fine rasterization." It is quite challenging to produce tiles for fine rasterization given a high-level scene representation, and this snapshot does not perform as well as I'd like. I am now exploring a new approach, and will post an update on that soon.
 
-* It's better for the GPU to consume the scene in a format friendly to CPU-side encoding.
-
-* It's possible to performantly generate tiles on the GPU rather than the CPU.
-
-* It's faster to do final pixel rendering and compositing in the compute pipeline than rasterization.
-
-There is some evidence for all these hypotheses, though I would consider piet-gpu to be work in progress rather than absolute proof. And for some, very detailed empirical evaluation is required, which is also a lot of work.
+Even so, there is enough progress that I think it's worthwhile to post an update now.
 
 ## Infrastructure work
 
@@ -82,7 +76,7 @@ The third compute kernel is responsible for generating a per-tile command list (
 
 The fourth compute kernel reads its per-tile command list and generates all the pixels in a 16x16 tile, writing them to the output image. This stage is effectively identical to the pixel shader in the RAVG paper, but with one small twist. Because it's a compute shader, each thread can read the input commands and generate a chunk of pixels (currently 8), amortizing the nontrivial cost of reading the tape over more pixels. Of course it would be possible to run this in a fragment shader if compute were not available.
 
-These kernels are relatively straightforward, but purely brute-force. A common theme is that all threads in a workgroup cooperate to read the input in parallel, then there is a "block shuffle" approach to distribute that work to the individual threads responsible for writing out work for smaller subregions. I described an approach based on 32x32 boolean matrix transpose in my [Taste of GPU Compute] talk, but in practice we find that using atomic operations (TODO: point to code, [current place](https://github.com/linebender/piet-gpu/blob/simpler_k2_tg/piet-gpu/shader/kernel2f.comp#L149-L151) is dev branch) to assign work is slightly faster.
+These kernels are relatively straightforward, but purely brute-force. A common theme is that all threads in a workgroup cooperate to read the input in parallel, then there is a "block shuffle" approach to distribute that work to the individual threads responsible for writing out work for smaller subregions. I described an approach based on 32x32 boolean matrix transpose in my [Taste of GPU Compute][A taste of GPU compute] talk, but in practice we find that using atomic operations is dev branch) to assign work is slightly faster.
 
 ### Layers
 
@@ -110,7 +104,13 @@ Again, the assumptions driving piet-gpu are primarily for UI, where latency is t
 
 The relative tradeoff is also affected by the speed of the graphics card. Single threaded CPU performance is probably close to stuck, but GPUs will get faster and faster; already we're seeing Intel integrated GPU go from anemic to serious competitors to low-end discrete graphics cards.
 
-## Performance evaluation
+## Performance
+
+I'm not yet satisfied with the performance of piet-gpu, yet there are aspects of it which are very encouraging.
+
+
+
+I was hoping to do a detailed performance evaluation in this section, but the 
 
 TODO: most of this section. A few highlights:
 
@@ -151,3 +151,4 @@ Thanks to Brian Merchant for work on various parts of piet-gpu, msiglreith for h
 [Flutter's Rendering Pipeline]: https://www.youtube.com/watch?v=UUfXWzp0-DU
 [Jetpack Compose]: https://developer.android.com/jetpack/compose
 [RenderNode]: https://developer.android.com/reference/android/graphics/RenderNode
+[piet-gpu#15]: https://github.com/linebender/piet-gpu/pull/15
