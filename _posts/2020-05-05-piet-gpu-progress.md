@@ -28,7 +28,7 @@ One of the modules in piet-gpu is a [tool][piet-gpu-derive] that generates GLSL 
 
 What kind of content is being rendered? It matters, more so for GPU than for CPU rendering.
 
-At one extreme, we have fully static content, which might be rendered with different transforms (certainly in the case of 3D). In this case, it makes sense to do expensive precomputation on the content, optimized for random access traversal while rendering. A primary example of this type of content is games.
+At one extreme, we have fully static content, which might be rendered with different transforms (certainly in the case of 3D). In this case, it makes sense to do expensive precomputation on the content, optimized for random access traversal while rendering. Static content of this type often shows up in games.
 
 At the other extreme, the 2D scene is generated from scratch every frame, and might share nothing with the previous frame. Precomputation just adds to the frame time, so the emphasis must be on getting the scene into the pipeline as quickly as possible. A good example of this type of content is scientific visualization.
 
@@ -42,7 +42,7 @@ Let's look at precomputation in more detail. Much of the literature on GPU rende
 
 Another concern for precomputation is the memory requirements; the sophisticated data structures, specialized for random access, often take a lot more space than the source. For example, RAVG cites 428k for the encoded representation, as opposed to 62k for the tiger's SVG source.
 
-Similar concerns apply to fonts. [Multi-channel signed distance fields] are very appealing because of the speed of rendering and ease of integration into game pipelines, but the total storage requirement for a set of international fonts (especially CJK) is nontrivial.
+Similar concerns apply to fonts. [Multi-channel signed distance fields] are very appealing because of the speed of rendering and ease of integration into game pipelines, but the total storage requirement for a set of international fonts (especially CJK) is nontrivial, as well as the problems with fine details.
 
 The [Slug] library is very polished solution to vector font rendering, and also relies on precomputation, computing a triangulated convex polygon enclosing the glyph shape and sorting the outlines so they can efficiently be traversed from a fragment shader. A quick test of `slugfont` on [Inconsolata] Regular generates a 486k file from a 105k input.
 
@@ -113,6 +113,8 @@ For performance testing, I'm using 3 samples from the [Massively-Parallel Vector
 With that said, here's a chart of the performance, broken down by pipeline stage. Here, k4 is "kernel 4", or fine rasterization, the stage that actually produces the pixels.
 
 ![piet-gpu performance comparison graphs](/assets//piet-gpu-performance.png)
+
+These measurements are done on a four-core i7-7700HQ processor; with more cores, the CPU time would scale down, and vice versa, as Pathfinder is very effective in exploiting multithreading.
 
 At some point, I'd like to do a much more thorough performance comparison, but doing performance measurement of GPU is surprisingly difficult, so I want to take the time to do it properly. In the meantime, here are rough numbers from the current master version of Pathfinder running on GTX 1060: tiger 2.3ms (of which GPU is 0.7), paper-1 7.3ms (GPU 1.1ms), and paris-30k 83ms (GPU 15.5ms). On Intel 630, the total time is only slightly larger, with the GPU taking roughly the same amount of time as CPU. Also keep in mind, these figures *do* include flattening, and see below for an update about Pathfinder performance.
 
