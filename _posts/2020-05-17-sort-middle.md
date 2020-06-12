@@ -1,12 +1,12 @@
 ---
 layout: post
 title:  "A sort-middle architecture for 2D graphics"
-date:   2020-06-10 08:49:42 -0700
+date:   2020-06-11 17:07:42 -0700
 categories: [rust, graphics, gpu]
 ---
 In my recent [piet-gpu update], I wrote that I was not satisfied with performance and teased a new approach. I'm on a quest to systematically figure out how to get top-notch performance, and this is a report of one station I'm passing through.
 
-To recap, piet-gpu is a new high performance 2D rendering engine, currently a research protoype. While most 2D renderers fit the vector primitives into a GPU's rasterization pipeline, the brief for piet-gpu is to fully explore what's possible using the compute capabilities of modern GPU's. In short, it's a software renderer that is written to run efficiently on a highly parallel computer. Software rendering has been gaining more attention even for complex 3D scenes, as the traditional triangle-centric pipeline is less and less of a fit for high-end rendering. As a striking example, the new [Unreal 5] engine relies heavily on compute shaders for software rasterization.
+To recap, piet-gpu is a new high performance 2D rendering engine, currently a research protoype. While most 2D renderers fit the vector primitives into a GPU's rasterization pipeline, the brief for piet-gpu is to fully explore what's possible using the compute capabilities of modern GPUs. In short, it's a software renderer that is written to run efficiently on a highly parallel computer. Software rendering has been gaining more attention even for complex 3D scenes, as the traditional triangle-centric pipeline is less and less of a fit for high-end rendering. As a striking example, the new [Unreal 5] engine relies heavily on compute shaders for software rasterization.
 
 The new architecture for piet-gpu draws heavily from the 2011 paper [High-Performance Software Rasterization on GPUs] by Laine and Karras. That paper describes an all-compute rendering pipeline for the traditional 3D triangle workload. The architecture calls for sorting in the middle of the pipeline, so that in the early stage of the pipeline, triangles can be processed in arbitrary order to maximally exploit parallelism, but the output render still correctly applies the triangles in order. In 3D rendering, you can *almost* get away with unsorted rendering, relying on Z-buffering to decide a winning fragment, but that would result in "Z-fighting" artifacts and also cause problems for semitransparent fragments.
 
@@ -14,7 +14,7 @@ The original piet-metal architecture tried to avoid an explicit sorting step by 
 
 Central to the new piet-gpu architecture, the scene is represented as a contiguous sequence of these elements, each of which has a fixed-size representation. The current elements are "concatenate affine transform", "set line width", "line segment for stroke", "stroke previous line segments", "line segment for fill", and "fill previous line segments", with of course many more elements planned as the capability of the renderer grows.
 
-While triangles are more or less independent of each other aside from the order of blending the rasterized fragments, these 2D graphics elements are a different beast: they affect graphics *state,* which is traditionally the enemy of highly parallel approaches. Filled outlines present another challenge: the effects are non-local, as the interior of a filled shape depends on the winding number as influenced by segments of the outline that may be very far away. It is not obvious how a pipeline designed for more or less independent triangles can be adapted to such a stateful model. This post will explain how it's done.
+While triangles are more or less independent of each other aside from the order of blending the rasterized fragments, these 2D graphics elements are a different beast: they affect graphics *state,* which is traditionally the enemy of parallelism. Filled outlines present another challenge: the effects are non-local, as the interior of a filled shape depends on the winding number as influenced by segments of the outline that may be very far away. It is not obvious how a pipeline designed for more or less independent triangles can be adapted to such a stateful model. This post will explain how it's done.
 
 ## Scan
 
@@ -50,7 +50,7 @@ The effect on the transform is even simpler, it's just multiplication of the aff
 
 Where things get slightly trickier is the accumulation of the bounding boxes. The union of bounding boxes is an associative (and commutative) operator, but we also need a couple of flags to track whether the bounding box is reset. However, in general, affine transformations and bounding boxes don't distribute perfectly; the bounding box resulting from that affine transformation of a bounding box might be larger than the bounding box of transforming the individual elements.
 
-[[Image showing that]]
+![Bounding box does not commute with rotation](/assets/bbox_no_commute.svg)
 
 For our purposes, it's ok for the bounding box to be conservative, as it's used only for binning. If we restricted transforms to axis-aligned, or if we used a convex hull rather than bounding rectangle, then transforms would distribute perfectly and we'd have a true monoid. But close enough.
 
@@ -64,15 +64,17 @@ While element processing is totally different than triangle processing in the La
 
 If you look at the code, you'll see a bunch of concern about `right_edge`, which is in service of the backdrop calculation, which we'll cover in more detail below.
 
-The binning stage is generally quite similar to cudaraster. Only a small number (16) of workgroups are launched, just enough to keep all the threads in the GPU busy. Each workgroup work-steals a partition of elements in the input, and puts its binning output into a per-workgroup, per-bin queue. These queues don't interfere with each other, so no synchronization is needed. Also, since the partitions are taken in order, within a queue the elements are in sorted order.
+The binning stage is generally similar to cudaraster, though I did refine it. Where cudaraster launches a fixed number of workgroups (designed to match the number of Streaming Multiprocessors in the hardware) and outputs a linked list of segments, one per workgroup and partition, I found that this created a significant overhead in the subsequent merge step. Thus, my design outputs a contiguous segment per *bin* and partition, which allows for more parallel reading in the merge step, though it has a small overhead of potentially outputting empty segments (I suspect this is the reason Laine and Karras did not pursue the approach). In both cases, the workgroups do not need to synchronize with each other, and the elements *within* an output segment are kept sorted, which reduces the burden in the subsequent merge step.
 
 The binning stage is also quite fast, not contributing significantly to the total render time.
+
+Why such large bins, or, in other words, so few of them? If binning is so fast, it might be appealing to bin all the way down to individual tiles. But the design calls for one bin per thread, so that would exceed the size of a workgroup (workgroup size is generally bounded around 1024 threads, and very large workgroups can have other performance issues). Of course, it may well still be possible to improve performance by tuning such factors; in general I used round numbers.
 
 ## Coarse rasterization
 
 This pipeline stage was by far the most challenging to implement, both because of the grueling performance requirements and because of how much logic it needed to incorporate.
 
-The core of the coarse rasterizer is very similar to cudaraster. Internally it works in processes, each cycle consuming 256 elements from the bin until all elements in the bin have been processed.
+The core of the coarse rasterizer is very similar to cudaraster. Internally it works in stages, each cycle consuming 256 elements from the bin until all elements in the bin have been processed.
 
 * The first stage merges the bin outputs, restoring the elements to sorted order. This stage repeatedly reads chunks generated in the binning stage until 256 elements are read (or the end of the input is reached).
 
@@ -82,7 +84,11 @@ The core of the coarse rasterizer is very similar to cudaraster. Internally it w
 
 * As in cudaraster, segments are output in a highly parallel scheme, with all output segments evenly divded between threads, so each thread has to do a small stage to find its work item.
 
-* The commands for a tile are then written sequentially, one tile per thread. This lets us keep track of per-tile state, and there are many fewer commands than segments.
+* The commands for a tile are then written sequentially, one tile per thread. This lets us keep track of per-tile state, and there tend to be many fewer commands than segments.
+
+This is called "coarse rasterization" because it is sensitive to the geometry of path segments. In particular, coverage of tiles by line segments is done with a "fat line rasterization" algorithm:
+
+![Diagram of fat line rasterization](/assets/fat_line_rasterization.svg)
 
 ### Backdrop
 
@@ -98,6 +104,10 @@ While conceptually fairly straightforwrd, the code to implement this efficiently
 
 * In the output stage of coarse rasterization, bit counting operations are used to sum up the backdrop. Then, if there are any path segments in the tile, the backdrop is recorded in the path command. Otherwise, if the backdrop is nonzero, a solid color command is output.
 
+Basically, the correct winding number is a combination of three rules. Within a tile, a line segment causes a +1 winding number change in the region to the right of the line (sign flipped when direction is flipped). If the line crosses a vertical tile edge, an additional -1 is added to the half-tile below the crossing point. And if the line crosses a horizontal tile edge, +1 is added to all tiles to the right; this is known as "backdrop" and is how tiles completely on the interior of a shape can get filled. Almost as if by magic, the combination of these three rules results in the correct winding number, the tile boundaries erased. Another presentation of this idea is given in the [RAVG][Random-Access Rendering of General Vector Graphics] paper.
+
+![Diagram of fat line rasterization](/assets/fill_rule.svg)
+
 ## Fine rasterization
 
 The fine rasterization stage was almost untouched from the previous piet-gpu iteration. I was very happy with the performance of that; the problem we're trying to solve is efficient preparation of tiles for coarse rasterization.
@@ -112,9 +122,41 @@ An important special case is font rendering. The outline for a glyph can be enco
 
 Note that at the current code checkpoint, this vision is not fully realized, as flattening is still CPU-side. Thus, a retained subgraph (particularly a font glyph) cannot be reused across a wide range of zooms. But I am confident this can be done.
 
+## What was wrong with the original design?
+
+The original design worked pretty well for some workloads, but overall had disappointing (to me) performance. Now is a good time to go into some more detail.
+
+To recap, the original design was a series of four kernels: graph traversal (and binning to 512x32 "tilegroups"), what I would now call coarse rasterization of path segments, generation of per-tile command lists (which is the rest of coarse rasterization), and fine rasterization. The main difference is the scene representation; otherwise the stages overlap a fair amount. In the older design, the CPU was responsible for encoding the graph structure, both path segments within a fill/stroke path, and also the ability to group items together.
+
+Overall, the older design was efficient when the number of children of a node was neither large nor small. But outside that happy medium, performance would degrade, and we'll examine why. Each of the first three kernels has a potential performance problem.
+
+Starting at kernel 1 (graph traversal), the fundamental problem is that each workgroup of this kernel (responsible for a 512x512 region) did its own traversal of the input graph. For a 2048x1536 target, this means 12 workgroups. Actually, that highlights another problem; this phase can becomes starved for parallelism, a bigger relative problem on discrete graphics than integrated. Thus, the cost of reading the input scene is multiplied by 12. In some cases, that is not in fact a serious problem; if these nodes have a lot of children (for example, are paths with a lot of path segments each), only the parent node is touched. Even better, if nodes are grouped with good spatial locality (which is likely realistic for UI workloads), culling by bounding box can eliminate much of the duplicate work. But for the specific case of lots of small objects (as might happen in a scatterplot visualization, for example), the work factor is not good.
+
+The second kernel has different problems depending on whether the number of children is small or large. In the former case, since each thread in a workgroup reads one child, there is poor utilization because there isn't enough work to keep the threads busy (I had a "fancy k2" branch which tried to pack multiple nodes together, but because of higher divergence it was a regression). In the latter case, the problem is that each workgroup (responsible for a 512x32 tilegroup) has to read *all* the path segments in each path intersecting that tilegroup. So for a large complex path which touches many tilegroups, there's a lot of duplicated work reading path segments which are then discarded. On top of that, utilization was poor because of difficulty doing load balancing; the complexity of tiles varies widely, so some threads would sit idle waiting for the others in the tilegroup to complete.
+
+The third kernel also took a significant amount of time, generally about the same as fine rasterization. Again one of the biggest problems is poor utilization, in this case because all threads consider all items that intersect the tilegroup. In the common case where an item only touches a small fraction of the tiles within the tilegroup, lots of wasted work.
+
+The new design avoids many of these problems, increasing parallelism dramatically in early stages, and employing more parallel, load balanced stages in the middle. However, it is more complex and generally more heavyweight. So for workloads that avoid the performance pitfalls outlined above, the older design can still beat it.
+
+## Performance evaluation
+
+Compared to the previous version, performance is mixed. It is encouraging in some ways, but not across the board, and one test is in fact a regression. Let's look at GTX 1060 first:
+
+![performance charts on GTX 1060](/assets/piet-gpu-1060.png)
+
+Here the timing is given in pairs, old design on the left, sort-middle on the right. These results *are* encouraging, including a very appealing speedup on the paris-30k test. (Again, I should point out that this test is not a fully accurate render, as stroke styles are not applied. However, as a test of the old architecture vs the new, it is a fair test).
+
+Do these results hold up on Intel?
+
+![performance charts on Intel 630](/assets/piet-gpu-630.png)
+
+In short, no. There is much less speedup, and indeed for the paris-30k example, it has regressed. It is one of the difficult aspects of writing GPU code that different GPUs have different performance characteristics, in some cases quite significant. I haven't deeply analyzed the performance (I find it quite difficult to do so, and often wish for better tools), but suspect it might have something to do with the relatively slow performance of threadgroup shared memory on Intel.
+
+In all cases, the cost of coarse rasterization is significant, while element processing and binning are quite speedy.
+
 ## Discussion
 
-Performance is somewhat improved over the previous version of piet-gpu ((TODO: present measurements)), but not as much as I was hoping. Why?
+Performance is generally somewhat improved over the previous version of piet-gpu, but not as much as I was hoping. Why?
 
 My analysis is that it's a solid implementation of the concept, but that there is a nontrivial cost to carrying an element through the pipeline fully in fully sorted order. One observation is that segments within a path need not be sorted at all, simply ascribed to the correct (path, tile position) tuple. I will be exploring that in a forthcoming blog post.
 
