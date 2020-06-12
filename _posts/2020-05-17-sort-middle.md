@@ -174,7 +174,7 @@ I have had the good fortune of sharing ideas and analysis with Patrick Walton of
 [Random-Access Rendering of General Vector Graphics]: http://hhoppe.com/ravg.pdf
 [Why are 2D vector graphics so much harder than 3D?]: https://blog.mecheye.net/2019/05/why-is-2d-graphics-is-harder-than-3d-graphics/
 [High-Performance Software Rasterization on GPUs]: https://research.nvidia.com/publication/high-performance-software-rasterization-gpus
-[piet-gpu update]: (rust/graphics/gpu/2020/05/26/piet-gpu-progress.html)
+[piet-gpu update]: https://raphlinus.github.io/rust/graphics/gpu/2020/06/01/piet-gpu-progress.html
 [Unreal 5]: https://www.eurogamer.net/articles/digitalfoundry-2020-unreal-engine-5-playstation-5-tech-demo-analysis
 [Z-fighting]: https://en.wikipedia.org/wiki/Z-fighting
 [A High-Performance Software Graphics Pipeline Architecturefor the GPU]: https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_350.pdf
