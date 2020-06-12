@@ -82,7 +82,7 @@ The core of the coarse rasterizer is very similar to cudaraster. Internally it w
 
 * The total number of line segments is counted, and space in the output is allocated using an atomic add.
 
-* As in cudaraster, segments are output in a highly parallel scheme, with all output segments evenly divded between threads, so each thread has to do a small stage to find its work item.
+* As in cudaraster, segments are output in a highly parallel scheme, with all output segments evenly divided between threads, so each thread has to do a small stage to find its work item.
 
 * The commands for a tile are then written sequentially, one tile per thread. This lets us keep track of per-tile state, and there tend to be many fewer commands than segments.
 
@@ -94,7 +94,7 @@ This is called "coarse rasterization" because it is sensitive to the geometry of
 
 A special feature of coarse rasterization for 2D vector graphics is the filling of the interior of shapes. The general approach is similar to [RAVG][Random-Access Rendering of General Vector Graphics]; when an edge crosses the top edge of a tile, a "backdrop" is propagated to all tiles to the right, up to the right edge of the fill's bounding box.
 
-While conceptually fairly straightforwrd, the code to implement this efficiently covers a number of stages in the pipeline. For one, the right edge of fills must be propagated back to segments within the fill, even in early stages such as binning.
+While conceptually fairly straightforward, the code to implement this efficiently covers a number of stages in the pipeline. For one, the right edge of fills must be propagated back to segments within the fill, even in early stages such as binning.
 
 * The first right edge of each partition is recorded in the aggregate for each partition in element processing.
 
@@ -130,7 +130,7 @@ To recap, the original design was a series of four kernels: graph traversal (and
 
 Overall, the older design was efficient when the number of children of a node was neither large nor small. But outside that happy medium, performance would degrade, and we'll examine why. Each of the first three kernels has a potential performance problem.
 
-Starting at kernel 1 (graph traversal), the fundamental problem is that each workgroup of this kernel (responsible for a 512x512 region) did its own traversal of the input graph. For a 2048x1536 target, this means 12 workgroups. Actually, that highlights another problem; this phase can becomes starved for parallelism, a bigger relative problem on discrete graphics than integrated. Thus, the cost of reading the input scene is multiplied by 12. In some cases, that is not in fact a serious problem; if these nodes have a lot of children (for example, are paths with a lot of path segments each), only the parent node is touched. Even better, if nodes are grouped with good spatial locality (which is likely realistic for UI workloads), culling by bounding box can eliminate much of the duplicate work. But for the specific case of lots of small objects (as might happen in a scatterplot visualization, for example), the work factor is not good.
+Starting at kernel 1 (graph traversal), the fundamental problem is that each workgroup of this kernel (responsible for a 512x512 region) did its own traversal of the input graph. For a 2048x1536 target, this means 12 workgroups. Actually, that highlights another problem; this phase can become starved for parallelism, a bigger relative problem on discrete graphics than integrated. Thus, the cost of reading the input scene is multiplied by 12. In some cases, that is not in fact a serious problem; if these nodes have a lot of children (for example, are paths with a lot of path segments each), only the parent node is touched. Even better, if nodes are grouped with good spatial locality (which is likely realistic for UI workloads), culling by bounding box can eliminate much of the duplicate work. But for the specific case of lots of small objects (as might happen in a scatterplot visualization, for example), the work factor is not good.
 
 The second kernel has different problems depending on whether the number of children is small or large. In the former case, since each thread in a workgroup reads one child, there is poor utilization because there isn't enough work to keep the threads busy (I had a "fancy k2" branch which tried to pack multiple nodes together, but because of higher divergence it was a regression). In the latter case, the problem is that each workgroup (responsible for a 512x32 tilegroup) has to read *all* the path segments in each path intersecting that tilegroup. So for a large complex path which touches many tilegroups, there's a lot of duplicated work reading path segments which are then discarded. On top of that, utilization was poor because of difficulty doing load balancing; the complexity of tiles varies widely, so some threads would sit idle waiting for the others in the tilegroup to complete.
 
@@ -177,6 +177,6 @@ I have had the good fortune of sharing ideas and analysis with Patrick Walton of
 [piet-gpu update]: https://raphlinus.github.io/rust/graphics/gpu/2020/06/01/piet-gpu-progress.html
 [Unreal 5]: https://www.eurogamer.net/articles/digitalfoundry-2020-unreal-engine-5-playstation-5-tech-demo-analysis
 [Z-fighting]: https://en.wikipedia.org/wiki/Z-fighting
-[A High-Performance Software Graphics Pipeline Architecturefor the GPU]: https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_350.pdf
+[A High-Performance Software Graphics Pipeline Architecture for the GPU]: https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_350.pdf
 [Pathfinder]: https://github.com/servo/pathfinder
 [prefix sum]: https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html

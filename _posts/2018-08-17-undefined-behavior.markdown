@@ -134,4 +134,4 @@ Follow the discussion threads on [lobste.rs](https://lobste.rs/s/jrxhr5/with_und
 
 ## Artwork credits
 
-Top image by [dbeast32](https://www.fiverr.com/dbeast32). Space unicorn by [chrislove95](https://www.fiverr.com/chrislove95).
+Top image by [dbeast32](https://www.fiverr.com/dbeast32). Space unicorn most likely by [cinderellapop](https://www.deviantart.com/cindarellapop/about), trying to get in touch with the artist for permission.

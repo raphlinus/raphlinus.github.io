@@ -10,7 +10,7 @@ That post set out a vision of rendering 2D graphics on a GPU, using compute kern
 
 One of the limitations of that prototype is that it was implemented in Metal, which was chosen for ease of development, but is challenging to port to other APIs. I've spent considerable time in the last year exploring issues around portable, advanced GPU programming, and among other things gave a talk entitled [A taste of GPU compute]. As part of the evolution of the work, the new prototype is in Vulkan with the compute kernels written in GLSL.
 
-This blog post represents a checkpoint of the work; the code is in [piet-gpu#15]. Some aspects are very promising indeed, in particular the performance of "fine rasterization." It is quite challenging to efficiently produce tiles for fine rasterization given a high-level scene representation, and this snapshot does not perform as well as I'd like. I am now exploring a new approach, and will post an update on that soon.
+This blog post represents a checkpoint of the work; the code is in [piet-gpu#15]. Some aspects are very promising indeed, in particular the performance of "fine rasterization." It is quite challenging to efficiently produce tiles for fine rasterization given a high-level scene representation, and this snapshot does not perform as well as I'd like. I am now exploring a new approach, and will post an [update](https://raphlinus.github.io/rust/graphics/gpu/2020/06/12/sort-middle.html) on that soon.
 
 Even so, there is enough progress that I think it's worthwhile to post an update now.
 
@@ -127,6 +127,8 @@ I would like for piet-gpu to become production-quality, but am not sure whether 
 Another extremely good outcome for this work would be for it to flow into a high quality open-source rendering project. One of the best candidates for that is [Pathfinder], which has been gaining momentum and has also incorporated some of my ideas. One of the appealing aspects of Pathfinder is its "mix and match" architecture, where some stages might be done on CPU and others on GPU, and the final pixel rendering can be done in either the rasterization or compute pipeline, the choice made based on compatibility and observed performance. In fact, since the first draft of this blog post, I've been working closely with Patrick, sharing ideas back and forth, and there is now a compute branch of Pathfinder with some encouraging performance numbers. You'll hear more about that soon.
 
 Thanks to Brian Merchant for work on various parts of piet-gpu, msiglreith for help with Vulkan, and Patrick Walton for many conversations about the best way to render 2D graphics.
+
+There was some [discussion on /r/rust](https://www.reddit.com/r/rust/comments/gv1b95/pietgpu_progress_report/).
 
 [piet-gpu]: https://github.com/linebender/piet-gpu
 [2D Graphics on Modern GPU]: /rust/graphics/gpu/2019/05/08/modern-2d.html
