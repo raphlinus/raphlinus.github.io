@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "A sort-middle architecture for 2D graphics"
-date:   2020-06-11 17:07:42 -0700
+date:   "2020-06-11 17:07:42 -0700"
 categories: [rust, graphics, gpu]
 ---
 In my recent [piet-gpu update], I wrote that I was not satisfied with performance and teased a new approach. I'm on a quest to systematically figure out how to get top-notch performance, and this is a report of one station I'm passing through.
