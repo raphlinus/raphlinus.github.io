@@ -8,7 +8,7 @@ Previously on my quest for fast rendering of 2D vector graphics on GPU, I have p
 
 I am now pleased to present an architecture that I believe does realize this vision. The performance is impressive, but more than that, the architecture is derived from principles and is founded on a general pipeline, as opposed to being a collection of hacks in the service of benchmark results. As much work as possible is offloaded to the GPU, which minimizes the risk of jank in UI rendering and lets us exploit the continuing performance improvements in GPU technology.
 
-Further, this rendering pipeline is well suited both for fully dynamic and (partially) static content. It does not rely on precomputation, instead quickly processing the scenes into tiles for "fine rasterization" at the of the pipeline. Even so, static fragments of the scene can readily be retained and stitched together, so that the CPU-side cost is minimized.
+Further, this rendering pipeline is well suited both for fully dynamic and (partially) static content. It does not rely on precomputation, instead quickly processing the scenes into tiles for "fine rasterization" at the end of the pipeline. Even so, static fragments of the scene can readily be retained and stitched together, so that the CPU-side cost is minimized.
 
 In short, I firmly believe that this is the architecture to beat.
 
@@ -78,7 +78,7 @@ I'm not going to go into a lot of detail comparing the current codebase with the
 
 ## Discussion and prospects
 
-I believe I have demonstrated convincingly that moving alomst all of the 2D rendering task to the GPU is viable and yields excellent performance. Further, the ideas are general, and should adapt well to a range of graphics primitives and fine rendering techniques. I believe it would hold up well as an academic paper, and would like to find the time to write it up as such.
+I believe I have demonstrated convincingly that moving almost all of the 2D rendering task to the GPU is viable and yields excellent performance. Further, the ideas are general, and should adapt well to a range of graphics primitives and fine rendering techniques. I believe it would hold up well as an academic paper, and would like to find the time to write it up as such.
 
 Having got this far, I'm not sure how much farther I want to take the piet-gpu codebase. I think an ideal outcome would be to have the ideas folded into existing open-source renderers like Pathfinder, and am encouraged by progress on that front. Even so, I believe there is some benefit to exploring a GPU-centric approach to layers.
 
