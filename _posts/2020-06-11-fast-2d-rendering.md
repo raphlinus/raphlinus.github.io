@@ -32,7 +32,7 @@ Thus, the pipeline splits into two parts; a sort-middle path for filled and stro
 
 Coarse rasterization in the sorted pipeline is similar to the previous sort-middle architecture, with some refinement. It inspects the rectangular tile region for each path, and marks non-empty tiles using an internal bitmap (this is a highly parallel and load-balanced operation). Then, each thread processes one tile, and outputs commands for each element that was so marked, in sorted order.
 
-Backdrop processing is actually more straightforward than the previous version. When backdrop is needed (a path segment crossing a horizontal tile boundary), there's just a simple `atomicAdd` of +1 or -1 to the backdrop for that tile. Then, another kernel performs a prefix sum across a scanline of tiles, propagating that backdrop to the right. Tiles with nonzero backdrop but also no path segments get a "solid color" command. One of the nice things about this architecture is that there is no O(n^2) for highly complex paths, as there was in previous iterations, and also other GPU-based renderers such as [Slug].
+Backdrop processing is actually more straightforward than the previous version. When backdrop is needed (a path segment crossing a horizontal tile boundary), there's just a simple `atomicAdd` of +1 or -1 to the backdrop for that tile. Then, another kernel performs a prefix sum across a scanline of tiles, propagating that backdrop to the right. Tiles with nonzero backdrop but also no path segments get a "solid color" command. One of the nice things about this architecture is that there is no O(n^2) for highly complex paths, as there was in previous iterations.
 
 To me, the performance is satisfying in a way not fulfilled by previous iterations, not only because it's fast (it is), but because it's *understandable.* Every cost in the pipeline has a reason. You have to keep paths sorted and composite them in order, and there's a cost to doing that. But only paths, not segments within a path, so the cost is a lot less. And a nice feature of the pipeline is "performance smoothness;" there aren't workloads where the performance degrades.
 
@@ -68,7 +68,7 @@ Since the amount of time taken by piet-gpu rendering is barely visible, let's re
 
 ![Comparison of 2D rendering, scaled](/assets/piet_gpu_comparison_scaled.png)
 
-I find these really exciting results. Moving rendering to GPU means that interactive frame rates are possible even with very complex documents, and even on Intel 630 the paper-1 example (dense vector text) runs in 7.6ms, meaning 60fps is possible with plenty of room to spare. (More detailed measurements are in a [spreadsheet](https://docs.google.com/spreadsheets/d/1L4GOqo07wKpBZIRAq98bbIF0oZNEmrmZVuDqHpuGGng/edit?usp=sharing), but as a general rule of thumb, the Intel HD 630 is about 5x slower than the GTX 1060). I am unaware of any published renderer with comparable performance.
+I find these really exciting results. Moving rendering to GPU means that interactive frame rates are possible even with very complex documents, and even on Intel 630 the paper-1 example (dense vector text) runs in 7.6ms, meaning 60fps is possible with plenty of room to spare. (More detailed measurements are in a [spreadsheet](https://docs.google.com/spreadsheets/d/1L4GOqo07wKpBZIRAq98bbIF0oZNEmrmZVuDqHpuGGng/edit?usp=sharing), but as a general rule of thumb, the Intel HD 630 is about 5x slower than the GTX 1060). I am unaware of any published renderer with comparable performance, though I believe [Li et al] comes close, and it is entirely possible that [Spinel] is faster; it is just very difficult to evaluate.
 
 Unfortunately, a lot of software we use today is stuck on CPU rendering, which has performance nowhere near what is possible on GPU. We should do better.
 
@@ -97,7 +97,7 @@ Many thanks to Patrick Walton for stimulating discussions which have helped clar
 [piet-gpu update]: https://raphlinus.github.io/rust/graphics/gpu/2020/06/01/piet-gpu-progress.html
 [Unreal 5]: https://www.eurogamer.net/articles/digitalfoundry-2020-unreal-engine-5-playstation-5-tech-demo-analysis
 [Z-fighting]: https://en.wikipedia.org/wiki/Z-fighting
-[A High-Performance Software Graphics Pipeline Architecturefor the GPU]: https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_350.pdf
+[A High-Performance Software Graphics Pipeline Architecture for the GPU]: https://arbook.icg.tugraz.at/schmalstieg/Schmalstieg_350.pdf
 [Cairo]: https://www.cairographics.org/
 [Pathfinder]: https://github.com/servo/pathfinder
 [resvg]: https://github.com/RazrFalcon/resvg
@@ -109,3 +109,5 @@ Many thanks to Patrick Walton for stimulating discussions which have helped clar
 [sort-middle]: https://raphlinus.github.io/rust/graphics/gpu/2020/06/12/sort-middle.html
 [design document]: https://docs.google.com/document/d/1HNf5PDLz-uzNRIEDLt787J9GHYKKPb511JU6so3OadU/edit?usp=sharing
 [#gpu stream]: https://xi.zulipchat.com/#narrow/stream/197075-gpu
+[Spinel]: https://fuchsia.googlesource.com/fuchsia/+/refs/heads/master/src/graphics/lib/compute/spinel/
+[Li et al]: http://kunzhou.net/zjugaps/pathrendering/
