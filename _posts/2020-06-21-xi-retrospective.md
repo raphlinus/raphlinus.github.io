@@ -64,6 +64,26 @@ Second, on the Rust side, while [serde] is quite fast and very convenient (thank
 
 I believe it's possible to do performant, clean JSON across most languages, but people should know, we're not there yet.
 
+## The rope
+
+There are only a few data structures suitable for representation of text in a text editor. I would enumerate them as: contiguous string, gapped buffer, array of lines, piece table, and rope. I would consider the first unsuitable for the goals of xi-editor as it doesn't scale well to large documents, though its simplicity is appealing, and memcpy is fast these days; if you know your document is always under a megabyte or so, it's probably the best choice.
+
+Similarly, array of lines has performance failure modes, most notably very long lines. Many good editors have been written using piece tables, but I'm not a huge fan; performance is very good when first opening the file, but degrades over time.
+
+My favorite aspect of the rope as a data structure is its excellent worst-case performance. Basically, there aren't any cases where it performs *badly.* And even the concern about excess copying because of its immutability might not be a real problem; Rust has a [copy-on-write mechanism](https://doc.rust-lang.org/std/sync/struct.Arc.html#method.make_mut) where you can mutate in-place when there's only one reference to the data.
+
+The main argument against the rope is its complexity. I think this varies a lot by language; in C a gapped buffer might be preferable, but I think in Rust, a rope is the sweet spot. A large part of the reason for this is that in C, low level implementation details tend to leak through; you'll often be dealing with a pointer to the buffer. For the common case of operations that don't need to span the gap, you can hand out a pointer to a contiguous slice, and things just don't get any simpler than that. Conversely, if any of the invariants of the rope are violated, the whole system will just fall apart.
+
+In Rust, though, things are different. Proper Rust style is for all access to the data structure to be mediated by a well-defined interface. Then the details about how that's implemented are hidden from the user. A good way to think about this is that the implementation has complexity, but that complexity is *contained.* It doesn't leak out.
+
+I think the rope in xi-editor meets that ideal. A lot of work went into getting it right, but now it works. Certain things, like navigating by line and counting UTF-16 code units, are easy and efficient. It's built in layers, so could be used for other things including binary editing.
+
+One of the best things about the rope is that it can readily and safely be shared across threads. Ironically we didn't end up making much use of that in xi-editor, as it was more common to share across *processes,* using sophisicated diff/delta and caching protocols.
+
+A rope is a fairly niche data structure. You really only want it when you're dealing with large sequences, and also doing a lot of small edits on them. Those conditions arise rarely outside text editors. But for people building text editing in Rust, I think xi-rope holds up well and is one of the valuable artifacts to come from the project.
+
+There's a good [HN discussion of text editor data structures](https://news.ycombinator.com/item?id=15381886) where I talk about the rope more, and can also point people to the [Rope science](https://xi-editor.io/docs/rope_science_00.html) series for more color.
+
 ## Async is a complexity multiplier
 
 We knew going in that async was going to be a source of complexity. The hope is that we would be able to tackle the async stuff once, and that complexity would be encapsulated, much as it was for the rope data structure.
