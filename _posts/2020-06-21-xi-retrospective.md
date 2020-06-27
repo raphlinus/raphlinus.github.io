@@ -168,6 +168,8 @@ The xi-editor project had very ambitious goals, and bet on a number of speculati
 
 To a large extent the project was optimized for learning rather than shipping, and through that lens it has been pretty successful. I now know a lot more than I did about building editor-like GUI applications in Rust, and am now applying that to making the [Druid] toolkit and the [Runebender] font editor. Perhaps more important, because these projects are more ambitious than one person could really take on, the community started around xi-editor is evolving into one that can sustain GUI in Rust. I'm excited to see what we can do.
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=23663878) and [/r/rust](https://www.reddit.com/r/rust/comments/hgzdu5/xieditor_retrospective/).
+
 [xi-editor]: https://github.com/xi-editor/xi-editor
 [CRDT comment]: https://github.com/xi-editor/xi-editor/issues/1187#issuecomment-491473599
 [CRDT discussion]: https://news.ycombinator.com/item?id=19886883
