@@ -4,6 +4,8 @@ title:  "Towards GPGPU JSON parsing"
 date:   2018-05-10 08:37:03 -0700
 categories: personal
 ---
+**Update 2020-09-06:** a followup to this post is [The stack monoid](https://raphlinus.github.io/gpu/2020/09/05/stack-monoid.html).
+
 The amount of computing resources available on general purpose GPU hardware is vastly greater than in scalar CPUs. A continuing trend is to move computation from CPU to GPGPU. Some computations (most 3D graphics operations, many machine learning tasks) can be expressed efficiently in terms of primitives that GPUs offer. However, tasks such as JSON parsing are traditionally considered as serial algorithms and are not often implemented on GPU.
 
 I've been thinking about how to apply rope science techniques to this problem, and now believe I have a practical solution. This post sketches my idea at a high level - I haven't implemented it yet and have little hands-on experience with GPU, so who knows what could go wrong?

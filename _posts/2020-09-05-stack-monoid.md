@@ -4,6 +4,8 @@ title:  "The stack monoid"
 date:   2020-09-05 08:14:42 -0700
 categories: [gpu]
 ---
+(Updated 2020-09-06 with pointers to related work and a bit more explanation)
+
 This is a bit of a followup to [Towards GPGPU JSON parsing]. That proposed a rather roundabout way to parallelize a simple parsing task. Having had more GPU programming experience under my belt, I don't expect that particular approach to work well, but it did suggest that parallelism exists in the problem.
 
 This post is a writeup of a new idea, but with a caution, no implementation. It probably contains some mistakes, and maybe the idea is flawed. But if it holds up, I think it's an exciting line of research on how to port sequential algorithms to GPU.
@@ -48,6 +50,8 @@ def combine(m1, m2):
         return (n1, s1[:len(s1) - n2] + s2)
 ```
 
+And of course, the identity element is `(0, [])`. One intuition for this monoid is that it represents a function from the state at the beginning of a sequence of tokens to the state at the end. If it indeed computes this function for arbitrary subsequences, then it it follows that it's a monoid from the fact that function composition is associative.
+
 Running scan, or generalized [prefix sum], on this monoid, will result in the desired result at the top of the stack, i.e. the last element of the sequence in the monoid.
 
 **Exercise:** Show that this monoid is associative.
@@ -82,6 +86,22 @@ Thus, my analysis is that the work factor is *extremely* good for this algorithm
 
 As I mentioned, an efficient GPU kernel is likely to be challenging, probably requiring tricky techniques to exploit SIMD (warp) parallelism without spending too much time computing the monoid composition, but the fact that it seems to work so well in the multicore case is an encouraging sign that an efficient, fully GPU-tuned implementation is possible.
 
+## Related work
+
+In an earlier draft, I asked for relevant literature related to this idea. I still haven't found anything that presents this particular monoid, or a tool that can derive it from its sequential source, but there is a fair amount of related work.
+
+Obviously, [simdjson] is an important exploration of deriving more parallelism from the JSON parsing task, with impressive results. It is, I think, complementary to this exploration, as it exploits parallelism at a fine grain, where this monoid approach is geared towards the larger grain of tree structure. But both are necessary for a performant GPU implementation; anyone intending to really parse JSON on GPU is well advised to study it.
+
+Parsing CSV has some of the same problems as JSON, though not the (potentially deeply) nested tree structure. A recent preprint, [ParPaRaw: Massively Parallel Parsing of Delimiter-Separated Raw Data] presents a GPU implementation.
+
+This [PR to cudf](https://github.com/rapidsai/cudf/pull/1512) implements "JSON Lines" parsing, which seems to me more similar to CSV than full tree-structured JSON parsing, but I haven't dug into it in detail.
+
+There is also a large literature on incremental parsing, which is related to parallel parsing as well (monoids are useful to both); a relevant example is [Efficient parallel and incremental parsing of practical context-free languages].
+
+I linked it in my previous blog, but [Aaron Hsu's PhD thesis] is a remarkable full compiler implementation (for an APL-derived language) on GPU. It *does* address tree structure, and I believe generally uses adjacency matrices to represent that.
+
+An interesting paper on converting a sequential program into a monoid is [Functional Parallels of Sequential Imperatives], and that has a lot of pointers into other literature. I haven't (yet) read it carefully enough to know whether it could derive the monoid stated above. There's also some literature on [symbolic execution for deriving map-reduce aggregations](https://scholar.google.com/scholar?um=1&ie=UTF-8&lr&cites=9891136685444157082) that could well be relevant.
+
 ## Conclusions
 
 I am even more convinced than before that efficient parsing is possible on GPU. The "stack monoid" shows promise to be a fundamental building block to represent the parse stack, and in general to manipulate tree structured data. I am unaware of any presentation of this, though it's likely it exists somewhere in the literature.
@@ -94,5 +114,13 @@ But in the meantime, I'm interested to see if other people take up these ideas. 
 
 (As a personal note, I'm taking a break from Twitter, possibly a very long one, as I'm finding that social media has been really sapping my energy. The best way to get in touch with me for followup is email. I do love hearing from people though!)
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=24385095). Thanks to 
+Vijay Chakravarthy, George Kulakowski, Eli Rosenthal, and Dan Rosen for pointers to the literature, and Chao Gao for posing a question about the original JSON post that sparked this exploration.
+
 [Towards GPGPU JSON parsing]: https://raphlinus.github.io/personal/2018/05/10/toward-gpu-json-parsing.html
 [prefix sum]: https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html
+[simdjson]: https://github.com/simdjson/simdjson
+[Aaron Hsu's PhD thesis]: https://scholarworks.iu.edu/dspace/handle/2022/24749
+[Functional Parallels of Sequential Imperatives]: https://dl.acm.org/doi/pdf/10.1145/3018882.3018891
+[ParPaRaw: Massively Parallel Parsing of Delimiter-Separated Raw Data]: https://arxiv.org/pdf/1905.13415.pdf
+[Efficient parallel and incremental parsing of practical context-free languages]: https://www.cambridge.org/core/journals/journal-of-functional-programming/article/efficient-parallel-and-incremental-parsing-of-practical-contextfree-languages/4D620F0BFADE2B588F854AAAEA252F5C
