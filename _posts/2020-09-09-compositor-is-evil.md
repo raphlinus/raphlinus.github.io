@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The compositor is evil
-date:   2020-09-13 20:44:42 -0700
+date:   2020-09-13 13:42:42 -0700
 categories: [ui, graphics]
 ---
 First, I want to make it clear that I'm not accusing the compositor of true evil, which I define roughly as deliberately causing suffering. There's unfortunately too much of that in the world. I mean it in the more metaphorical sense that it causes serious problems and forces other parts of the system to be more complex to work around its limitations.
