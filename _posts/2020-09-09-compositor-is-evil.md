@@ -41,11 +41,11 @@ The rendering of UI and 2D graphics continued to evolve during this time as well
 
 A trend at the same time was the ability to run multiple applications, each with their own window. While the idea had been around for a while, it burst on to the scene with the Macintosh, and the rest of the world caught up shortly after.
 
-Early implementations did *not* have "preemptive multitasking," or what we would call process separation. Applications, even when running in windowed mode, wrote directly into the framebuffer. The platform basically provided a library for applications to keep track of visible regions, so they wouldn't paint in regions where the window was occluded. Related, when an occluding window went away, the system would notify the application it needed to repaint (WM_PAINT on Windows), and, because computers were slow and this took a while, the "damage region" was visible for a bit (this is explained and animated in Jasper St. Johns' [X Window System Basics](https://magcius.github.io/xplain/article/x-basics.html) article).
+Early implementations did *not* have "preemptive multitasking," or what we would call process separation. Applications, even when running in windowed mode, wrote directly into the framebuffer. The platform basically provided a library for applications to keep track of visible regions, so they wouldn't paint in regions where the window was occluded. Related, when an occluding window went away, the system would notify the application it needed to repaint (WM_PAINT on Windows), and, because computers were slow and this took a while, the "damage region" was visible for a bit (this is explained and animated in Jasper St. Pierre's [X Window System Basics](https://magcius.github.io/xplain/article/x-basics.html) article).
 
 In this early version of windowing GUI, latency wasn't seriously affected. Some things were slower because resolution and bit depth was going up, and of course text needed to be rendered into bitmaps (more computationally expensive with antialiasing), but a well-written application could still be quite responsive.
 
-However, running without process separation was a serious problem, if for no other reason than the fact that a misbehaving application could corrupt the entire system. System crashes were extremely common in the days of pre-X Mac OS, and pre-NT Windows. Certainly in the Unix tradition, applications would run in their own process, with some kind of client-server protocol to combine the presentation of the multiple applications together. The X System (aka X11) came to dominate in Unix, but before that there were many other proposals, notably [Blit](https://en.wikipedia.org/wiki/Blit_(computer_terminal)) and [NeWS](https://en.wikipedia.org/wiki/Blit_(computer_terminal)). Also common to the Unix tradition, these would commonly run across a network.
+However, running without process separation was a serious problem, if for no other reason than the fact that a misbehaving application could corrupt the entire system; consumer desktop systems were seriously behind the Unix/X11 ecosystem in this regard. System crashes were extremely common in the days of pre-X Mac OS, and pre-NT Windows (though Windows 95 had a limited form of process separation in that the display server bounded the window's drawing area). Certainly in the Unix tradition, applications would run in their own process, with some kind of client-server protocol to combine the presentation of the multiple applications together. The X System (aka X11) came to dominate in Unix, but before that there were many other proposals, notably [Blit](https://en.wikipedia.org/wiki/Blit_(computer_terminal)) and [NeWS](https://en.wikipedia.org/wiki/Blit_(computer_terminal)). Also common to the Unix tradition, these would commonly run across a network.
 
 ## Apple's Aqua compositor
 
@@ -55,7 +55,7 @@ In the first version, all the drawing and compositing was done in software. Sinc
 
 Even so, things improved. By 10.2 (Jaguar) in August 2002, Quartz Extreme did the compositing in the GPU, finally making performance comparable to pre-compositor designs.
 
-While there have been changes (discussed in some detail below), Quartz Compositor is fundamentally the modern compositor design used today. Microsoft Vista adopted a similar design with [DWM], first in Vista, and made non-optional by Windows 8. Also, while I consider Aqua the first real [compositor] in the modern sense, there were important predecessors, notably the Amiga.
+While there have been changes (discussed in some detail below), Quartz Compositor is fundamentally the modern compositor design used today. Microsoft Vista adopted a similar design with [DWM], first in Vista, and made non-optional by Windows 8. Also, while I consider Aqua the first real [compositor] in the modern sense, there were important predecessors, notably the Amiga. Jasper St. Pierre points out that Windows 2000 had a limited compositor, known as ["layered windows"], where certain windows could be redirected offscreen.
 
 ## Doing more in the compositor
 
@@ -98,7 +98,6 @@ There are some problems with DirectFlip as well, of course. It's enabled using a
 Often, fullscreen modes for gameplay bypass the compositor (another in a long list of special-case workarounds). One good way to understand the motivation and implementation of DirectFlip is that it's a way for games to get basically the same latency and performance as fullscreen, without having to give up the warm embrace of being in a windowed desktop.
 
 One consequence of DirectFlip becoming more common is that it presents a difficult tradeoff for a graphically complex app such as a browser: either it can leverage the compositor for tasks such as scrolling and cursor blinking, which ordinarily would reduce power consumption, or it can do all compositing itself and hope the window is promoted to DirectFlip, in which case it's likely (depending on details of workload, of course) that the total power consumption will go down, in addition to reduced latency.
-
 
 ## Smooth resize
 
@@ -188,6 +187,8 @@ In the meantime, it seems likely we'll continue piling up more hacks and workaro
 
 Thanks to Patrick Walton for a series of provocative conversations around these topics. Also thanks to Tristan Hume for doing a bunch of the legwork tracking down references, particularly recent Linux work. Check out Tristan's [latency measuring project] as well.
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=24466929).
+
 [piet]: https://github.com/linebender/piet
 [druid]: https://github.com/linebender/druid
 [the xi Zulip]: https://xi.zulipchat.com/
@@ -228,3 +229,4 @@ Thanks to Patrick Walton for a series of provocative conversations around these 
 
 [blurbusters]: https://blurbusters.com/
 [Recurse Center Logo]: https://8bitworkshop.com/v3.6.0/embed.html?p=vcs&r=TFpHAAAQAAAAAR1Ufls8AQMFDBJ42KIAiqjKmkjQ%2B6kOhQKFAErQ%2Ba2EAgyGCanGhQaFB6kAhQipGIUKDI%2BiJYUCytD7hgGgB4YNhg6GD4UCBADqEg%2BFEIURhQKI0PugEKIMeQ2FDrki8YUPuVXxhRu5ZfGFBLkz8YUNuUTxhQ4MFww%2BytDYuQAMSxEMCwyk6uoFDhyI0LKgOAUERgzH%2B6kChQGpIYUCjZYCBQOXTAvwABIeEgb8rFz4wPwE9BIDBPwAAPCgUPAw8ADwEgMA8AAAwMDAgADAQBIFwAUJNGwAqAULRDcSIRIR%2FxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh8SHxIfEh4SHBIIAPAA8A%3D%3D
+["layered windows"]: https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features#layered-windows
