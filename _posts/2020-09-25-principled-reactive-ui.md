@@ -197,6 +197,8 @@ Obviously there is a long journey from such a rough, early prototype to a proper
 
 Work on Druid is generously funded by Google Fonts. The ideas and designs in this post were influenced by discussions with many friends, including but not limited to Adam Perry, Colin Rofls, Chris Morgan, and Tristan Hume.
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=24599560) or [/r/rust](https://www.reddit.com/r/rust/comments/j0840q/towards_principled_reactive_ui/).
+
 [Towards a unified theory of reactive UI]: https://raphlinus.github.io/ui/druid/2019/11/22/reactive-ui.html
 [Druid]: https://github.com/linebender/druid
 [Crochet]: https://github.com/raphlinus/crochet
