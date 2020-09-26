@@ -32,6 +32,17 @@ SwiftUI has gained considerable attention due to its excellent ergonomics in thi
 
 It's very popular in Rust GUI land to adapt [Elm] patterns; we see clear influence in [relm], [Iced], [vgtk], and others. But I think much of the conciseness and friendliness of Elm comes from the language itself, particularly its facility with higher-order composition. When adapting to a more pragmatic language such as Rust, I consider each subtask of view building and dispatching messages to components as each a half-lens, requiring the writing out of two pieces of logic to integrate a component. For this reason, I find Rust UI code adapted from Elm to be not as clear and concise as possible.
 
+A great resource for comparing the concision of different toolkits is [7GUIs]. We don't have these ported to Crochet yet, except for counter, but plan to. For reference, here's the `run` method for that:
+
+```rust
+    fn run(&mut self, cx: &mut Cx) {
+        Label::new(format!("current count: {}", self.count)).build(cx);
+        if Button::new("Increment").build(cx) {
+            self.count += 1;
+        }
+    }
+```
+
 ### Actually being incremental
 
 While imgui can express UI concisely, it cheats somewhat by not being incremental. Generally, it makes up for this by being able to repaint the world very quickly (using GPU acceleration), but there are downsides, including power consumption. In the context of a game which is actively using the GPU anyway, it's fine, but is a good reason not to choose imgui outside that context.
@@ -66,6 +77,16 @@ To me, one of the most serious drawbacks to the complex type approach is that sc
 
 Again, imgui is an example of an architecture that avoids complex types, by drawing the UI directly rather than constructing an intermediate tree of view objects. But imgui is not the only such; another compelling example to learn from is [Jetpack Compose].
 
+### Simple control flow
+
+It is very tempting to use complex control flow patterns: putting significant logic in callbacks, using higher order composition techniques, or using a compiler to significantly transform the code. Yet, such techniques have downsides.
+
+The first is simply that this complexity leaks out into the app. In current Druid, we use some higher order composition techniques such as lenses. While fairly simple by Haskell standards, and our users with Haskell background tend like them, a lot of people coming to Druid find them confusing.
+
+The simplest mechanism for composition of UI elements is function composition. This position is well argued in [Jetpack Compose], and the experience of React hooks vs class-based components is further evidence.
+
+Another reason to prefer simple control flow is performance. Not that it's always faster, but that it's easier to reason about and measure. Perhaps one of the more controversial aspects of the Crochet prototype is that it relies on explicit application logic to decide when to skip subtrees. This is a bit of a burden, but also an opportunity for the application to apply its own context, for example status from a stateful database connection. Also, straightforward profiling and tracing should quickly reveal opportunities for more aggressive skipping.
+
 ### Overall system complexity
 
 This one is even more subjective, but I think is still important. A UI toolkit is an ambitious task as it is. Doing a full-scale incremental computation engine, of similar scope as [Adapton] or [Incremental], is a serious additional burden. (Fans of Incremental should also be aware of its successor [Bonsai]). What I know of SwiftUI suggests that it has a similar engine under the hood (which shows up as "ViewGraph" or "AttributeGraph" in stack traces), and that's in addition to its integration with the public-facing [Combine].
@@ -78,7 +99,7 @@ My review of [Iced] also found its overall simplicity to be appealing, though I 
 
 ## Principles
 
-While the above stated goals illuminate important differences between existing reactive UI systems, I also believe there are principles common to essentially all such systems, though each might add its own spin to how it implements these principles. My "towards a unified theory" blog post proposed some of those principles, particularly the model of a pipeline of tree transformations. In this section I will focus on three more, only touched on briefly in the previous post: observable objects vs future-like polling, how trees and tree mutations are represented, and the tricky question of stable node identity in the view tree.
+While the above stated goals illuminate important differences between existing reactive UI systems, I also believe there are principles common to essentially all such systems, though each might add its own spin to how it implements these principles. My ["towards a unified theory"][Towards a unified theory of reactive UI] blog post proposed some of those principles, particularly the model of a pipeline of tree transformations. In this section I will focus on three more, only touched on briefly in the previous post: observable objects vs future-like polling, how trees and tree mutations are represented, and the tricky question of stable node identity in the view tree.
 
 ### Observable objects
 
@@ -102,11 +123,11 @@ I think a promising inspiration is Rust's async infrastructure. [Futures][Future
 
 The Crochet prototype has a specific implementation of this idea, but there are likely other viable variants. In general I think it is one of the most important architectural decisions to be made for a reactive UI framework.
 
-Integration with Rust's async ecosystem is a major feature for a UI toolkit, and something the existing Druid architecture struggles with. Based on early experimentation with the Crochet prototype (though there is much more to be done), it seems like the task-waking approach will integrate very nicely. The details are beyond the scope of this post, but involve the app logic *conceptually* traversing the view tree from the root, while in practice efficiently skipping subtrees other than the one that contains the waking token, at which point it has exactly the context it needs to advance its state. Getting this to work is one of the major reasons I'm excited about this architectural approach.
+Integration with Rust's async ecosystem is a major feature for a UI toolkit, and something the existing Druid architecture struggles with. Based on early experimentation with the Crochet prototype (though there is much more to be done), it seems like the task-waking approach will integrate very nicely. The details are beyond the scope of this post, but involve the app logic *conceptually* traversing the view tree from the root, while in practice having the opportunity to efficiently skip subtrees other than the one that contains the waking token, at which point it has exactly the context it needs to advance its state. Getting this to work is one of the major reasons I'm excited about this architectural approach.
 
 ### Trees and tree mutation
 
-As argued in the "unified theory" post, the logic of reactive UI is well-expressed as a series of tree transformations. A typical pipeline consists of the transform from the app state to the view tree (this stage is basically the view part of the "app logic", the other part being response to UI actions), from the view tree to a render object (widget) tree, and from the widget tree to drawing graphics primitives of some kind or other, ideally GPU-friendly display lists.
+As argued in the ["unified theory" post][Towards a unified theory of reactive UI], the logic of reactive UI is well-expressed as a series of tree transformations. A typical pipeline consists of the transform from the app state to the view tree (this stage is basically the view part of the "app logic", the other part being response to UI actions), from the view tree to a render object (widget) tree, and from the widget tree to drawing graphics primitives of some kind or other, ideally GPU-friendly display lists.
 
 Aside from custom widgets, most of the rest of the pipeline behind the view tree is the responsibility of the toolkit. In the existing Druid architecture, the app state itself is also expected to conform to tree structure, though I think relaxing this is important for the "concise expression" goal.
 
@@ -207,3 +228,4 @@ Work on Druid is generously funded by Google Fonts. The ideas and designs in thi
 [automerge]: https://github.com/automerge/automerge
 [1.46]: https://blog.rust-lang.org/2020/08/27/Rust-1.46.0.html
 [optimistic merging]: http://hintjens.com/blog:106
+[7GUIs]: https://eugenkiss.github.io/7guis/
