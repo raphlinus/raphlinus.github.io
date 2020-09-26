@@ -28,7 +28,7 @@ The main point of a reactive UI architecture is so that the app can express its 
 
 A central feature of reactive UI is for the app to declaratively express the current state of the view tree. In traditional object-oriented UI, it's more common to specify the initial state (often as a static document, not even code), plus additional logic for state changes. I think the debate is now essentially over, the reactive approach is winning.
 
-SwiftUI has gained considerable attention due to its excellent ergonomics in this regard. But other approaches are also worth studying. In particular, immediate mode GUI ([imgui]) is nearly as declarative, it just achieves it in a very different way (about which more below). And React and its many derivatives are also "good enough." Svelte is another example from the JS world that deserves praise, though considerably more difficult to adapt to Rust because of its reliance on a sophisticated compiler.
+SwiftUI has gained considerable attention due to its excellent ergonomics in this regard. But other approaches are also worth studying. In particular, immediate mode GUI ([imgui]) is nearly as declarative, it just achieves it in a very different way (about which more below). And React and its many derivatives are also "good enough." [Svelte] is another example from the JS world that deserves praise, though considerably more difficult to adapt to Rust because of its reliance on a sophisticated compiler.
 
 It's very popular in Rust GUI land to adapt [Elm] patterns; we see clear influence in [relm], [Iced], [vgtk], and others. But I think much of the conciseness and friendliness of Elm comes from the language itself, particularly its facility with higher-order composition. When adapting to a more pragmatic language such as Rust, I consider each subtask of view building and dispatching messages to components as each a half-lens, requiring the writing out of two pieces of logic to integrate a component. For this reason, I find Rust UI code adapted from Elm to be not as clear and concise as possible.
 
@@ -81,7 +81,7 @@ Again, imgui is an example of an architecture that avoids complex types, by draw
 
 It is very tempting to use complex control flow patterns: putting significant logic in callbacks, using higher order composition techniques, or using a compiler to significantly transform the code. Yet, such techniques have downsides.
 
-The first is simply that this complexity leaks out into the app. In current Druid, we use some higher order composition techniques such as lenses. While fairly simple by Haskell standards, and our users with Haskell background tend like them, a lot of people coming to Druid find them confusing.
+The first is simply that this complexity leaks out into the app. In current Druid, we use some higher order composition techniques such as lenses. While fairly simple by Haskell standards, and our users with Haskell background tend to like them, a lot of people coming to Druid find them confusing.
 
 The simplest mechanism for composition of UI elements is function composition. This position is well argued in [Jetpack Compose], and the experience of React hooks vs class-based components is further evidence.
 
@@ -229,3 +229,4 @@ Work on Druid is generously funded by Google Fonts. The ideas and designs in thi
 [1.46]: https://blog.rust-lang.org/2020/08/27/Rust-1.46.0.html
 [optimistic merging]: http://hintjens.com/blog:106
 [7GUIs]: https://eugenkiss.github.io/7guis/
+[Svelte]: https://svelte.dev/
