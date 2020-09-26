@@ -28,7 +28,7 @@ The main point of a reactive UI architecture is so that the app can express its 
 
 A central feature of reactive UI is for the app to declaratively express the current state of the view tree. In traditional object-oriented UI, it's more common to specify the initial state (often as a static document, not even code), plus additional logic for state changes. I think the debate is now essentially over, the reactive approach is winning.
 
-SwiftUI has gained considerable attention due to its excellent ergonomics in this regard. But other approaches are also worth studying. In particular, immediate mode GUI (imgui) is nearly as declarative, it just achieves it in a very different way (about which more below). And React and its many derivatives are also "good enough." Svelte is another example from the JS world that deserves praise, though considerably more difficult to adapt to Rust because of its reliance on a sophisticated compiler.
+SwiftUI has gained considerable attention due to its excellent ergonomics in this regard. But other approaches are also worth studying. In particular, immediate mode GUI ([imgui]) is nearly as declarative, it just achieves it in a very different way (about which more below). And React and its many derivatives are also "good enough." Svelte is another example from the JS world that deserves praise, though considerably more difficult to adapt to Rust because of its reliance on a sophisticated compiler.
 
 It's very popular in Rust GUI land to adapt [Elm] patterns; we see clear influence in [relm], [Iced], [vgtk], and others. But I think much of the conciseness and friendliness of Elm comes from the language itself, particularly its facility with higher-order composition. When adapting to a more pragmatic language such as Rust, I consider each subtask of view building and dispatching messages to components as each a half-lens, requiring the writing out of two pieces of logic to integrate a component. For this reason, I find Rust UI code adapted from Elm to be not as clear and concise as possible.
 
@@ -84,9 +84,11 @@ While the above stated goals illuminate important differences between existing r
 
 UI requires expressing dependency relationships. You click a button here, something in the internal state changes, then that's visible in a different widget over there.
 
-The standard object-oriented approach to these dependencies is an "observable object," of which there are many many implementations. While there are lots of variations, generally it involves the object keeping track of some number of subscriptions, each of which boils down to a callback that is invoked when something happens. Probably the most familiar example is onclick listeners and the like in the JavScript/DOM world.
+The standard object-oriented approach to these dependencies is an "observable object," of which there are many many implementations. While there are lots of variations, generally it involves the object keeping track of some number of subscriptions, each of which boils down to a callback that is invoked when something happens. Probably the most familiar example is onclick listeners and the like in the JavaScript/DOM world.
 
 The observable pattern is so common, it is often taken for granted as a required building block of UI. But I think we should be looking at alternatives, especially in Rust, where the object-oriented underpinnings do not translate well.
+
+In languages with getter/setter notation, the setter method of an observable object calls the callbacks of the currently subscribed listeners, in addition to updating the field of the object. In fact, it is probably one of the main motivations for languages to have this syntax. While Swift notably does have getter/setter, Rust, for better or worse, does not.
 
 The problems with observable boil down to the fact that the callback requires a *lot* of context to know what change should happen in response to the event. In this way, I think it is fundamentally in tension with the goals of reactive UI, though some systems have managed to reconcile the two, often with compiler help to translate fairly straightforward declarative logic into an observable-based implementation: SwiftUI and Svelte come to mind.
 
@@ -152,7 +154,19 @@ Crochet adopts this concept wholeheartedly, taking it a step further even. In Cr
 
 A purely academic inquiry into these themes might be somewhat interesting, but I feel like I only really understand things when I code them up and play with them. To that end, I've coded up a prototype, using Druid as essentially the render object (widget) engine. It's very crude when it comes to actual UI functionality, but does explore most of the main reactive themes, including prototypes of scripting through Python, async integration, and a sketch of how to handle large collections (list views) efficiently.
 
-A detailed description of the theory of how Crochet works is beyond the scope of this post; hopefully that will follow when the time is right. But I do think it is useful that this post at least sets out the motivations and concerns. Essentially, it is a statement of what problems I'm trying to solve.
+A detailed description of the theory of how Crochet works is beyond the scope of this post; hopefully that will follow when the time is right. But I do think it is useful that this post at least sets out the motivations and concerns. Essentially, it is a statement of what problems I'm trying to solve. The curious will find more information in the README in the repo, and the very curious will find their thirst slaked by reading the code.
+
+Of the systems I've studied, Crochet is most similar to Jetpack Compose, with the following exceptions:
+
+* Getting actions from widgets is more like imgui, and does not use an observable.
+* Crochet doesn't use a compiler. The need for it is reduced by two factors:
+   * No need to transform data access into observables.
+   * Location tracking is through #[track_caller], as in Moxie.
+* The low level tree mutation API is beefed up, for use by list views, etc.
+* Crochet doesn't do "recompose", but always starts from the root.
+* There is a hook for integrating with Rust's async.
+
+I think getting rid of recompose is a good simplification, especially within the context of Rust. I don't expect performance issues, because I expect components will be more aggressive in explicit skipping of subtrees, with help from the low-level API and greater use of immutable data structures. Of course, we don't know for sure how this will work out until we get more experience with it.
 
 I encourage people to experiment with the [Crochet] code. In addition, I'm experimenting with a policy of [optimistic merging], as I want people to be able to try things with low friction.
 
@@ -160,7 +174,7 @@ So far, experience with the prototype is positive. The thing I'm most interested
 
 Obviously there is a long journey from such a rough, early prototype to a proper implementation, and there are many other problems to be solved. So I make no promises of any kind when, or even if, that will happen. In the meantime, I hope people find the research exploration to be interesting.
 
-Work on Druid is generously funded by Google Fonts. The ideas and designs in this post were influenced by discussions with many friends, including but not limited to Adam Perry, Colin Rofls, and Tristan Hume.
+Work on Druid is generously funded by Google Fonts. The ideas and designs in this post were influenced by discussions with many friends, including but not limited to Adam Perry, Colin Rofls, Chris Morgan, and Tristan Hume.
 
 [Towards a unified theory of reactive UI]: https://raphlinus.github.io/ui/druid/2019/11/22/reactive-ui.html
 [Druid]: https://github.com/linebender/druid
@@ -174,6 +188,7 @@ Work on Druid is generously funded by Google Fonts. The ideas and designs in thi
 [Key]: https://api.flutter.dev/flutter/foundation/Key-class.html
 [Composer]: https://developer.android.com/reference/kotlin/androidx/compose/runtime/Composer
 [Moxie]: https://moxie.rs/
+[imgui]: https://github.com/ocornut/imgui
 [johno on IMGUI]: http://www.johno.se/book/imgui.html
 [Conrod]: https://github.com/PistonDevelopers/conrod
 [Iced]: https://github.com/hecrj/iced
