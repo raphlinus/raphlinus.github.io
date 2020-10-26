@@ -45,6 +45,8 @@ Fortunately, this part of the stack is defined by a standard ([UAX #9]), and the
 
 The level runs and the style runs are then merged, so that in subsequent stages each run is of a consistent style and directionality. As such, for the purpose of defining the hierarchy, the result of BiDi analysis could alternatively be considered an implicit or derived rich text span.
 
+In addition to BiDi, which I consider a basic requirement, a more sophisticated text layout engine will also be able to handle vertical [writing modes], including mixed cases where short strings are horizontal within the vertical primary direction. Extremely sophisticated layout engines will also be able to handle ruby text and other ways of annotating the main text flow with intercalated strings. See [Requirements for Japanese Text Layout] for many examples of sophisticated layout requirements; the scope of this blog post really is basic text layout of the kind needed in user interfaces.
+
 ### Itemization (font coverage)
 
 Itemization is the trickiest and least well specified part of the hierarchy. There is no standard for it, and no common implementation. Rather, each text layout engine deals with it in its own special way.
@@ -219,3 +221,5 @@ Thanks to Chris Morgan for review and examples.
 [skribo]: https://github.com/linebender/skribo
 [Pango]: https://developer.gnome.org/pango/unstable/
 [Firefox bug 479829]: https://bugzilla.mozilla.org/show_bug.cgi?id=479829
+[writing modes]: https://developer.mozilla.org/en-US/docs/Web/CSS/writing-mode
+[Requirements for Japanese Text Layout]: https://www.w3.org/TR/jlreq/
