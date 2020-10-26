@@ -6,7 +6,7 @@ categories: [text]
 ---
 I love text layout, and have been working with it in one form or other for over 35 years. Yet, knowledge about it is quite arcane. I don't believe there is a single place where it's all properly written down. I have some explanation for that: while basic text layout is very important for UI, games, and other contexts, a lot of the "professional" needs around text layout are embedded in *much* more complicated systems such as Microsoft Word or a modern Web browser.
 
-A complete account of text layout would be at least a small book. Since there's no way I can write that now, this blog post is a small step towards that - in particular, an attempt to describe the "big picture," using the conceptual framework of a "loose hierarchy." Essentially, a text layout engine breaks the input into finer and finer grains, then reassembles the results into a text layout object suitable for drawing, measurement, and hit testing.
+A complete account of text layout would be at least a small book. Since there's no way I can write that now, this blog post is a small step towards that – in particular, an attempt to describe the "big picture," using the conceptual framework of a "loose hierarchy." Essentially, a text layout engine breaks the input into finer and finer grains, then reassembles the results into a text layout object suitable for drawing, measurement, and hit testing.
 
 The main hierarchy is concerned with laying out the entire paragraph as a single line of text. Line breaking is also important, but has a separate, parallel hierarchy.
 
@@ -148,7 +148,7 @@ There are other ways to access lower level text layout capabilities, including
 
 Another high quality implementation is [Core Text]. I don't personally find it as well designed as DirectWrite, but it does get the job done. In general, though, Core Text is considered a lower level interface, and applications are recommended to use a higher level mechanism (Cocoa text on macOS, Text Kit on iOS).
 
-When doing text layout on macOS, it's probably better to use the platform-provided itemization method (), rather than getting the font list and doing itemization in the client. See [linebender/skribo#14](https://github.com/linebender/skribo/issues/14) for more information on this tradeoff.
+When doing text layout on macOS, it's probably better to use the platform-provided itemization method ([CTFontCreateForString](https://developer.apple.com/documentation/coretext/1509506-ctfontcreateforstring)), rather than getting the font list and doing itemization in the client. See [linebender/skribo#14](https://github.com/linebender/skribo/issues/14) for more information on this tradeoff.
 
 ### Druid/Piet
 
