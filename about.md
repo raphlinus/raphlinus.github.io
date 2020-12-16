@@ -8,7 +8,7 @@ This is Raph Levien’s blog. He also has a [home page](http://levien.com). The 
 
 The source for this blog is at
 [github.com/raphlinus/raphlinus.github.io](https://github.com/raphlinus/raphlinus.github.io).
-Pull requests are welcome, as are [issues](https://github.com/raphlinus/raphlinus.github.io/issues). I hope to use issues more extensively to track ideas in the pipeline.
+Pull requests are welcome, as are [issues](https://github.com/raphlinus/raphlinus.github.io/issues). Issues are also used to track ideas in the pipeline.
 
 Here's a list of [posts by category](/categories.html).
 
