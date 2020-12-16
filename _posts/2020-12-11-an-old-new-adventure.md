@@ -8,6 +8,8 @@ After two and a half years of being independent, I am returning to Google.
 
 The time off was really valuable. I was still feeling residual effects from burnout on the Android team in late 2015, and also drained by family and personal things that were happening and needed more time and energy. I got that, and return recharged and with some insights that I hope will be useful. I'll touch on a few of those in this post. Each could probably be its own blog post, but today I want to briefly note the event.
 
+I am now a research software engineer on the Google Fonts team, working on a number of topics in font technology, including font design tools, GPU-accelerated font rendering, and evolution of font file formats to be more efficient and capable.
+
 ## On open source sustainability
 
 Much has been written on open source sustainability, notably [Nadia Eghbal]'s *Working in Public.* I won't speak to open source more broadly (except to note how impressed I am with Blender and Krita), but for the specific task of building an ecosystem for a library, I think there is one model that actually works: being hired by a company that depends on that ecosystem.
