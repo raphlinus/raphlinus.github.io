@@ -4,11 +4,11 @@ title: About
 permalink: /about/
 ---
 
-This is Raph Levien’s blog. He also has a [home page](http://levien.com).
+This is Raph Levien’s blog. He also has a [home page](http://levien.com). The opinions expressed in this blog are his, and are not official statements of his employer or [team].
 
 The source for this blog is at
 [github.com/raphlinus/raphlinus.github.io](https://github.com/raphlinus/raphlinus.github.io).
-Pull requests are welcome.
+Pull requests are welcome, as are [issues](https://github.com/raphlinus/raphlinus.github.io/issues). Issues are also used to track ideas in the pipeline.
 
 Here's a list of [posts by category](/categories.html).
 
@@ -16,3 +16,4 @@ The text of this blog is licensed under [CC BY 4.0]. Feel free to quote and adap
 
 [CC BY 4.0]: https://creativecommons.org/licenses/by/4.0/
 [Apache 2.0]: https://www.apache.org/licenses/LICENSE-2.0
+[team]: https://fonts.google.com
