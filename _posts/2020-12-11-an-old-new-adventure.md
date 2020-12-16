@@ -14,7 +14,7 @@ I am now a research software engineer on the Google Fonts team, working on a num
 
 Much has been written on open source sustainability, notably [Nadia Eghbal]'s *Working in Public.* I won't speak to open source more broadly (except to note how impressed I am with Blender and Krita), but for the specific task of building an ecosystem for a library, I think there is one model that actually works: being hired by a company that depends on that ecosystem.
 
-To some extent, that's an indictment of our capitalist system. In an ideal universe, there would be strong institutions dedicated to the public interest where open source developers could develop, researchers could research, and spend an absolute minimum of time and energy hustling for support. For software, in any case, universities are not that (as demonstrated by [William Stein's experience with Cocalc at UCSD][stein on leaving ucsd]), otherwise I'd be quite tempted. In the actual world, working for a company like Google is about as close as you can come.
+To some extent, that's an indictment of our capitalist system. In an ideal universe, there would be strong institutions dedicated to the public interest where open source developers could develop, researchers could research, and spend an absolute minimum of time and energy hustling for support. For software, in any case, universities are not that (as demonstrated by [William Stein's experience with Cocalc at University of Washington][Stein on leaving UW]), otherwise I'd be quite tempted. In the actual world, working for a company like Google is about as close as you can come.
 
 I remain skeptical of patronage-style platforms such as Patreon or Github Sponsors. I think it's possible to make them work, but only for a small number of fortunate people, and even then, the incentives for creating maximum value aren't that well aligned with the incentive structure of hustling on social media.
 
@@ -50,7 +50,7 @@ There are also really exciting advances in [spline] technology in the pipeline. 
 
 I have a lot of work in front of me, but am more excited than ever. On to an old new adventure, and may 2021 be a time of healing and renewed energy for all.
 
-[stein on leaving ucsd]: https://blog.cocalc.com/2019/04/12/should-i-resign-from-my-full-professor-job-to-work-fulltime-on-cocalc.html
+[Stein on leaving UW]: https://blog.cocalc.com/2019/04/12/should-i-resign-from-my-full-professor-job-to-work-fulltime-on-cocalc.html
 [Nadia Eghbal]: https://nadiaeghbal.com/
 [Druid]: https://github.com/linebender/druid
 [Runebender]: https://github.com/linebender/runebender
