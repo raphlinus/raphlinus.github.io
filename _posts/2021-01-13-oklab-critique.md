@@ -12,7 +12,7 @@ Basically *the* central question of color theory is how colors (in the physical 
 
 In an idea perceptual color space, the distance of two points in the space would correlate strongly with the *perception* of color difference. Put another way, all pairs separated by a "just noticeable difference" would be separated by an equal distance.
 
-As it turns out, such a thing is no more possible than flattening an orange peel, because color perception is inherently non-euclidean. To put it simply, our eyes are more sensitive to small changes in hue than small changes in lightness or color saturation.
+As it turns out, such a thing is no more possible than flattening an orange peel, because color perception is inherently [non-euclidean][Non-euclidean structure of spectral color space]. To put it simply, our eyes are more sensitive to small changes in hue than small changes in lightness or color saturation.
 
 Even so, like map projections, it is possible to make a color space that approximates perceptual uniformity and is useful for various tasks. One of these, a primary focus of this blog post, is smoother gradients.
 
@@ -24,7 +24,7 @@ Perceptual color spaces are also a good basis for programmatic manipulation of c
 
 And, as mentioned by Björn, a color picker widget can benefit from a good perceptual space. It should be possible to adjust lightness and saturation without affecting hue, in particular.
 
-Much of the literature on perceptual color spaces is geared to image compression, with two primary motivations. First, as compression adds errors, you generally want those errors distributed evenly in perceptual space; it wouldn't be good at all to have artifacts that appear more prominently in areas of a particular shade. Second, good compression depends on a clean separation of luma and chroma information, as the latter can be compressed better.
+Much of the literature on perceptual color spaces is geared to image compression, with two primary motivations. First, as compression adds errors, you generally want those errors distributed evenly in perceptual space; it wouldn't be good at all to have artifacts that appear more prominently in areas of a particular shade. Second, good compression depends on a clean separation of lightness and chroma information, as the latter can be compressed better.
 
 All that said, there are definitely cases where you do *not* want to use a perceptual space. Generally for image filtering, antialiasing, and alpha compositing, you want to use a linear space (though there are subtleties here). And there are even some cases you want to use a device space, as the device gamut is usually nice cube there, while it has quite the complex shape in other color spaces.
 
@@ -50,18 +50,16 @@ There is good science on how perception varies with viewing conditions, and the 
 
 HDR is a different story, and I need to go into it to explain the [ICtCp] color space.
 
-It's possible to think of perceptual coding as a game. If the user sees a step due to quantization error, the coder loses (and, in keeping with the gradient theme, gradients are the case where such steps are most visible). The name of the game is to encode the image with the least number of bits.
+In standard dynamic range, you basically assume the visual system is adapted to a particular set of viewing conditions (in fact, [sRGB] specifies an exact set of viewing conditions, including monitor brightness, white point, and room lighting). A perceptually uniform gradient from black to white is also useful for image coding, because if you set number of steps so that each individual step is *just* imperceptible, it uses a minimum number of bits for each sample while faithfully rendering the image without artifacts. And in sRGB, 256 level is just barely enough for most uses, though steps are often visible when displaying gradients, the case where the eye is most sensitive to quantization errors.
 
-In "standard" viewing conditions, 8 bits in the sRGB space is (almost) enough. In fact, steps are barely visible, but in most cases this is good enough, and the convenience and performance benefits of using exactly one byte to encode a sample value are enough. Making perceptually uniform gradients is related to the quantization problem, because ideally all these 1/255 steps are equal perceptually.
+In HDR, however, this approach doesn't quite work. Because of the wider range of brightness values from the display device, and also weaker assumptions about the viewing conditions (darkened rooms are common for movie viewing), the human visual system might at any time be adapted to quite light or quite dark viewing conditions. In the latter case, it would be sensitive to much finer gradations in near-black shades than when adapted to lighter conditions, and a similar situation is true the other way around. If tuned for any one single brightness level, results will be good when adaptation matches, but poor otherwise.
 
-HDR changes the game a bit. Not only is the content over a wider range of values, in part because the display technology is assumed to be capable of higher brightness, but we can assume the opponent can change the viewing conditions, including a dark room. With these rules, sRGB fails pretty badly. Even not counting the high-brightness side of the equation, when the eye is accommodated to dark viewing conditions, the steps in the linear ramp near black become considerably more visible.
-
-The theory behind HDR coding is basically to minimax the game. Essentially, it allocates code words such that over all possible adaptations to viewing conditions, the step between code words is just under the perceptual threshold, so the coder never loses. The curve that represents the minimum step over all adaptations is the "Barten model" and is shown in Figure 4.6 of [Poynton's thesis].
+Thus, HDR uses a different approach. It uses a model (known as the Barten model, and shown in Figure 4.6 of [Poynton's thesis]) of the minimum contrast step perceptible at each brightness level, over all possible adaptation conditions. The goal is to determine a sequence of steps so that each step is just under the threshold of what's perceptible under *any* viewing conditions.
 
 The SMPTE ST 2084 transfer function is basically a mathematical curve-fit to the empirical Barten model, and has the property that with 12 bits of code words, each step is just under 0.9 of the minimum perceptual difference as predicted by the Barten model, across a range from 0.001 to 10,000 nits of brightness (7 orders of magnitude). There's lots more detail and context in the presentation [A Perceptual EOTF for Extended
-Dynamic Range Imagery] (PDF). Arguably it wins the game, so defined.
+Dynamic Range Imagery] (PDF).
 
-That said, though it's sophisticated and an excellent fit to the empirical Barten curve, it is *not* perceptually uniform at any one particular viewing condition. In particular, a ramp of the ST 2048 curve will dwell far too long near-black (representing a range that would be more visible in dark viewing conditions). To see this for yourself.
+That said, though it's sophisticated and an excellent fit to the empirical Barten curve, it is *not* perceptually uniform at any one particular viewing condition. In particular, a ramp of the ST 2084 curve will dwell far too long near-black (representing a range that would be more visible in dark viewing conditions). To see this for yourself.
 
 ### A comparison of curves
 
@@ -77,7 +75,9 @@ CIELAB, IPT, ICtCp, and Oklab all share a simple architecture: a 3x3 matrix, a n
 
 TODO: image
 
-The main difference between the various color spaces in this architecture is the nonlinear function, which determines the white-black ramp as discussed above. Once that is in place, there is a relatively small number of remaining parameters. Those can be optimized, either by hand or using an automated optimizer trying to minimize a cost function.
+The main difference between the various color spaces in this architecture is the nonlinear function, which determines the black-to-white ramp as discussed above. Once that is in place, there is a relatively small number of remaining parameters. Those can be optimized, either by hand or using an automated optimizer trying to minimize a cost function.
+
+In particular, [ICtCp] was derived from the ST 2084 transfer function, and then optimized for hue linearity and good lightness prediction. It's important to note, good lightness prediction in an HDR context does *not* mean that the lightness steps are perceptually uniform, but that colors with the same reported lightness have the same perceived lightness. ICtCp does well in the latter criterion, but not so much the former; it's fundamentally in tension with a color space suitable for HDR.
 
 ## Comparisons
 
@@ -99,7 +99,7 @@ On lightness, the Oklab blog argues more accurate predictions than IPT. I was in
 ![iso-luma patches in IPT](/assets/iso_luma_ipt.png)
 ![iso-luma patches in Oklab](/assets/iso_luma_oklab.png)
 
-The first is a collection of color patches with the same luma (I) value in IPT, and the second with the same luma (L) in Oklab. To my eyes, the second has more uniform luminance, while in IPT blues are too dark and yellow-greens are too light.
+The first is a collection of color patches with the same lightness (I) value in IPT, and the second with the same lightness (L) in Oklab. To my eyes, the second has more uniform lightness, while in IPT blues are too dark and yellow-greens are too light.
 
 It's also possible to evaluate this claim objectively. The L* axis in CIELAB is widely agreed to predict lightness. Thus, deviations from it are a bad sign. The plots below show a scatterplot of random colors, with CIELAB L* on the horizontal axis, and the lightness axis of IPT and Oklab on the vertical axis:
 
@@ -112,9 +112,9 @@ DISCUSSION QUESTION: show the plot as well?
 
 Differences in lightness don't have a huge effect on gradients, but they do affect image processing operations such as changing saturation. Thus, I wouldn't recommend IPT as a color space for these operations, and am more comfortable recommending Oklab.
 
-### Chrominance
+### Chroma
 
-I didn't evaluate this claim as carefully, in part because its relevance to high quality gradients is limited. *Relative* changes in chrominance are of course very important, but the *absolute* chrominance value ascribed to highly saturated colors matters little to gradients. Even so, the quantitative data suggest that Oklab is a more accurate predictor, and it's easy to believe, as IPT wasn't carefully optimized for this criterion.
+I didn't evaluate this claim as carefully, in part because its relevance to high quality gradients is limited. *Relative* changes in chroma are of course very important, but the *absolute* chroma value ascribed to highly saturated colors matters little to gradients. Even so, the quantitative data suggest that Oklab is a more accurate predictor, and it's easy to believe, as IPT wasn't carefully optimized for this criterion.
 
 ## Conclusions
 
@@ -122,13 +122,13 @@ A good perceptual color space can make higher quality, more uniform gradients. W
 
 The desirable properties of IPT inspired a family of IPT-like color spaces, with the main difference being the choice of transfer function. Obviously the family includes ICtCp, which uses a transfer function optimized for HDR (but which, sadly, makes it less suitable for general purpose use). The modern recipe for an IPT-like color space is to choose a transfer function, then optimize the matrix parameters for hue linearity and accurate prediction of lightness and chroma. Oklab is basically the result of applying that recipe, starting at the cube-root transfer function.
 
-For most applications where CIELAB is used today, both IPT and Oklab are better alternatives. The choice between them is a judgment call, though Oklab does have better prediction of chrominance and luminance.
+For most applications where CIELAB is used today, both IPT and Oklab are better alternatives. The choice between them is a judgment call, though Oklab does have better prediction of chroma and lightness.
 
 Is an even better color space possible? I think so. I personally would like to see a transfer function with a little more contrast in the near-black region (closer to CIELAB), but this is something of a judgment call. I also think it's possible to optimize on the basis of higher quality data; indexing off an existing color space retains any flaws in that space. Perhaps the biggest concern is that there is no one clear contender for a post-CIELAB standard. Another spin on Oklab with even higher quality data, and a consensus-building process, could be exactly that.
 
 In the meantime, I can highly recommend Oklab for tasks such as making better gradients.
 
-This blog post benefitted greatly from conversations with Björn Ottson [I hope to expand this list as I get more review feedback], though of course my mistakes are my own.
+This blog post benefitted greatly from conversations with Björn Ottson and Jacob Rus [I hope to expand this list as I get more review feedback], though of course my mistakes are my own.
 
 [colour-science]: https://www.colour-science.org/
 [ICtCp]: https://en.wikipedia.org/wiki/ICtCp
@@ -142,3 +142,5 @@ This blog post benefitted greatly from conversations with Björn Ottson [I hope 
 [A Perceptual EOTF for Extended Dynamic Range Imagery]: https://www.avsforum.com/attachments/smpte-2014-05-06-eotf-miller-1-2-handout-pdf.1347114/
 [Using Gaussian Spectra to Derive a Hue-linear Color Space]: https://doi.org/10.2352/J.Percept.Imaging.2020.3.2.020401
 [HN thread on Oklab]: https://news.ycombinator.com/item?id=25525726
+[Non-euclidean structure of spectral color space]: https://www.researchgate.net/publication/2900785_Non-Euclidean_Structure_of_Spectral_Color_Space
+[sRGB]: https://en.wikipedia.org/wiki/SRGB
