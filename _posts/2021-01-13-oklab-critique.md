@@ -1,10 +1,74 @@
 ---
 layout: post
 title:  "Critique of Oklab"
-date:   2021-01-13 07:33:42 -0700
+date:   2021-01-18 14:39:42 -0700
 categories: [color]
 ---
+THIS IS STILL A DRAFT. I'M PUBLISHING IT TO PREVIEW THE INTERACTIVES.
+
 Björn Ottson recenty published a blog post introducing [Oklab]. The blog claimed that Oklab is a better perceptual color space than what came before. It piqued my interest, and I wanted to see for myself.
+
+In exploring perceptual color spaces, I find an interactive gradient tool to be invaluable, so I've reproduced one here:
+
+<div class="gradients">
+<div>ICtCp</div>
+<div>Oklab</div>
+<div><canvas width="320" height="60" id="c0"></canvas></div>
+<div><canvas width="320" height="60" id="c1"></canvas></div>
+<div>CIELAB</div>
+<div>sRGB</div>
+<div><canvas width="320" height="60" id="c2"></canvas></div>
+<div><canvas width="320" height="60" id="c3"></canvas></div>
+</div>
+
+<!--Jerry-rigged color picker-->
+<style>
+    .gradients {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .sliders {
+        display: grid;
+        grid-template-columns: repeat(2, 2em 2em 1fr);
+    }
+    .buttonrow {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+</style>
+<div class="buttonrow">
+    <button id="randomize" type="button">Random</button>
+    <button id="q0"><span style="background: #00f">&#x2003;</span><span style="background: #fff">&#x2003;</span></button>
+    <button id="q1"><span style="background: #000">&#x2003;</span><span style="background: #fff">&#x2003;</span></button>
+    <button id="q2"><span style="background: #001">&#x2003;</span><span style="background: #fff">&#x2003;</span></button>
+    <button id="q3"><span style="background: #00f">&#x2003;</span><span style="background: #ff0">&#x2003;</span></button>
+    <button id="q4"><span style="background: #f00">&#x2003;</span><span style="background: #00f">&#x2003;</span></button>
+    <button id="q5"><span style="background: #f00">&#x2003;</span><span style="background: #0f0">&#x2003;</span></button>
+</div>
+<div class="sliders">
+<div>R</div>
+<div id="ro1"></div>
+<div><input id="r1" type="range" min="0" max="255" value="0"></div>
+<div>R</div>
+<div id="ro2"></div>
+<div><input id="r2" type="range" min="0" max="255" value="255"></div>
+
+<div>G</div>
+<div id="go1"></div>
+<div><input id="g1" type="range" min="0" max="255" value="0"></div>
+<div>G</div>
+<div id="go2"></div>
+<div><input id="g2" type="range" min="0" max="255" value="255"></div>
+
+<div>B</div>
+<div id="bo1"></div>
+<div><input id="b1" type="range" min="0" max="255" value="255"></div>
+<div>B</div>
+<div id="bo2"></div>
+<div><input id="b2" type="range" min="0" max="255" value="255"></div>
+</div>
+
+<div>&nbsp;</div>
 
 ## Why (and when) a perceptual color space?
 
@@ -96,15 +160,15 @@ More recent research indicates that changing the *bandwidth* of a gaussian spect
 
 On lightness, the Oklab blog argues more accurate predictions than IPT. I was initially skeptical of this claim (it's not entirely consistent with similar claims in [Ebner's thesis][Fritz Ebner's thesis], see Figures 69 and 71 in particular), but on closer examination I agree. The following images should help you verify this claim yourself:
 
-![iso-luma patches in IPT](/assets/iso_luma_ipt.png)
-![iso-luma patches in Oklab](/assets/iso_luma_oklab.png)
+<img src="/assets/iso_luma_ipt.png" width="350" alt="iso-luma patches in IPT" />
+<img src="/assets/iso_luma_oklab.png" width="350" alt="iso-luma patches in Oklab" />
 
 The first is a collection of color patches with the same lightness (I) value in IPT, and the second with the same lightness (L) in Oklab. To my eyes, the second has more uniform lightness, while in IPT blues are too dark and yellow-greens are too light.
 
 It's also possible to evaluate this claim objectively. The L* axis in CIELAB is widely agreed to predict lightness. Thus, deviations from it are a bad sign. The plots below show a scatterplot of random colors, with CIELAB L* on the horizontal axis, and the lightness axis of IPT and Oklab on the vertical axis:
 
-![lightness scatterplot of IPT vs CIELAB](/assets/ipt_l_scatter.png)
-![lightness scatterplot of Oklab vs CIELAB](/assets/oklab_l_scatter.png)
+<img src="/assets/ipt_l_scatter.png" width="350" alt="lightness scatterplot of IPT vs CIELAB" />
+<img src="/assets/oklab_l_scatter.png" width="350" alt="lightness scatterplot of Oklab vs CIELAB" />
 
 As can be seen, Oklab correlates *much* more strongly with CIELAB on the lightness scale, while IPT has considerable variation. I was also interested to see that ICtCp correlates strongly with CIELAB as well, though there's a pronounced nonlinearity due to the transfer function.
 
@@ -128,7 +192,7 @@ Is an even better color space possible? I think so. I personally would like to s
 
 In the meantime, I can highly recommend Oklab for tasks such as making better gradients.
 
-This blog post benefitted greatly from conversations with Björn Ottson and Jacob Rus [I hope to expand this list as I get more review feedback], though of course my mistakes are my own.
+This blog post benefitted greatly from conversations with Björn Ottson and Jacob Rus, though of course my mistakes are my own.
 
 [colour-science]: https://www.colour-science.org/
 [ICtCp]: https://en.wikipedia.org/wiki/ICtCp
@@ -144,3 +208,269 @@ This blog post benefitted greatly from conversations with Björn Ottson and Jaco
 [HN thread on Oklab]: https://news.ycombinator.com/item?id=25525726
 [Non-euclidean structure of spectral color space]: https://www.researchgate.net/publication/2900785_Non-Euclidean_Structure_of_Spectral_Color_Space
 [sRGB]: https://en.wikipedia.org/wiki/SRGB
+
+<script>
+// The following code is licensed under Apache-2.0 license as indicated in
+// the "About" page of this blog.
+function lerp(a, b, t) {
+    if (Array.isArray(a)) {
+        var result = [];
+        for (let i = 0; i < a.length; i++) {
+            result.push(lerp(a[i], b[i], t));
+        }
+        return result;
+    } else {
+        return a + (b - a) * t;
+    }
+}
+function mat_vec_mul(m, v) {
+    var result = [];
+    for (row of m) {
+        let sum = 0;
+        for (let i = 0; i < row.length; i++) {
+            sum += row[i] * v[i];
+        }
+        result.push(sum);
+    }
+    return result;
+}
+// Argument is in range 0..1
+function srgb_eotf(u) {
+    if (u < 0.04045) {
+        return u / 12.92;
+    } else {
+        return Math.pow((u + 0.055) / 1.055, 2.4);
+    }
+}
+function srgb_eotf_inv(u) {
+    if (u < 0.0031308) {
+        return u * 12.92;
+    } else {
+        return 1.055 * Math.pow(u, 1/2.4) - 0.055;
+    }
+}
+// Source: Wikipedia sRGB article, rounded to 4 decimals
+const SRGB_TO_XYZ = [
+    [0.4124, 0.3576, 0.1805],
+    [0.2126, 0.7152, 0.0722],
+    [0.0193, 0.1192, 0.9505]
+];
+const XYZ_TO_SRGB = [
+    [3.2410, -1.5374, -0.4986],
+    [-0.9692, 1.8760, 0.0416],
+    [0.0556, -0.2040, 1.0570]
+];
+// Color is sRGB with 0..255 range. Result is in D65 white point.
+function sRGB_to_XYZ(rgb) {
+    const rgblin = rgb.map(x => srgb_eotf(x / 255));
+    return mat_vec_mul(SRGB_TO_XYZ, rgblin);
+}
+function XYZ_to_sRGB(xyz) {
+    const rgblin = mat_vec_mul(XYZ_TO_SRGB, xyz);
+    return rgblin.map(x => Math.round(255 * srgb_eotf_inv(x)));
+}
+const SRGB = {"to_xyz": sRGB_to_XYZ, "from_xyz": XYZ_to_sRGB};
+
+
+// From Oklab article, then some numpy. Note these are transposed. I'm
+// not sure I have the conventions right, but it is giving the right
+// answer.
+const OKLAB_M1 = [
+    [ 0.8189,  0.3619, -0.1289],
+    [ 0.033 ,  0.9293,  0.0361],
+    [ 0.0482,  0.2644,  0.6339]
+];
+const OKLAB_M2 = [
+    [ 0.2105,  0.7936, -0.0041],
+    [ 1.978 , -2.4286,  0.4506],
+    [ 0.0259,  0.7828, -0.8087]
+];
+const OKLAB_INV_M1 = [
+    [ 1.227 , -0.5578,  0.2813],
+    [-0.0406,  1.1123, -0.0717],
+    [-0.0764, -0.4215,  1.5862]
+];
+const OKLAB_INV_M2 = [
+    [ 1.0   ,  0.3963,  0.2158],
+    [ 1.0   , -0.1056, -0.0639],
+    [ 1.0   , -0.0895, -1.2915]
+];
+function Oklab_to_XYZ(lab) {
+    const lms = mat_vec_mul(OKLAB_INV_M2, lab);
+    const lmslin = lms.map(x => x * x * x);
+    return mat_vec_mul(OKLAB_INV_M1, lmslin);
+}
+function XYZ_to_Oklab(xyz) {
+    const lmslin = mat_vec_mul(OKLAB_M1, xyz);
+    const lms = lmslin.map(Math.cbrt);
+    return mat_vec_mul(OKLAB_M2, lms);
+}
+const OKLAB = {"to_xyz": Oklab_to_XYZ, "from_xyz": XYZ_to_Oklab};
+
+function cielab_f(t) {
+    const d = 6.0/29.0;
+    if (t < d * d * d) {
+        return t / (3 * d * d) + 4.0/29.0;
+    } else {
+        return Math.cbrt(t);
+    }
+}
+function cielab_f_inv(t) {
+    const d = 6.0/29.0;
+    if (t < d) {
+        return 3 * d * d * (t - 4.0/29.0);
+    } else {
+        return t * t * t;
+    }
+}
+function XYZ_to_Lab(xyz) {
+    // Just normalizing XYZ values to the white point is the "wrong von Kries"
+    // transformation, which is faithful to the spec.
+    const xyz_n = [xyz[0] / .9505, xyz[1], xyz[2] / 1.0888];
+    const fxyz = xyz_n.map(cielab_f);
+    const L = 116 * fxyz[1] - 16;
+    const a = 500 * (fxyz[0] - fxyz[1]);
+    const b = 200 * (fxyz[1] - fxyz[2]);
+    return [L, a, b];
+}
+function Lab_to_XYZ(lab) {
+    const l_ = (lab[0] + 16) / 116;
+    const x = 0.9505 * cielab_f_inv(l_ + lab[1] / 500);
+    const y = cielab_f_inv(l_);
+    const z = 1.0888 * cielab_f_inv(l_ - lab[2] / 200);
+    return [x, y, z];
+}
+const CIELAB = {"to_xyz": Lab_to_XYZ, "from_xyz": XYZ_to_Lab};
+
+// https://professional.dolby.com/siteassets/pdfs/ictcp_dolbywhitepaper_v071.pdf
+const XYZ_TO_LMS = [
+    [ 0.3593,  0.6976, -0.0359],
+    [-0.1921,  1.1005,  0.0754],
+    [ 0.0071,  0.0748,  0.8433]
+];
+const LMS_TO_ITP = [
+    [ 0.5   ,  0.5   ,  0.0   ],
+    [ 1.6138, -3.3235,  1.7097],
+    [ 4.3782, -4.2456, -0.1326]
+];
+const LMS_TO_XYZ = [
+    [ 2.0703, -1.3265,  0.2067],
+    [ 0.3647,  0.6806, -0.0453],
+    [-0.0498, -0.0492,  1.1881]
+];
+const ITP_TO_LMS = [
+    [ 1.0   ,  0.0086,  0.111 ],
+    [ 1.0   , -0.0086, -0.111 ],
+    [ 1.0   ,  0.56  , -0.3206]
+];
+const m1 = 2610/16384;
+const m2 = 2523/4096 * 128;
+const c2 = 2413/4096 * 32;
+const c3 = 2392/4096 * 32;
+const c1 = c3 - c2 + 1;
+// This peak luminance value is from the Dolby whitepaper but seems too high.
+const L_p = 10000;
+// Note: 80 is what is specified by sRGB but seems too low; this value is chosen
+// to be typical for actual non-HDR displays.
+const L_display = 200;
+function st_2084_eotf_inv(n) {
+    const fd = n * L_display;
+    const y = fd / L_p;
+    const ym1 = Math.pow(y, m1);
+    return Math.pow((c1 + c2 * ym1) / (1 + c3 * ym1), m2);
+}
+function st_2084_eotf(x) {
+    const V_p = Math.pow(x, 1 / m2);
+    const n = V_p - c1;
+    // maybe max with 0 here?
+    const L = Math.pow(n / (c2 - c3 * V_p), 1 / m1);
+    return L * L_p / L_display;
+}
+function ICtCp_to_XYZ(lab) {
+    const lms = mat_vec_mul(ITP_TO_LMS, lab);
+    const lmslin = lms.map(st_2084_eotf);
+    return mat_vec_mul(LMS_TO_XYZ, lmslin);
+}
+function XYZ_to_ICtCp(xyz) {
+    const lmslin = mat_vec_mul(XYZ_TO_LMS, xyz);
+    const lms = lmslin.map(st_2084_eotf_inv);
+    return mat_vec_mul(LMS_TO_ITP, lms);
+}
+const ICTCP = {"to_xyz": ICtCp_to_XYZ, "from_xyz": XYZ_to_ICtCp};
+
+function draw_gradient(id, c1, c2, cs) {
+    const a1 = cs["from_xyz"](sRGB_to_XYZ(c1));
+    const a2 = cs["from_xyz"](sRGB_to_XYZ(c2));
+    const element = document.getElementById(id);
+    const w = element.width;
+    const h = element.height;
+    const ctx = element.getContext("2d");
+    const img = ctx.createImageData(w, h);
+    for (let x = 0; x < w; x++) {
+        const t = x / (w - 1);
+        const a = lerp(a1, a2, t);
+        const c = XYZ_to_sRGB(cs["to_xyz"](a));
+        img.data[x * 4 + 0] = c[0];
+        img.data[x * 4 + 1] = c[1];
+        img.data[x * 4 + 2] = c[2];
+        img.data[x * 4 + 3] = 255;
+    }
+    for (let y = 1; y < h; y++) {
+        img.data.copyWithin(y * w * 4, 0, w * 4);
+    }
+    ctx.putImageData(img, 0, 0);
+}
+
+// UI
+function getrgb(n) {
+    return ['r', 'g', 'b'].map(c => {
+        const v = document.getElementById(c + n).valueAsNumber;
+        document.getElementById(c + 'o' + n).innerText = `${v}`;
+        return v;
+    });
+}
+function update(e) {
+    rgb1 = getrgb(1);
+    rgb2 = getrgb(2);
+    draw_gradient("c0", rgb1, rgb2, ICTCP);
+    draw_gradient("c1", rgb1, rgb2, OKLAB);
+    draw_gradient("c2", rgb1, rgb2, CIELAB);
+    draw_gradient("c3", rgb1, rgb2, SRGB);
+}
+function setrgb(rgb1, rgb2) {
+    for (let i = 0; i < 3; i++) {
+        const c = ['r', 'g', 'b'][i];
+        document.getElementById(c + 1).valueAsNumber = rgb1[i];
+        document.getElementById(c + 2).valueAsNumber = rgb2[i];
+    }
+    update();
+}
+function randomize(e) {
+    const rgb1 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
+    const rgb2 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
+    setrgb(rgb1, rgb2);
+}
+function install_ui() {
+    for (var c of ['r', 'g', 'b']) {
+        document.getElementById(c + 1).addEventListener('input', update);
+        document.getElementById(c + 2).addEventListener('input', update);
+    }
+    document.getElementById('randomize').addEventListener('click', randomize);
+    const colors = [
+        [[0, 0, 255], [255, 255, 255]],
+        [[0, 0, 0], [255, 255, 255]],
+        [[0, 0, 17], [255, 255, 255]],
+        [[0, 0, 255], [255, 255, 0]],
+        [[255, 0, 0], [0, 0, 255]],
+        [[255, 0, 0], [0, 255, 0]]
+    ];
+    for (var i = 0; i < colors.length; i++) {
+        const c = colors[i];
+        document.getElementById('q' + i).addEventListener('click', e => {
+            setrgb(c[0], c[1]);
+        });
+    }
+}
+install_ui();
+update();
+</script>
