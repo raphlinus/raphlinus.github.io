@@ -10,32 +10,67 @@ Björn Ottson recenty published a blog post introducing [Oklab]. The blog claime
 
 In exploring perceptual color spaces, I find an interactive gradient tool to be invaluable, so I've reproduced one here:
 
-<div class="gradients">
-<div>ICtCp</div>
-<div>Oklab</div>
-<div><canvas width="320" height="60" id="c0"></canvas></div>
-<div><canvas width="320" height="60" id="c1"></canvas></div>
-<div>CIELAB</div>
-<div>sRGB</div>
-<div><canvas width="320" height="60" id="c2"></canvas></div>
-<div><canvas width="320" height="60" id="c3"></canvas></div>
-</div>
-
-<!--Jerry-rigged color picker-->
 <style>
-    .gradients {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+    .gradient {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .gradname {
+        width: 5em;
     }
     .sliders {
-        display: grid;
-        grid-template-columns: repeat(2, 2em 2em 1fr);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+    .cluster {
+        margin: 10px;
+    }
+    .axis {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .axis div:nth-child(1) {
+        width: 2em;
+    }
+    .axis div:nth-child(2) {
+        width: 2em;
     }
     .buttonrow {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         margin-top: 5px;
         margin-bottom: 5px;
     }
+    .buttonrow button {
+        margin: 0 5px;
+    }
 </style>
+
+<div class="gradients">
+
+<div class="gradient">
+<div class="gradname">ICtCp</div>
+<div><canvas width="480" height="50" id="c0"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">Oklab</div>
+<div><canvas width="480" height="50" id="c1"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">CIELAB</div>
+<div><canvas width="480" height="50" id="c2"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">sRGB</div>
+<div><canvas width="480" height="50" id="c3"></canvas></div>
+</div>
+</div>
+
+<!--Jerry-rigged color picker-->
 <div class="buttonrow">
     <button id="randomize" type="button">Random</button>
     <button id="q0"><span style="background: #00f">&#x2003;</span><span style="background: #fff">&#x2003;</span></button>
@@ -46,29 +81,42 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
     <button id="q5"><span style="background: #f00">&#x2003;</span><span style="background: #0f0">&#x2003;</span></button>
 </div>
 <div class="sliders">
+<div class="cluster">
+<div class="axis">
 <div>R</div>
 <div id="ro1"></div>
 <div><input id="r1" type="range" min="0" max="255" value="0"></div>
-<div>R</div>
-<div id="ro2"></div>
-<div><input id="r2" type="range" min="0" max="255" value="255"></div>
-
+</div>
+<div class="axis">
 <div>G</div>
 <div id="go1"></div>
 <div><input id="g1" type="range" min="0" max="255" value="0"></div>
-<div>G</div>
-<div id="go2"></div>
-<div><input id="g2" type="range" min="0" max="255" value="255"></div>
-
+</div>
+<div class="axis">
 <div>B</div>
 <div id="bo1"></div>
 <div><input id="b1" type="range" min="0" max="255" value="255"></div>
+</div>
+</div>
+
+<div class="cluster">
+<div class="axis">
+<div>R</div>
+<div id="ro2"></div>
+<div><input id="r2" type="range" min="0" max="255" value="255"></div>
+</div>
+<div class="axis">
+<div>G</div>
+<div id="go2"></div>
+<div><input id="g2" type="range" min="0" max="255" value="255"></div>
+</div>
+<div class="axis">
 <div>B</div>
 <div id="bo2"></div>
 <div><input id="b2" type="range" min="0" max="255" value="255"></div>
 </div>
-
-<div>&nbsp;</div>
+</div>
+</div>
 
 ## Why (and when) a perceptual color space?
 
@@ -137,7 +185,7 @@ I found Björn's arguments in favor of pure cube root to be not entirely compell
 
 CIELAB, IPT, ICtCp, and Oklab all share a simple architecture: a 3x3 matrix, a nonlinear function, and another 3x3 matrix. In addition to being simple, this architecture is easily invertible. Many other color spaces are considerably more complex, with CIECAM as an especially bad offender.
 
-TODO: image
+<img src="/assets/ipt_flow.svg" alt="flow diagram of IPT architecture" style="margin: auto; display: block;" />
 
 The main difference between the various color spaces in this architecture is the nonlinear function, which determines the black-to-white ramp as discussed above. Once that is in place, there is a relatively small number of remaining parameters. Those can be optimized, either by hand or using an automated optimizer trying to minimize a cost function.
 
