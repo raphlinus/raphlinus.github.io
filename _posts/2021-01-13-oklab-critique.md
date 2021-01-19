@@ -48,6 +48,15 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
     .buttonrow button {
         margin: 0 5px;
     }
+    .quantize {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+    .quantize div {
+        margin: 0 10px;
+    }
 </style>
 
 <div class="gradients">
@@ -117,6 +126,12 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
 </div>
 </div>
 </div>
+<div class="quantize">
+<div>Quantize</div>
+<div>
+<input id="quant" type="range" min="0" max="1" value="1" step="any" />
+</div>
+</div>
 
 ## Why (and when) a perceptual color space?
 
@@ -171,13 +186,13 @@ Thus, HDR uses a different approach. It uses a model (known as the Barten model,
 The SMPTE ST 2084 transfer function is basically a mathematical curve-fit to the empirical Barten model, and has the property that with 12 bits of code words, each step is just under 0.9 of the minimum perceptual difference as predicted by the Barten model, across a range from 0.001 to 10,000 nits of brightness (7 orders of magnitude). There's lots more detail and context in the presentation [A Perceptual EOTF for Extended
 Dynamic Range Imagery] (PDF).
 
-That said, though it's sophisticated and an excellent fit to the empirical Barten curve, it is *not* perceptually uniform at any one particular viewing condition. In particular, a ramp of the ST 2084 curve will dwell far too long near-black (representing a range that would be more visible in dark viewing conditions). To see this for yourself.
+That said, though it's sophisticated and an excellent fit to the empirical Barten curve, it is *not* perceptually uniform at any one particular viewing condition. In particular, a ramp of the ST 2084 curve will dwell far too long near-black (representing a range that would be more visible in dark viewing conditions). To see this for yourself, try the black+white button in the interactive explorer above.
 
 ### A comparison of curves
 
 We can basically place curves on a scale from "way too dark" (ST 2084) to "way too light" (linear light), with all the others in between. CIELAB is a pretty good median (though this may express my personal preference), with IPT a bit lighter and Oklab a bit darker.
 
-TODO: plot the curves
+<img src="/assets/colorspace_transfer_functions.png" width="575" style="margin: auto; display: block;" />
 
 I found Björn's arguments in favor of pure cube root to be not entirely compelling, but this is perhaps an open question. Both CIELAB and sRGB use a finite-derivative region near black. Is it important to limit derivatives for more accurate LUT-based calculation? Perhaps in 2021, we will almost always prefer ALU to LUT. The conditional part is also not ideal, especially on GPUs, where branches can hurt performance. I personally would explore transfer functions of the form $f(x) = a + (b + cx)^\gamma$, constrained so $f(0) = 0$ and $f(1) = 1$, as these are GPU-friendly and have smooth derivatives. The XYB color space used in JPEG XL apparently uses a bias rather than a piecewise linear region, as well. (Source: [HN thread on Oklab], as I wasn't easily able to find a document)
 
@@ -220,7 +235,7 @@ It's also possible to evaluate this claim objectively. The L* axis in CIELAB is 
 
 As can be seen, Oklab correlates *much* more strongly with CIELAB on the lightness scale, while IPT has considerable variation. I was also interested to see that ICtCp correlates strongly with CIELAB as well, though there's a pronounced nonlinearity due to the transfer function.
 
-DISCUSSION QUESTION: show the plot as well?
+<img src="/assets/ictcp_l_scatter.png" width="350" alt="lightness scatterplot of ICtCp vs CIELAB" style="margin: auto; display: block;" />
 
 Differences in lightness don't have a huge effect on gradients, but they do affect image processing operations such as changing saturation. Thus, I wouldn't recommend IPT as a color space for these operations, and am more comfortable recommending Oklab.
 
@@ -446,7 +461,8 @@ function XYZ_to_ICtCp(xyz) {
 }
 const ICTCP = {"to_xyz": ICtCp_to_XYZ, "from_xyz": XYZ_to_ICtCp};
 
-function draw_gradient(id, c1, c2, cs) {
+function draw_gradient(id, c1, c2, cs, q) {
+    const n_steps = Math.round(2.0 / (1 - Math.cbrt(q)));
     const a1 = cs["from_xyz"](sRGB_to_XYZ(c1));
     const a2 = cs["from_xyz"](sRGB_to_XYZ(c2));
     const element = document.getElementById(id);
@@ -455,7 +471,10 @@ function draw_gradient(id, c1, c2, cs) {
     const ctx = element.getContext("2d");
     const img = ctx.createImageData(w, h);
     for (let x = 0; x < w; x++) {
-        const t = x / (w - 1);
+        let t = x / (w - 1);
+        if (q < 1) {
+            t = Math.min(Math.floor(t * (n_steps + 1)) / n_steps, 1.0);
+        }
         const a = lerp(a1, a2, t);
         const c = XYZ_to_sRGB(cs["to_xyz"](a));
         img.data[x * 4 + 0] = c[0];
@@ -480,10 +499,11 @@ function getrgb(n) {
 function update(e) {
     rgb1 = getrgb(1);
     rgb2 = getrgb(2);
-    draw_gradient("c0", rgb1, rgb2, ICTCP);
-    draw_gradient("c1", rgb1, rgb2, OKLAB);
-    draw_gradient("c2", rgb1, rgb2, CIELAB);
-    draw_gradient("c3", rgb1, rgb2, SRGB);
+    q = document.getElementById('quant').valueAsNumber;
+    draw_gradient("c0", rgb1, rgb2, ICTCP, q);
+    draw_gradient("c1", rgb1, rgb2, OKLAB, q);
+    draw_gradient("c2", rgb1, rgb2, CIELAB, q);
+    draw_gradient("c3", rgb1, rgb2, SRGB, q);
 }
 function setrgb(rgb1, rgb2) {
     for (let i = 0; i < 3; i++) {
@@ -503,6 +523,7 @@ function install_ui() {
         document.getElementById(c + 1).addEventListener('input', update);
         document.getElementById(c + 2).addEventListener('input', update);
     }
+    document.getElementById('quant').addEventListener('input', update);
     document.getElementById('randomize').addEventListener('click', randomize);
     const colors = [
         [[0, 0, 255], [255, 255, 255]],
