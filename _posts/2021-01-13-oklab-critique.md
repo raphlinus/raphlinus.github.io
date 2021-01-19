@@ -152,7 +152,7 @@ Basically *the* central question of color theory is how colors (in the physical 
 
 In an ideal perceptual color space, the distance of two points in the space would correlate strongly with the *perception* of color difference. Put another way, all pairs separated by a "just noticeable difference" would be separated by an equal distance.
 
-As it turns out, such a thing is no more possible than flattening an orange peel, because color perception is inherently [non-euclidean][Non-euclidean structure of spectral color space]. To put it simply, our eyes are more sensitive to small changes in hue than small changes in lightness or color saturation.
+As it turns out, such a thing is no more possible than flattening an orange peel, because color perception is inherently [non-Euclidean][Non-euclidean structure of spectral color space]. To put it another way, the ratio of perceptually distinct steps around a hue circle to those directly across through gray is greater than would be expected as a circle in an ordinary Euclidean space.
 
 Even so, like map projections, it is possible to make a color space that approximates perceptual uniformity and is useful for various tasks. One of these, a primary focus of this blog post, is smoother gradients.
 
