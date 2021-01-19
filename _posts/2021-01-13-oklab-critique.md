@@ -169,7 +169,7 @@ The transfer function for neutral colors is the literal backbone of any color sp
 
 An ideal transfer function for gradients will have perceptually equal steps from black to white. In *general,* the transfer function in CIELAB is considered close to perceptually uniform, but as always in color perception, the truth is a bit more complicated.
 
-In particular, perception depends on viewing conditions. That includes the ambient light, but also the surround; the same gradient surrounded by white will appear darker than when surrounded by black.
+In particular, perception depends on viewing conditions. That includes the ambient light, but also the surround; the same gradient surrounded by white will appear darker than when surrounded by black. For an extremely compelling demonstration of the power of surround to affect the perception of lightness, see [Akiyoshi's illusion pages], for example [this one](http://www.psy.ritsumei.ac.jp/~akitaoka/light2e.html).
 
 Another complication is that the light received by the eye includes so-called "veiling glare," a fraction of ambient light reflected by the monitor because its black is not a perfect absorber (veiling glare is much less of a problem in movie-like conditions).
 
@@ -275,6 +275,7 @@ This blog post benefitted greatly from conversations with Björn Ottson and Jaco
 [HN thread on Oklab]: https://news.ycombinator.com/item?id=25525726
 [Non-euclidean structure of spectral color space]: https://www.researchgate.net/publication/2900785_Non-Euclidean_Structure_of_Spectral_Color_Space
 [sRGB]: https://en.wikipedia.org/wiki/SRGB
+[Akiyoshi's illusion pages]: http://www.ritsumei.ac.jp/~akitaoka/index-e.html
 
 <script>
 // The following code is licensed under Apache-2.0 license as indicated in
