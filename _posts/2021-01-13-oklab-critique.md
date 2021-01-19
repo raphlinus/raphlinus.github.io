@@ -1,7 +1,8 @@
 ---
 layout: post
-title:  "Critique of Oklab"
+title:  "An interactive review of Oklab"
 date:   2021-01-18 14:39:42 -0700
+permalink: /color/2021/01/18/oklab-critique.html
 categories: [color]
 ---
 <script type="text/x-mathjax-config">
