@@ -270,6 +270,8 @@ In the meantime, I can highly recommend Oklab for tasks such as making better gr
 
 This blog post benefitted greatly from conversations with Björn Ottson and Jacob Rus, though of course my mistakes are my own.
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=25830327).
+
 [colour-science]: https://www.colour-science.org/
 [ICtCp]: https://en.wikipedia.org/wiki/ICtCp
 [Fritz Ebner's thesis]: https://www.researchgate.net/publication/221677980_Development_and_Testing_of_a_Color_Space_IPT_with_Improved_Hue_Uniformity
