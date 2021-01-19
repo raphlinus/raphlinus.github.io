@@ -4,8 +4,6 @@ title:  "Critique of Oklab"
 date:   2021-01-18 14:39:42 -0700
 categories: [color]
 ---
-THIS IS STILL A DRAFT. I'M PUBLISHING IT TO PREVIEW THE INTERACTIVES.
-
 Björn Ottson recenty published a blog post introducing [Oklab]. The blog claimed that Oklab is a better perceptual color space than what came before. It piqued my interest, and I wanted to see for myself.
 
 In exploring perceptual color spaces, I find an interactive gradient tool to be invaluable, so I've reproduced one here:
@@ -62,20 +60,24 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
 <div class="gradients">
 
 <div class="gradient">
-<div class="gradname">ICtCp</div>
+<div class="gradname">sRGB</div>
 <div><canvas width="480" height="50" id="c0"></canvas></div>
 </div>
 <div class="gradient">
-<div class="gradname">Oklab</div>
+<div class="gradname">CIELAB</div>
 <div><canvas width="480" height="50" id="c1"></canvas></div>
 </div>
 <div class="gradient">
-<div class="gradname">CIELAB</div>
+<div class="gradname">IPT</div>
 <div><canvas width="480" height="50" id="c2"></canvas></div>
 </div>
 <div class="gradient">
-<div class="gradname">sRGB</div>
+<div class="gradname">Oklab</div>
 <div><canvas width="480" height="50" id="c3"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">ICtCp</div>
+<div><canvas width="480" height="50" id="c4"></canvas></div>
 </div>
 </div>
 
@@ -135,9 +137,11 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
 
 ## Why (and when) a perceptual color space?
 
+Most image processing is done using a device color space (most often [sRGB]), and most libraries and interfaces expose that color space. Even when an image editing tool or a standard (such as CSS) exposes other color spaces, it's still most common to use the device color space. But for some use cases, a perceptual color space can give better results.
+
 Basically *the* central question of color theory is how colors (in the physical sense) are perceived. The trichromacy assumption basically groups colors into equivalence classes in a three-dimensional space, and display devices generally produce colors by mixing three additive primaries: the familiar red, green, and blue.
 
-In an idea perceptual color space, the distance of two points in the space would correlate strongly with the *perception* of color difference. Put another way, all pairs separated by a "just noticeable difference" would be separated by an equal distance.
+In an ideal perceptual color space, the distance of two points in the space would correlate strongly with the *perception* of color difference. Put another way, all pairs separated by a "just noticeable difference" would be separated by an equal distance.
 
 As it turns out, such a thing is no more possible than flattening an orange peel, because color perception is inherently [non-euclidean][Non-euclidean structure of spectral color space]. To put it simply, our eyes are more sensitive to small changes in hue than small changes in lightness or color saturation.
 
@@ -406,22 +410,22 @@ function Lab_to_XYZ(lab) {
 const CIELAB = {"to_xyz": Lab_to_XYZ, "from_xyz": XYZ_to_Lab};
 
 // https://professional.dolby.com/siteassets/pdfs/ictcp_dolbywhitepaper_v071.pdf
-const XYZ_TO_LMS = [
+const ICTCP_XYZ_TO_LMS = [
     [ 0.3593,  0.6976, -0.0359],
     [-0.1921,  1.1005,  0.0754],
     [ 0.0071,  0.0748,  0.8433]
 ];
-const LMS_TO_ITP = [
+const ICTCP_LMS_TO_ITP = [
     [ 0.5   ,  0.5   ,  0.0   ],
     [ 1.6138, -3.3235,  1.7097],
     [ 4.3782, -4.2456, -0.1326]
 ];
-const LMS_TO_XYZ = [
+const ICTCP_LMS_TO_XYZ = [
     [ 2.0703, -1.3265,  0.2067],
     [ 0.3647,  0.6806, -0.0453],
     [-0.0498, -0.0492,  1.1881]
 ];
-const ITP_TO_LMS = [
+const ICTCP_ITP_TO_LMS = [
     [ 1.0   ,  0.0086,  0.111 ],
     [ 1.0   , -0.0086, -0.111 ],
     [ 1.0   ,  0.56  , -0.3206]
@@ -450,16 +454,49 @@ function st_2084_eotf(x) {
     return L * L_p / L_display;
 }
 function ICtCp_to_XYZ(lab) {
-    const lms = mat_vec_mul(ITP_TO_LMS, lab);
+    const lms = mat_vec_mul(ICTCP_ITP_TO_LMS, lab);
     const lmslin = lms.map(st_2084_eotf);
-    return mat_vec_mul(LMS_TO_XYZ, lmslin);
+    return mat_vec_mul(ICTCP_LMS_TO_XYZ, lmslin);
 }
 function XYZ_to_ICtCp(xyz) {
-    const lmslin = mat_vec_mul(XYZ_TO_LMS, xyz);
+    const lmslin = mat_vec_mul(ICTCP_XYZ_TO_LMS, xyz);
     const lms = lmslin.map(st_2084_eotf_inv);
-    return mat_vec_mul(LMS_TO_ITP, lms);
+    return mat_vec_mul(ICTCP_LMS_TO_ITP, lms);
 }
 const ICTCP = {"to_xyz": ICtCp_to_XYZ, "from_xyz": XYZ_to_ICtCp};
+
+///
+const IPT_XYZ_TO_LMS = [
+    [0.4002, 0.7075, -0.0807],
+    [-0.2280, 1.1500, 0.0612],
+    [0.0000, 0.0000, 0.9184]
+];
+const IPT_LMS_TO_IPT = [
+    [0.4000, 0.4000, 0.2000],
+    [4.4550, -4.8510, 0.3960],
+    [0.8056, 0.3572, -1.1628],
+];
+const IPT_LMS_TO_XYZ = [
+    [ 1.8502, -1.1383,  0.2384],
+    [ 0.3668,  0.6439, -0.0107],
+    [ 0.0   ,  0.0   ,  1.0889]
+];
+const IPT_IPT_TO_LMS = [
+    [ 1.0   ,  0.0976,  0.2052],
+    [ 1.0   , -0.1139,  0.1332],
+    [ 1.0   ,  0.0326, -0.6769]
+];
+function IPT_to_XYZ(lab) {
+    const lms = mat_vec_mul(IPT_IPT_TO_LMS, lab);
+    const lmslin = lms.map(x => Math.pow(x, 1.0 / 0.43));
+    return mat_vec_mul(IPT_LMS_TO_XYZ, lmslin);
+}
+function XYZ_to_IPT(xyz) {
+    const lmslin = mat_vec_mul(IPT_XYZ_TO_LMS, xyz);
+    const lms = lmslin.map(x => Math.pow(x, 0.43));
+    return mat_vec_mul(IPT_LMS_TO_IPT, lms);
+}
+const IPT = {"to_xyz": IPT_to_XYZ, "from_xyz": XYZ_to_IPT};
 
 function draw_gradient(id, c1, c2, cs, q) {
     const n_steps = Math.round(2.0 / (1 - Math.cbrt(q)));
@@ -500,10 +537,11 @@ function update(e) {
     rgb1 = getrgb(1);
     rgb2 = getrgb(2);
     q = document.getElementById('quant').valueAsNumber;
-    draw_gradient("c0", rgb1, rgb2, ICTCP, q);
-    draw_gradient("c1", rgb1, rgb2, OKLAB, q);
-    draw_gradient("c2", rgb1, rgb2, CIELAB, q);
-    draw_gradient("c3", rgb1, rgb2, SRGB, q);
+    draw_gradient("c0", rgb1, rgb2, SRGB, q);
+    draw_gradient("c1", rgb1, rgb2, CIELAB, q);
+    draw_gradient("c2", rgb1, rgb2, IPT, q);
+    draw_gradient("c3", rgb1, rgb2, OKLAB, q);
+    draw_gradient("c4", rgb1, rgb2, ICTCP, q);
 }
 function setrgb(rgb1, rgb2) {
     for (let i = 0; i < 3; i++) {
