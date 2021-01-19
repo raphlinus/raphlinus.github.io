@@ -4,7 +4,15 @@ title:  "Critique of Oklab"
 date:   2021-01-18 14:39:42 -0700
 categories: [color]
 ---
-Björn Ottson recenty published a blog post introducing [Oklab]. The blog claimed that Oklab is a better perceptual color space than what came before. It piqued my interest, and I wanted to see for myself.
+<script type="text/x-mathjax-config">
+	MathJax.Hub.Config({
+		tex2jax: {
+			inlineMath: [['$', '$']]
+		}
+	});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+Björn Ottosson recenty published a blog post introducing [Oklab]. The blog claimed that Oklab is a better perceptual color space than what came before. It piqued my interest, and I wanted to see for myself.
 
 In exploring perceptual color spaces, I find an interactive gradient tool to be invaluable, so I've reproduced one here:
 
