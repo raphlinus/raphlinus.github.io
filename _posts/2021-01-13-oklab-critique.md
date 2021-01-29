@@ -13,6 +13,9 @@ categories: [color]
 	});
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+**Update 2021-01-29:** See the [update](#update-2021-01-29) below for more color spaces and discussion.
+
 Björn Ottosson recenty published a blog post introducing [Oklab]. The blog claimed that Oklab is a better perceptual color space than what came before. It piqued my interest, and I wanted to see for myself.
 
 In exploring perceptual color spaces, I find an interactive gradient tool to be invaluable, so I've reproduced one here:
@@ -85,7 +88,7 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
 <div><canvas width="480" height="50" id="c3"></canvas></div>
 </div>
 <div class="gradient">
-<div class="gradname">ICtCp</div>
+<div class="gradname" id="c4name">ICtCp</div>
 <div><canvas width="480" height="50" id="c4"></canvas></div>
 </div>
 </div>
@@ -272,6 +275,24 @@ This blog post benefitted greatly from conversations with Björn Ottson and Jaco
 
 Discuss on [Hacker News](https://news.ycombinator.com/item?id=25830327).
 
+## Update 2021-01-29
+
+I've added several more color spaces to the widget above. You can get to them by clicking the last gradient. (I'd happily accept a patch to make this more general; this blog is open source).
+
+One of the color spaces is linear mixing, which doesn't have great hue linearity, and is perceptually *way* too light in the white-black ramp. But I include it for comparison because some have suggested that it is appropriate for gradients.
+
+Another great resource for "better gradients" is Matt Deslaurier's [gradient Observable notebook](https://observablehq.com/@mattdesl/perceptually-smooth-multi-color-linear-gradients). That now has an open source license and a correct implementation of XYB.
+
+### XYB
+
+The XYB color space is part of [JPEG XL], and thus its main motivation is image compression. Its hue linearity is not great, about halfway between CIELAB and IPT. However, it has a nice transfer function - it's a cube root with an offset, which has generally similar darkness/lightness as CIELAB, but with smoother derivatives throughout. If I were to make a new color space, I would choose this transfer function.
+
+### SRLAB2
+
+A very little known color space is [SRLAB2] by Jan Behrens. It uses the CIELAB transfer function but updates the matrices for better hue linearity. Overall it performs very well; the only flaw I found is that the red-white ramp bends toward orange (as does CIELAB).
+
+Juha Järvi has produced a [gist analyzing SRLAB2](https://gist.github.com/jjrv/b27d0840b4438502f9cad2a0f9edeabc) in more detail, and there is some [Reddit discussion](https://www.reddit.com/r/GraphicsProgramming/comments/l2o8zu/a_new_perceptual_color_space/gl08lzq/?context=3) as well. Thanks to Juha for bringing this to my attention.
+
 [colour-science]: https://www.colour-science.org/
 [ICtCp]: https://en.wikipedia.org/wiki/ICtCp
 [Fritz Ebner's thesis]: https://www.researchgate.net/publication/221677980_Development_and_Testing_of_a_Color_Space_IPT_with_Improved_Hue_Uniformity
@@ -287,6 +308,8 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=25830327).
 [Non-euclidean structure of spectral color space]: https://www.researchgate.net/publication/2900785_Non-Euclidean_Structure_of_Spectral_Color_Space
 [sRGB]: https://en.wikipedia.org/wiki/SRGB
 [Akiyoshi's illusion pages]: http://www.ritsumei.ac.jp/~akitaoka/index-e.html
+[JPEG XL]: https://jpeg.org/jpegxl/
+[SRLAB2]: https://www.magnetkern.de/srlab2.html
 
 <script>
 // The following code is licensed under Apache-2.0 license as indicated in
@@ -510,6 +533,90 @@ function XYZ_to_IPT(xyz) {
 }
 const IPT = {"to_xyz": IPT_to_XYZ, "from_xyz": XYZ_to_IPT};
 
+const XYB_XYZ_TO_LMS = [
+    [ 0.3739,  0.6896, -0.0413],
+    [ 0.0792,  0.9286, -0.0035],
+    [ 0.6212, -0.1027,  0.4704]
+];
+const XYB_LMS_TO_XYB = [
+    [ 0.5, -0.5, 0.0],
+    [ 0.5, 0.5, 0.0],
+    [ 0.0, 0.0, 1.0],
+]
+const XYB_LMS_TO_XYZ = [
+    [ 2.7253, -1.9993,  0.2245],
+    [-0.2462,  1.2585, -0.0122],
+    [-3.6527,  2.9148,  1.8268]
+];
+const XYB_XYB_TO_LMS = [
+    [ 1.0, 1.0, 0.0],
+    [ -1.0, 1.0, 0.0],
+    [ 0.0, 0.0, 1.0],
+]
+const XYB_BIAS = 0.00379307;
+const XYB_BIAS_CBRT = Math.cbrt(XYB_BIAS);
+function XYB_to_XYZ(lab) {
+    const lms = mat_vec_mul(XYB_XYB_TO_LMS, lab);
+    const lmslin = lms.map(x => Math.pow(x + XYB_BIAS_CBRT, 3) - XYB_BIAS);
+    return mat_vec_mul(XYB_LMS_TO_XYZ, lmslin);
+}
+function XYZ_to_XYB(xyz) {
+    const lmslin = mat_vec_mul(XYB_XYZ_TO_LMS, xyz);
+    const lms = lmslin.map(x => Math.cbrt(x + XYB_BIAS) - XYB_BIAS_CBRT);
+    return mat_vec_mul(XYB_LMS_TO_XYB, lms);
+}
+const XYB = {"to_xyz": XYB_to_XYZ, "from_xyz": XYZ_to_XYB};
+
+const LINEAR = {"to_xyz": x => x, "from_xyz": x => x};
+
+// These are actually equivalent to the CIE curves and the code could be merged,
+// but we're keeping closer to the sources.
+function srlab2_f(t) {
+    if (t < 216.0/24389.0) {
+        return t * (24389.0 / 2700.0);
+    } else {
+        return 1.16 * Math.cbrt(t) - 0.16;
+    }
+}
+function srlab2_f_inv(t) {
+    if (t < 0.08) {
+        return t * (2700.0 / 24389.0);
+    } else {
+        return Math.pow((t + 0.16) / 1.16, 3.0);
+    }
+}
+const SRLAB2_XYZ_TO_LMS = [
+    [ 0.424 ,  0.6933, -0.0884],
+    [-0.2037,  1.1537,  0.0367],
+    [-0.0008, -0.001 ,  0.9199]
+];
+const SRLAB2_LMS_TO_LAB = [
+    [ 37.0950,   62.9054,   -0.0008],
+    [663.4684, -750.5078,   87.0328],
+    [ 63.9569,  108.4576, -172.4152],
+];
+const SRLAB2_LMS_TO_XYZ = [
+    [ 1.8307, -1.1   ,  0.2198],
+    [ 0.3231,  0.6726,  0.0042],
+    [ 0.0019, -0.0002,  1.0873]
+];
+const SRLAB2_LAB_TO_LMS = [
+    [0.01, +0.000904127, +0.000456344],
+    [0.01, -0.000533159, -0.000269178],
+    [0.01,  0.0        , -0.005800000]
+];
+function SRLAB2_to_XYZ(lab) {
+    const lms = mat_vec_mul(SRLAB2_LAB_TO_LMS, lab);
+    const lmslin = lms.map(srlab2_f_inv);
+    return mat_vec_mul(SRLAB2_LMS_TO_XYZ, lmslin);
+}
+function XYZ_to_SRLAB2(xyz) {
+    const lmslin = mat_vec_mul(SRLAB2_XYZ_TO_LMS, xyz);
+    const lms = lmslin.map(srlab2_f);
+    return mat_vec_mul(SRLAB2_LMS_TO_LAB, lms);
+}
+const SRLAB2 = {"to_xyz": SRLAB2_to_XYZ, "from_xyz": XYZ_to_SRLAB2};
+
 function draw_gradient(id, c1, c2, cs, q) {
     const n_steps = Math.round(2.0 / (1 - Math.cbrt(q)));
     const a1 = cs["from_xyz"](sRGB_to_XYZ(c1));
@@ -545,6 +652,13 @@ function getrgb(n) {
         return v;
     });
 }
+var cur_c4 = 0;
+const C4_CHOICES = [
+    ['ICtCp', ICTCP],
+    ['XYB', XYB],
+    ['SRLAB2', SRLAB2],
+    ['Linear', LINEAR],
+];
 function update(e) {
     rgb1 = getrgb(1);
     rgb2 = getrgb(2);
@@ -553,7 +667,7 @@ function update(e) {
     draw_gradient("c1", rgb1, rgb2, CIELAB, q);
     draw_gradient("c2", rgb1, rgb2, IPT, q);
     draw_gradient("c3", rgb1, rgb2, OKLAB, q);
-    draw_gradient("c4", rgb1, rgb2, ICTCP, q);
+    draw_gradient("c4", rgb1, rgb2, C4_CHOICES[cur_c4][1], q);
 }
 function setrgb(rgb1, rgb2) {
     for (let i = 0; i < 3; i++) {
@@ -567,6 +681,12 @@ function randomize(e) {
     const rgb1 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
     const rgb2 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
     setrgb(rgb1, rgb2);
+}
+function swapc4(e) {
+    cur_c4 = (cur_c4 + 1) % C4_CHOICES.length;
+    document.getElementById('c4name').innerText = C4_CHOICES[cur_c4][0];
+    update(e);
+    e.preventDefault();
 }
 function install_ui() {
     for (var c of ['r', 'g', 'b']) {
@@ -589,6 +709,7 @@ function install_ui() {
             setrgb(c[0], c[1]);
         });
     }
+    document.getElementById('c4').addEventListener('click', swapc4);
 }
 install_ui();
 update();
