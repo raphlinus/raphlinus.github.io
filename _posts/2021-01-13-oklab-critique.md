@@ -67,6 +67,9 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
     .quantize div {
         margin: 0 10px;
     }
+    .gradients > details[open] > summary {
+        display: none;
+    }
 </style>
 
 <div class="gradients">
@@ -88,9 +91,24 @@ In exploring perceptual color spaces, I find an interactive gradient tool to be 
 <div><canvas width="480" height="50" id="c3"></canvas></div>
 </div>
 <div class="gradient">
-<div class="gradname" id="c4name">ICtCp</div>
+<div class="gradname">ICtCp</div>
 <div><canvas width="480" height="50" id="c4"></canvas></div>
 </div>
+<details>
+<summary>Show more color spaces (added after the initial publication of the article, for further comparisons)</summary>
+<div class="gradient">
+<div class="gradname">XYB</div>
+<div><canvas width="480" height="50" id="c5"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">SRLAB2</div>
+<div><canvas width="480" height="50" id="c6"></canvas></div>
+</div>
+<div class="gradient">
+<div class="gradname">Linear</div>
+<div><canvas width="480" height="50" id="c7"></canvas></div>
+</div>
+</details>
 </div>
 
 <!--Jerry-rigged color picker-->
@@ -277,7 +295,7 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=25830327).
 
 ## Update 2021-01-29
 
-I've added several more color spaces to the widget above. You can get to them by clicking the last gradient. (I'd happily accept a patch to make this more general; this blog is open source).
+I've added several more color spaces to the widget above.
 
 One of the color spaces is linear mixing, which doesn't have great hue linearity, and is perceptually *way* too light in the white-black ramp. But I include it for comparison because some have suggested that it is appropriate for gradients.
 
@@ -652,13 +670,6 @@ function getrgb(n) {
         return v;
     });
 }
-var cur_c4 = 0;
-const C4_CHOICES = [
-    ['ICtCp', ICTCP],
-    ['XYB', XYB],
-    ['SRLAB2', SRLAB2],
-    ['Linear', LINEAR],
-];
 function update(e) {
     rgb1 = getrgb(1);
     rgb2 = getrgb(2);
@@ -667,7 +678,10 @@ function update(e) {
     draw_gradient("c1", rgb1, rgb2, CIELAB, q);
     draw_gradient("c2", rgb1, rgb2, IPT, q);
     draw_gradient("c3", rgb1, rgb2, OKLAB, q);
-    draw_gradient("c4", rgb1, rgb2, C4_CHOICES[cur_c4][1], q);
+    draw_gradient("c4", rgb1, rgb2, ICTCP, q);
+    draw_gradient("c5", rgb1, rgb2, XYB, q);
+    draw_gradient("c6", rgb1, rgb2, SRLAB2, q);
+    draw_gradient("c7", rgb1, rgb2, LINEAR, q);
 }
 function setrgb(rgb1, rgb2) {
     for (let i = 0; i < 3; i++) {
@@ -681,12 +695,6 @@ function randomize(e) {
     const rgb1 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
     const rgb2 = [0, 1, 2].map(_ => Math.round(255 * Math.random()));
     setrgb(rgb1, rgb2);
-}
-function swapc4(e) {
-    cur_c4 = (cur_c4 + 1) % C4_CHOICES.length;
-    document.getElementById('c4name').innerText = C4_CHOICES[cur_c4][0];
-    update(e);
-    e.preventDefault();
 }
 function install_ui() {
     for (var c of ['r', 'g', 'b']) {
@@ -709,7 +717,6 @@ function install_ui() {
             setrgb(c[0], c[1]);
         });
     }
-    document.getElementById('c4').addEventListener('click', swapc4);
 }
 install_ui();
 update();
