@@ -1,0 +1,15 @@
+<svg width="500" height="660" viewBox="0 0 500 660" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 10l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0m-500 32l500 0" stroke="#ccf"/>
+<path d="M10 0l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660m32 -660l0 660" stroke="#ccf"/>
+<circle cx="10" cy="330" r="3" fill="black"/>
+<circle cx="490" cy="330" r="3" fill="black"/>
+<path d="M10 170A160 160 0 0 1 10 490" stroke="#ccc"/>
+<path d="M490 170A160 160 0 0 0 490 490" stroke="#ccc"/>
+<path d="M10 10Q330 330 10 650" stroke="#080"/>
+<path d="M490 10Q170 330 490 650" stroke="#080"/>
+<circle cx="155" cy="232" r="2" fill="blue"/>
+<circle cx="337" cy="397" r="2" fill="blue"/>
+<path d="M10 330L155 232" stroke="#008"/>
+<path d="M490 330L337 397" stroke="#008"/>
+<path d="M10 330C155 232 337 397 490 330" stroke="black" stroke-width="2"/>
+</svg>
