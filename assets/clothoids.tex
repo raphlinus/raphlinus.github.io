@@ -1,0 +1,71 @@
+\documentclass[12pt,a4paper]{scrartcl}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+
+\floatplacement{figure}{H}
+
+\title{Parallel curve of a Clothoid \thanks{Translated from the german original, found in the 1907 edition of the \emph{Archiv der Mathematik und Physik}}}
+\author{H. Wieleitner}
+\date{August 1, 1906}
+
+\begin{document}
+
+\maketitle
+\begin{figure}
+  \caption{Parallel curve of a clothoid}
+  \centering
+  \includegraphics[width=0.75\textwidth]{curve}
+\end{figure}
+The clothoid with the equation $\rho=a^2/s$, $\rho$ being the radius of curvature and $s$ the arc, has an inflection point $[s=\pm0, \rho=\pm\infty]$
+in its starting point $O$.  Additionally it has two asymptotic points $M$ and $M'$ (Tangent angle $\varphi=s^2/2a^2$, which is $\infty$ for $s=\pm\infty;\rho=0$).
+Their coordinates are $x=y=\pm\frac{a}{2}\sqrt{\pi}$.
+
+Its parallel curve does not seem to have been examined yet.  For it
+\begin{equation}
+s'=s+l\varphi, \rho'=\rho+l
+\end{equation}
+applies, $l$ being the distance (Cesàro, \emph{Nat. G.}, §19. --- Loria, S. 645).
+This immediately results in
+\begin{displaymath}
+s=\frac{a^2}{\rho'-l}, s'=s+\frac{s^2l}{2a^2}
+\end{displaymath}
+and by insertion
+\begin{equation}
+s'=\frac{a^2(2\rho'-l)}{2{(\rho'-l)}^2} \label{eq:s}
+\end{equation}
+or transposed
+\begin{equation}
+\rho'=\frac{a^2}{2s'}+l\pm\frac{a}{2s'}\sqrt{a^2+2ls'} \tag{2*}\label{eq:rho}
+\end{equation}.  Further
+\begin{equation}
+\varphi'=\int{\frac{d s'}{\rho'}}=\int{\frac{\left(1+\frac{ls}{a^2}\right)d s}{\frac{a^2}{s}+l}}=\int{\frac{sds }{a^2}}=\varphi \label{eq:phi}
+\end{equation}
+as is obvious for a parallel curve.
+
+From (\ref{eq:s}) and (\ref{eq:rho}), $s'$ is a distinct function of $\rho'$ while $\rho'$ is an ambiguous function of $s'$.
+To better see this interdependency, drawing (\ref{eq:s}) into a right-angled coordinate-system (see figure~\ref{fig:small}) helps.
+
+\begin{figure}
+  \caption{Relation of $s'$ and $\rho'$}\label{fig:small}
+  \centering
+  \includegraphics[width=0.25\textwidth]{smallfig}
+\end{figure}
+
+For $s'=\pm0$, $\rho$ will be $\pm\infty$; this yields the inflection point in the starting point $O'$ of the arc.
+If we turn right, $\rho'$ falls with rising $s'$, up to $l$ because for $s'=+\infty$, $\rho'$ equals $l$.
+But, because of (\ref{eq:phi}), $\varphi'$ is also $\infty$.  This means, the curve has an asymptotic circle around $M$ with radius $l$, which it closes in on from the outside.
+If we now go left from $O'$, ie we take $s'$ negative, then $\rho'$ goes from $-\infty$ to $0$ at $s'=-m=-a^2/2l^2$.
+Because of (\ref{eq:rho}) this is also a minimum for $s'$.  Our curve has a sharp turn at this point, that we will call $S$, with the tangential direction $\varphi'=a^2/2l^2$.
+The smaller $l$ is in relation to the clothoid, the more turns around $M'$ the branch going left from $O'$ will make until it reaches $S$.
+From $S$ onwards $s'$ rises (as seen in figure~\ref{fig:small}) up to the point $O''$ for which $|O'S|=|SO''|$.
+In $O''$, $s'$ is $0$ and $\rho'=\frac{1}{2}l$.  Apart from that, the point is not visible on the curve.
+Continuing on, $s'$ and $\varphi'$ go to $+\infty$ while $\rho'$ tends to $l$.
+This means, the curve has a second asymptotic circle around $M'$, which it closes in on from the inside.
+
+Changing the sign of $l$ just switches $M$ and $M'$.
+
+\end{document}

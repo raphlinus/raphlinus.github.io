@@ -20,7 +20,7 @@ A good paper comparing alternative approaches is [Comparing Offset Curve Approxi
 
 Specifically, this blog proposes piecewise Euler spirals as a curve representation particularly well suited to the parallel curve problem.
 
-There's an implementation of many of these ideas (currently still in PR stage) in [kurbo](https://github.com/linebender/kurbo/pull/169). I also used a colab notebook to explore a bunch of the math, and I've made a [copy of that available](/assets/Euler_spiral_scratchpad.ipynb) as well. [TODO: figure out best way to publish that]
+There's an implementation of many of these ideas (currently still in PR stage) in [kurbo][kurbo PR]. I also used a colab notebook to explore a bunch of the math, and I've made a [copy of that available](/assets/Euler_spiral_scratchpad.ipynb) as well. [TODO: figure out best way to publish that]
 
 ## The cusp
 
@@ -44,13 +44,17 @@ $$
 
 In general, most curves do not have a simple formula for their parallel curve. The obvious exception is a circular arc, for which the parallel curve is another circular arc. [The only other "classical" curve I'm aware of is a [circle involute][involute], which has the same self-parallel property, and about more which later. -- TODO clunky; it might be better to call out PH here]
 
-Thanks to its exceptionally simple formulation as a Cesàro equation, the Euler spiral is one of the rare curves with a simple closed-form equation for its parallel curve. That equation was first published in a 1906 paper by Heinrich Wieleitner, [Die Parallelkurve der Klothoide]. For those who don't read German, [Rahix] has kindly provided a translation into English: [PDF], [TeX source]. [TODO: put in assets]
+Thanks to its exceptionally simple formulation as a Cesàro equation, the Euler spiral is one of the rare curves with a simple closed-form equation for its parallel curve. That equation was first published in a 1906 paper by Heinrich Wieleitner, [Die Parallelkurve der Klothoide]. For those who don't read German, [Rahix] has kindly provided a translation into English: [PDF](/assets/clothoids.pdf), [TeX source](/assets/clothoids.text).
 
 Going over this math, I see Wieleitner missed an opportunity for further simplification. The style at the time was to write the Cesàro equation in terms of the *radius* of curvature (the reciprocal of curvature), but especially for the Euler spiral and its parallel curve, using curvature directly yields a much simpler equation. Putting the cusp at $s = 0$, the equation is gratifyingly simple:
 
 $$
 \kappa(s) = \frac{c}{\sqrt{s}} + \frac{1}{l}
 $$
+
+The equation is graphed below, and clicking on it links to a [Desmos calculator graph](https://www.desmos.com/calculator/qznzk9xnac) with sliders for the parameters.
+
+<a href="https://www.desmos.com/calculator/qznzk9xnac"><img src="/assets/euler-spiral-parallel-cesaro.png" width="400" height="400"></a>
 
 Here $c$ is a coefficient dependent on the parameters of the spiral. To connect it to the notation in the Wieleitner paper, $c = a / \sqrt{2 l^3}$, and the offset to $s$ to place the cusp at zero is $-a^2/{2l}$. I've also made a [Desmos calculator graph](https://www.desmos.com/calculator/imvqywsb8o) that interactively demostrates the equivalence of this equation and the more involved one from the Wieleitner paper.
 
@@ -84,10 +88,29 @@ $$
 
 The $\kappa_0 a^{-1} + l^{-1}$ term represents a distance from the cusp; the error scales in inverse proportion to this distance. Also note that $\kappa_1$ scales as the square of the number of subdivisions, so the entire formula scales as the fourth power, as expected.
 
+### Precise subdivision
+
+Given such a simple formula for the error metric, we can do better than the usual adaptive subdivision approach, which simply evaluates the error metric and subdivides in half if the threshold is not met. We can compute exactly how many subdivisions are needed, and where to split so the error of each subdivided segment is the same.
+
+More details are in the attached notebook, but the essence is this. If $s_i$ is chosen on the original curve according to the following formula, then error of each segment $s_i$ to $s_{i + 1}$ will be close to equal:
+
+$$
+s_i = s_0 + (t_0 + i \Delta t)^\frac{4}{3}
+$$
+
+Here $s_0$ is the location of the cusp. The key to using this formula is to choose $t_0$ so $s_0$ lands on one of the endpoints, then $\Delta t$ and $n$ so that $t_0 + n \Delta t$ lands on the other, and $n$ is the minimum value that still meets the error bound. The details are a bit fiddly, though not expensive to compute, and can be found in the notebook.
+
+I should note in fairness that this doesn't result in *exactly* equal error, but slightly undershoots for segments very close to the cusp. The resulting inefficiency is probably a few percent in practice, in my opinion well worth having such a direct solution.
 
 ## Euler spiral or parabola
 
-At heart, the algorithm is similar to the subdivision into parabolas.
+At heart, the algorithm is similar to the subdivision into parabolas. Why Euler spirals instead?
+
+A particularly tricky case for a parallel curve algorithm is when the input curve is a circular arc with curvature nearly matching the offset distance. The exact result is another circular arc with very small radius. However, using Beziers as the curve representation means that the curvature will "ripple" due to approximation errors. In the worst case, these ripples straddle the critical curvature value for generating cusps. Each quadratic Bezier can generate two such cusps. The finer the subdivision (for more accuracy in the result), the more cusps!
+
+Of course, a circular arc a case the Euler spiral can represent exactly, and its parallel curve also has zero error.
+
+To summarize, approximating a curve by Beziers can *add* cusps to the corresponding parallel curve, while approximating a curve by Euler spirals can *remove* them without sacrificing accuracy. This observation is the main reason I claim that Euler spirals are a "cleaner" solution to the parallel curve problem.
 
 ## Euler spirals to cubic Beziers
 
@@ -101,7 +124,31 @@ Graphic designers using cubic Beziers are commonly taught that smooth curves res
 
 In the symmetrical case, this solution is equivalent to the standard solution for approximating a [circular arc using a cubic bezier], as can be seen with a bit of trigonometry. What's less obvious is that it remains very good even in the non-symmetrical case, in particular the arclength of the bezier matches the true curve pretty well. The error scaling is as the fifth power, which is better than fourth power scaling of using standard Hermite interpolation (it consistently undershoots arclength), but not as good as the sixth power scaling that is theoretically possible, as shown in [High Accuracy Geometric Hermite Interpolation].
 
-This simple fitting with $n^5$ scaling, is appealing because it is very fast to evaluate, and in most cases will produce cubic beziers with a comfortable but not excessive safety margin for accuracy, especially since the approximation.
+The error bound, as well as the tightness of its analytical estimation, can be visualized in this image:
+
+![error bound for Euler spiral to cubic Bezier approximation](/assets/euler_to_cubic_err.png)
+
+Here, k0 is the horizontal axis and k1 is the vertical. The horizontal axis (k1 = 0) represents perfect circular arcs, while the vertical (k0 = 0) is "s" curves with odd symmetry; both cases have particularly low error. Black represents zero error, red the true error, and cyan the approximate error (see the `fit_cubic_plot` function in the examples in the associated [kurbo PR] for the error bound and the code used to plot the above). Thus, neutral gray means that the error bound is tight.
+
+This simple fitting with $n^5$ scaling, is appealing because it is very fast to evaluate, and in most cases will produce cubic beziers with a comfortable but not excessive safety margin for accuracy, especially since earlier stages of the approximation pipeline scale as $n^4$.
+
+## Conclusion
+
+The parallel curve problem has a well deserved reputation for being tricky. However, a large part of the problem is the choice of Beziers as the underlying curve representation - the parallel curve of a Bezier is a difficult beast to analyze and approximation, prone to cusps in hard-to-predict locations. By contrast, an Euler spiral representation of the source curve simplifies these problems, with a clean analytical solution for its parallel curve.
+
+In demonstrating the advantages of an Euler spiral representation, this blog post has presented a number of new results:
+
+* A very simple closed form Cesàro equation for the Euler spiral parallel curve, relating it to the involute of a circle.
+
+* A simple analytical error metric for approximating this parallel curve as piecewise Euler spirals.
+
+* An extremely efficient algorithm for geometric Hermite interpolation of Euler spirals.
+
+* An efficient and direct approximation of Euler spirals into cubic Beziers, also with tight error bounds.
+
+The more I work with Euler spirals, the more I find them to be a simple, efficient, and tractable representation of curves. For example, because they're defined using an arc length parameter, inverse arc length problems are nearly trivial. To look at the literature, working with Euler spirals would seem to require solutions to tricky problems such as evaluating Fresnel integrals, but in practice, highly efficient polynomial approximations work well, producing results of arbitrarily high precision with a modest (and predictable!) increase in the number of subdivisions. I've demonstrated how this curve representation is especially well suited to determining parallel curves, and also look forward to exploring its suitability for other classical 2D geometry problems.
+
+Lastly: the results in this blog post are determined mostly through experimentation, and validated through testing (randomized in many cases). If it were an academic paper, it would derive error bounds and related results rigorously using mathematical techniques. If that sounds fun, get in touch and let's discuss collaborating on a paper.
 
 [thesis]: https://www.levien.com/phd/phd.html
 [Cesàro equation]: https://en.wikipedia.org/wiki/Ces%C3%A0ro_equation
@@ -121,3 +168,4 @@ This simple fitting with $n^5$ scaling, is appealing because it is very fast to 
 [Secrets of smooth Béziers revealed]: https://raphlinus.github.io/curves/2018/12/08/euler-spiral.html
 [circular arc using a cubic bezier]: https://pomax.github.io/bezierinfo/#circles_cubic
 [High Accuracy Geometric Hermite Interpolation]: https://minds.wisconsin.edu/bitstream/1793/58822/1/TR692.pdf
+[kurbo PR]: https://github.com/linebender/kurbo/pull/169
