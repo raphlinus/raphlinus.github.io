@@ -149,7 +149,7 @@ This simple fitting with $n^5$ scaling, is appealing because it is very fast to 
 
 ## Conclusion
 
-The parallel curve problem has a well deserved reputation for being tricky. However, a large part of the problem is the choice of Béziers as the underlying curve representation – the parallel curve of a Bézier is a difficult beast to analyze and approximation, prone to cusps in hard-to-predict locations. By contrast, an Euler spiral representation of the source curve simplifies these problems, with a clean analytical solution for its parallel curve.
+The parallel curve problem has a well deserved reputation for being tricky. However, a large part of the problem is the choice of Béziers as the underlying curve representation – the parallel curve of a Bézier is a difficult beast to analyze and approximate, prone to cusps in hard-to-predict locations. By contrast, an Euler spiral representation of the source curve simplifies these problems, with a clean analytical solution for its parallel curve.
 
 In demonstrating the advantages of an Euler spiral representation, this blog post has presented a number of new results:
 
