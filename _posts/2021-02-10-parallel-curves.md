@@ -79,13 +79,13 @@ In 2D, there is a distinction between C1 and G1 (geometric) continuity. In C1 co
 
 In these applications, geometric Hermite interpolation is more efficient, as all parameters of the curve are available to make the shape fit. The Euler spiral is especially well suited to geometric Hermite interpolation, and there is literature on this topic. For reasonable assumptions of smoothness (excluding fractal curves but including simple cusps), the accuracy scales as $O(n^4)$ – a doubling of the number of subdivisions reduces the error by a factor of 16. This scaling is the same as cubic Hermite interpolation of a 1D function, not surprising as an Euler spiral segment approximates a cubic polynomial when $y$ values are small.
 
+Section 8.2 of my [thesis] provides a secant method for determining the Euler spiral parameters from the G1 Hermite constraints, and that's implemented in the `fit_euler` method in the [kurbo PR]. That's a good technique and its convergence is excellent (quadratic, as typical for Newton-style solvers for near-linear problems), but I've also been experimenting with ways to do it better. The linked notebook explores a polynomial approximation (based on 2D Taylor's series) that is much faster – 7ns vs 240ns in my measurements, and should be very accurate over a wide range of parameters. I'm not quite done making the error bounds rigorous, but this approach should help make the overall algorithm lightning-fast.
+
 Geometric Hermite interpolation works well to approximate the parallel curve of an Euler spiral segment with another Euler spiral segment:
 
 <img src="/assets/euler-parallel-approx.svg" alt="Approximation of the parallel curve of an Euler spiral segment" class="center">
 
 The true parallel curve is in blue, and the approximation in red. It has the same rough shape, but bulges out in the middle. We need to be able to estimate that error in order to make a more accurate approximation.
-
-Section 8.2 of my [thesis] provides a secant method for determining the Euler spiral parameters from the G1 Hermite constraints, and that's implemented in the `fit_euler` method in the [kurbo PR]. That's a good technique and its convergence is excellent (quadratic, as typical for Newton-style solvers for near-linear problems), but I've also been experimenting with ways to do it better. The linked notebook explores a polynomial approximation (based on 2D Taylor's series) that is much faster – 7ns vs 240ns in my measurements, and should be very accurate over a wide range of parameters. I'm not quite done making the error bounds rigorous, but this approach should help make the overall algorithm lightning-fast.
 
 ### A simple, accurate error metric
 
@@ -166,6 +166,8 @@ The more I work with Euler spirals, the more I find them to be a simple, efficie
 The actual implementation of the parallel curve in the [kurbo PR] is less than 100 lines of code, including handling of the cusps and careful error bounds. I think that provides further support for the claim that Euler spirals support a "cleaner" implementation than other curve representations. I haven't done careful benchmarking of the end-to-end implementation yet, but expect it to be very fast, certainly based on performance of the important primitives. Speed is important to me, as I want these operations available in  design applications, providing accurate and powerful geometry operations with smooth interactivity. That's a major reason I'm choosing Rust for the implementation.
 
 Lastly: the results in this blog post are determined mostly through experimentation, and validated through testing (randomized in many cases). If it were an academic paper, it would derive error bounds and related results rigorously using mathematical techniques. If that sounds fun, get in touch and let's discuss collaborating on a paper.
+
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=26196470).
 
 [thesis]: https://www.levien.com/phd/phd.html
 [Cesàro equation]: https://en.wikipedia.org/wiki/Ces%C3%A0ro_equation
