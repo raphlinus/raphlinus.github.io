@@ -22,7 +22,7 @@ A good survey paper is [Comparing Offset Curve Approximation Methods]. The main 
 
 Specifically, this blog proposes piecewise Euler spirals as a curve representation particularly well suited to the parallel curve problem.
 
-There's an implementation of many of these ideas (currently still in PR stage) in [kurbo][kurbo PR]. I also used a colab notebook to explore a bunch of the math, and I've made a [copy of that available](/assets/Euler_spiral_scratchpad.ipynb) as well. [TODO: figure out best way to publish that]
+There's an implementation of many of these ideas (currently still in PR stage) in [kurbo][kurbo PR]. I also used a colab notebook to explore a bunch of the math, and I've made a [copy of that available](https://github.com/raphlinus/raphlinus.github.io/blob/master/assets/Euler_spiral_scratchpad.ipynb) as well.
 
 ## The cusp
 
