@@ -61,7 +61,7 @@ The equation is graphed below, and clicking on it links to a [Desmos calculator 
 
 <a href="https://www.desmos.com/calculator/qznzk9xnac"><img src="/assets/euler-spiral-parallel-cesaro.png" width="400" height="400" class="center"></a>
 
-Here $c$ is a coefficient dependent on the parameters of the spiral. To connect it to the notation in the Wieleitner paper, $c = a / \sqrt{2 l^3}$, and $s_0 = -a^2/{2l}$. I've also made a [Desmos calculator graph](https://www.desmos.com/calculator/imvqywsb8o) that interactively demostrates the equivalence of this equation and the more involved one from the Wieleitner paper.
+Here $c$ is a coefficient dependent on the parameters of the spiral. To connect it to the notation in the Wieleitner paper, $c = a / \sqrt{2 l^3}$, and $s_0 = -a^2/{2l}$. I've also made a [Desmos calculator graph](https://www.desmos.com/calculator/imvqywsb8o) that interactively demonstrates the equivalence of this equation and the more involved one from the Wieleitner paper.
 
 There are a number of other curves that have a cusp similar to the above, with characteristic inverse-square root curvature. The clearest connection is the [circle involute][involute], which is the same but without the $1/l$ term, or in other words the Euler spiral parallel curve approaches the circle involute as the offset goes to infinity. This provides intuition for the fact that a circle involute is its own parallel curve. The circle involute is perhaps most famous as the optimized profile for meshing [gear] teeth, transferring force smoothly with no slop or friction.
 
