@@ -1,0 +1,24 @@
+<svg width='540' height='240' viewBox='0 0 540 240' xmlns='http://www.w3.org/2000/svg'>
+    <line x1='100' y1='0' x2='100' y2='240' stroke='#666' />
+    <line x1='0' y1='170' x2='540' y2='170' stroke='#666' />
+    <path d='M100.0 170.0C199.0402737891614 102.24290319259576 389.9162751932531 31.277089566227744 500.0 170.0' stroke='black' fill='none' />
+    <path d='M100.0 170.0L199.0402737891614 102.24290319259576' stroke='#88a' fill='none' />
+    <path d='M500.0 170.0L389.9162751932531 31.277089566227744' stroke='#88a' fill='none' />
+    <circle cx='100.0' cy='170.0' r='3' fill='black' />
+    <circle cx='500.0' cy='170.0' r='3' fill='black' />
+    <circle cx='199.0402737891614' cy='102.24290319259576' r='2' fill='blue' />
+    <circle cx='389.9162751932531' cy='31.277089566227744' r='2' fill='blue' />
+    <text x='100' y='190' text-anchor='middle'>(0, 0)</text>
+    <text x='500' y='190' text-anchor='middle'>(1, 0)</text>
+    <text x='140' y='130' text-anchor='middle'>δ₀</text>
+    <text x='460' y='100' text-anchor='middle'>δ₁</text>
+    <path d='M150 170A50 50 0 0 0 141.27 141.77' stroke='#88a' fill='none' />
+    <text x='160' y='160' text-anchor='middle'>θ₀</text>
+    <text x='445' y='150' text-anchor='middle'>θ₁</text>
+    <path d='M450 170A50 50 0 0 1 468.92 130.83' stroke='#88a' fill='none' />
+  <style><![CDATA[
+  text {
+    font-family: sans-serif;
+  }
+  ]]></style>
+</svg>
