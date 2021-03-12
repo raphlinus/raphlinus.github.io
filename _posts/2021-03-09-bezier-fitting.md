@@ -1,0 +1,196 @@
+---
+layout: post
+title:  "Fitting cubic Bézier curves"
+date:   2021-03-09 16:10:42 -0700
+categories: [curves]
+---
+<!-- I should figure out a cleaner way to do this include, rather than cutting and pasting. Ah well.-->
+<script type="text/x-mathjax-config">
+	MathJax.Hub.Config({
+		tex2jax: {
+			inlineMath: [['$', '$']]
+		}
+	});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+Cubic beziers are by far the most common curve representation, used both for design and rendering. A fundamental problem is *curve fitting,* or determining the cubic bezier that's closest to some source curve. Applications include simplifying existing paths, efficiently representing the [parallel curve], and rendering other spline representations such as Euler spiral or [hyperbezier]. A specific feature where curve fitting will be used in [Runebender] is deleting a smooth on-curve point. The intent is to merge two beziers into one, which is another way of saying to find a bezier which most closely approximates the curve formed of the two existing bezier segments.
+
+In spite of the importance of the curve-fitting problem and literature going back more than 30 years, there has been until now no fully satisfactory solution. Existing approaches either miss the optimum solution, are very slow (unsuitable for interactive use), or both.
+
+The main reason the problem is so hard is a basic but little-known fact about cubic beziers: C-shaped beziers come in triplets of very similar shape but quite different parameters. As a result, in general when fitting some arbitrary source curve, there are three local minima. Approaches based on iterative approximation (in addition to being slow) are likely to find just one, potentially missing a closer fit of one of the others.
+
+## How close are two curves?
+
+Before getting into the solution, we'll need to state the problem more carefully. The goal is a cubic bezier that minimizes some error metric with respect to the source curve. But how do we measure the distance between two curves?
+
+One meaningful metric is the [Fréchet distance]. It can be explained with a little story. An aircraft engineer goes on a walk with their dog Pierre, and the path followed by each can be described by a curve. What length leash is required so that the dog is always within that distance of the engineer? That is the Fréchet distance.
+
+Also note that the Fréchet distance is closely related to the Hausdorff distance, but the two can differ when the path loops back or crosses itself. For stroked curves, the Hausdorff distance is more relevant, but for filled paths such as font outlines, Fréchet preserves winding number in a way that Hausdorff doesn't guarantee.
+
+For solving optimization problems, the Fréchet distance is not ideal, as it effectively measures the distance of a single point, the maximum error. One can informally describe an [L2] error metric as similar, except that instead of describing the maximum length of the leash, it describes an *effort* of handling the dog which is proportional to the square of the distance of the dog from the engineer. Minimizing an L2 error means minimizing that total effort. This error metric takes into account the entire path, and thus is smoother in response to small changes of the parameters.
+
+I believe there is no one perfect error metric, and the choice depends on the context. Fortunately, for smooth curves such as we're likely to find in fonts, the differences between these error metrics are subtle, and we can confidently choose the one that's easiest to reason about mathematically. For this blog post, that's the L2 norm.
+
+Two things more to say: for smooth curves + low error, leash is generally perpendicular. Also, normalized arc length (both engineer and Pierre move at a constant speed) is a good approximation, though strictly larger.
+
+## Stating the problem
+
+Our dog Pierre has a funny quirk: he is capable of moving only along a cubic bezier path. That said, he is otherwise fairly obedient, and always starts and ends at the same position as the engineer, as well as starting out and ending up in the same direction.
+
+Another way to state this is that our cubic bezier must match the source curve to G1. Then we want to find values for the parameters that minimizes the error norm. For a cubic bezier, the two parameters are the lengths of the two control arms; all other parameters are determined by the requirement to match the source curve.
+
+As a mathematical simplification, we can factor out translation, uniform scaling, and rotation, and just consider a curve that goes from (0, 0) to (1, 0), with given $\theta_0$ and $\theta_1$ angles.
+
+[image]
+
+Then, the control points of the bezier are $(0, 0)$, $(\delta_0 \cos \theta_0, \delta_0 \sin \theta_0)$, $(1 - \delta_1 \cos \theta_1, \delta_1 \sin \theta_1)$, $(1, 0)$.
+
+## Prior work
+
+Having stated the problem, we can take a look at the existing literature.
+
+* G2 geometric Hermite interpolation, de Boor. A bunch of new things here: a proof of O(n^6) scaling. The presence of up to three solutions. However, the constant factor on error is 5-10x, which is not great.
+
+* Two approaches from the Penner paper, center of mass and orthogonal distance fitting (ODF).
+
+* The Graphics Gems chapter.
+
+Also note, I addressed this problem in chapter 9 of my [thesis]. That approach gave good results but was very slow. The solution in this blog is strictly better.
+
+## Solving the problem
+
+We have two parameters to optimize. A good place to start is a heat map of the error over the entire two dimensional parameter space. Below is such a heatmap for the Euler spiral with deflections 0.31 and 0.35 radians at the endpoints. The horizontal axis is $\delta_0$, ie the length of the left control arm, and the vertical axis is $\delta_1$, the length of the right control arm.
+
+![A 2D heatmap of error as a function of arm lengths](/assets/bezier_heatmap.png)
+
+Looking at this heatmap, we immediately see two things. First, there is clearly a curved line through the parameter space where the error is lower than on either side. On closer examination, the exact curve is an axis-aligned hyperbola, and we'll be able to characterize it soon. Second, along this curve the story is more complicated. In fact, for this source curve there are three local minima.
+
+But let's take these in turn.
+
+## Signed area
+
+Long story short, the main error-minimizing curve in the parameter space is the set of beziers with the same signed area as the source curve. Mathematically, it is fairly easy to establish the connection between the two concepts: if the areas don't match, it is impossible for the error norm to be small.
+
+Fortunately for us, it is especially easy to calculate and reason about area. Thanks to [Green's theorem], the equation for area of a curve tends to fairly simple, and with the normalization to the x-unit chord above, it actually becomes quite nice:
+
+$$
+\mathrm{area} = \frac{3}{20}(2\delta_0 \sin \theta_0 + 2\delta_1 \sin \theta_1 - \delta_0 \delta_1 \sin(\theta_0 + \theta_1))
+$$
+
+Immediately this formula buys us a lot; it's quite straightforward to calculate $\delta_1$ given $\delta_0$.
+
+We can confirm visually that this equation for area predicts error; in the following graphic we've plotted lines for a small delta above and below the true value. The line of minimum error clearly follows the centerline. The graph also uses a colormap with enhanced contrast for low errors, which among other things more clearly displays the three local minima.
+
+![A 2D heatmap of error as a function of arm lengths](/assets/bezier_heatmap_area.png)
+
+
+### Circular arcs
+
+In the case of fitting circular arcs, it's already been [shown][Approximate a circle with cubic Bézier curves] that the standard approach of fitting the midpoint to lie on the circle doesn't exactly minimize the error, though it's pretty close. In this case, the optimal curve is symmetrical, so we can just set the arm lengths equal and solve the above equation (it becomes a simple quadratic). This approach is not significantly slower or more difficult than the usual.
+
+### Area has meaning
+
+In addition to acting as a sensitive measure of overall curve-fit accuracy, area also has meaning of its own. In particular, when simplifying the outline of a glyph in a font, an area-preserving curve fit means that the amount of ink in a stroke is exactly preserved even if the shape is slightly distorted. As a font designer, I find that a desirable property.
+
+## Solving the second parameter
+
+Restricting ourselves to area-preserving solutions means that we now have a one dimensional parameter space to search. Let's plot the error from the above heatmap along the area-preserving curve, by plotting against $\delta_0$ and deriving $\delta_1$ from that:
+
+![Graph of error as a function of δ₀](/assets/bezier_fit_err_1d.png)
+
+Here we can see the three local minima even more clearly. At this point, it would not be unreasonably to simply apply numerical techniques to find the minima, but we can do even better.
+
+Ideally, we can find a measure of the curve that satisfies the following properties:
+
+* It is a sensitive indicator of overall error.
+* It takes the entire curve into account, not just local features.
+* It is mathematically tractable.
+* It is "most orthogonal" to the area measure.
+
+Some candidates come close. For example, arc length (used in chapter 9 of my [thesis]) satisfies some of these, but in the case of a symmetric curve such as a circular arc is not orthogonal to area at all.
+
+Again long story short, a winner is the first [image moment], calculated in the direction of the chord from the start point to the end point, or we can say x-moment because with our chord normalization this is the x unit vector. Generally, the first moment in 2D is computed in pairs, one for each direction, so it's slightly odd that we're only bothering with one and ignoring the other. But the requirement that it be as orthogonal as possible to area guides this choice.
+
+Plotting the x-moment makes it clear it accurately predicts error:
+
+![Graph of x-moment showing accurate prediction of error](/assets/bezier_fit_moment.png)
+
+In particular, each of the three local minima of the error correspond closely to a zero-crossing of the x-moment. So now we just have to find the solutions of that equation.
+
+Fortunately, Green's theorem also helps us derive an efficient formula for computing the x-moment of our bezier. It's more fiddly, but the same basic idea as area:
+
+$$
+\begin{align}
+\mathrm{xmoment} = \,(\ &34 \delta_0 \sin \theta_0 \\
++ \ & 50 \delta_1 \sin \theta_1 \\
++ \ & 15 \delta_0^2 \sin \theta_0 \cos \theta_0 \\
+- \ & 15 \delta_1^2 \sin \theta_1 \cos \theta_1 \\
+- \ & \delta_0 \delta_1 (33\sin \theta_0 \cos \theta_1 + 9 \cos \theta_0 \sin \theta_1) \\
+- \ &9 \delta_0^2 \delta_1 \sin(\theta_0 + \theta_1) \cos \theta_0 \\
++ \ & 9 \delta_0 \delta_1^2 \sin(\theta_0 + \theta_1) \cos \theta_1
+) / 280
+\end{align}
+$$
+
+It's perfectly reasonable to use numerical techniques to solve this equation (it's much cheaper than computing an error norm relative to the original curve), but again, we can do better.
+
+### A quartic polynomial
+
+We're looking for the simultaneous solution of the area and x-moment constraints. Using some mathematical tricks (very similar to those used in the Penner paper), we can reduce the whole thing to a single quartic polynomial.
+
+* Transform instances of $\delta_0 \delta_1$ into an equation of the form $a\delta_0 + b\delta_1 + c$
+
+* Replace all instances of $\delta_1$ by its area-preserving solution in terms of $\delta_0$.
+
+* Multiply the polynomial by $(\delta_0 \sin (\theta_0 + \theta_1) - 2 \sin \theta_1)^2$
+
+Given a [quartic polynomial], there are both analytical and numeric solutions (the latter can still be desirable because it can be tricky to achieve numerical robustness).
+
+In addition to the increased leverage for solving techniques, the existence of a polynomial gives us great insight into the solution space, for example the number of solutions.
+
+### The fourth solution
+
+A quartic polynomial can have up to four solutions, but so far we've been talking about triplets of solutions. What about the fourth?
+
+It turns out that it's also a valid solution of the area and x-moment constraints, but not at all close to the original curve, as it contains a loop. When computing signed area, the lobe enclosed by the loop has opposite sign as the rest of the curve, and similarly for moment.
+
+[TODO show example]
+
+Thus, in the general case we can talk about a triplet of similar curves and one "nemesis" that has a different loop structure, all of which share the same area and x-moment.
+
+## Near misses
+
+If we only consider exact solutions of the x-moment constraint, we may miss some error minima. Consider the Euler spiral with deflections of 0.285 and 0.35 radians as a source curve to fit. The graph of x-moment and error looks like this:
+
+![Graph of x-moment showing near approach to axis](/assets/bezier_fit_near_miss.png)
+
+Here, on the right side of the graph, the x-moment approaches zero but doesn't actually cross the x axis.
+
+* Optimal solution is actually near x-moment minimum.
+
+* These solutions correspond to "surprising oval" in Penner paper.
+
+## Conclusion and discussion
+
+* Cubic beziers have O(n^6) scaling. This algorithm lets you realize that level of accuracy.
+
+* In addition to a very fast algorithm, insights into cubic beziers. The presence of triplets of C-shaped curves.
+
+* Because of branches, double roots, etc, control points can move a lot in response to small changes in the source curve. This makes the result *not* in general interpolation compatible.
+
+Thanks to Bernat Guillen for discussion.
+
+[Fitting a Cubic Bézier to a Parametric Function]: https://www.tandfonline.com/doi/abs/10.1080/07468342.2019.1583038
+[Secrets of smooth Béziers revealed]: https://raphlinus.github.io/curves/2018/12/08/euler-spiral.html
+[High accuracy geometric Hermite interpolation]: https://www.sciencedirect.com/science/article/abs/pii/0167839687900021
+[An algorithm for automatically fitting digitized curves]: https://dl.acm.org/doi/10.5555/90767.90941
+[parallel curve]: https://raphlinus.github.io/curves/2021/02/19/parallel-curves.html
+[hyperbezier]: https://www.cmyr.net/blog/hyperbezier.html
+[Fréchet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+[L2]: https://mathworld.wolfram.com/L2-Norm.html
+[Green's theorem]: https://en.wikipedia.org/wiki/Green%27s_theorem
+[Approximate a circle with cubic Bézier curves]: https://spencermortensen.com/articles/bezier-circle/
+[thesis]: https://www.levien.com/phd/phd.html
+[Image moment]: https://en.wikipedia.org/wiki/Image_moment
+[quartic polynomial]: https://en.wikipedia.org/wiki/Quartic_function
