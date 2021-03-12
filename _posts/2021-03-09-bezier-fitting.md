@@ -26,13 +26,13 @@ Before getting into the solution, we'll need to state the problem more carefully
 
 One meaningful metric is the [Fréchet distance]. It can be explained with a little story. An aircraft engineer goes on a walk with their dog Pierre, and the path followed by each can be described by a curve. What is the minimum length leash that allows both to complete their paths? That is the Fréchet distance.
 
-Also note that the Fréchet distance is closely related to the Hausdorff distance, but the two can differ when the path loops back or crosses itself. For stroked curves, the Hausdorff distance is more relevant, but for filled paths such as font outlines, Fréchet preserves winding number in a way that Hausdorff doesn't guarantee.
+Also note that the Fréchet distance is closely related to the [Hausdorff distance], but the two can differ when the path loops back or crosses itself. For stroked curves, the Hausdorff distance is more relevant, but for filled paths such as font outlines, Fréchet preserves winding number in a way that Hausdorff doesn't guarantee.
 
 For solving optimization problems, the Fréchet distance is not ideal, as it effectively measures the distance of a single point, the maximum error. One can informally describe an [L2 error metric] as similar, except that instead of describing the maximum length of the leash, it describes an *effort* of handling the dog which is proportional to the square of the distance of the dog from the engineer. Minimizing an L2 error means minimizing that total effort. This error metric takes into account the entire path, and thus is smoother in response to small changes of the parameters.
 
 I believe there is no one perfect error metric, and the choice depends on the context. Fortunately, for smooth curves such as we're likely to find in fonts, the differences between these error metrics are subtle, and we can confidently choose the one that's easiest to reason about mathematically. For this blog post, that's the L2 norm.
 
-Two things more to say: for smooth curves + low error, leash is generally perpendicular. Also, normalized arc length (both engineer and Pierre move at a constant speed) is a good approximation, though strictly larger.
+For smooth curves and a relatively low threshold for error, the leash is generally perpendicular to the main path, meaning we can pay attention only to the component of the error vector that is perpenducular to the tangent curve. In addition, while the Fréchet distance represents a minimum over all possible parameterizations of the paths, in practice we can get a good approximation (and in any case an upper bound) by choosing normalized arc length as the parameterization, meaning both Pierre and the engineer move at constant speed along the path (and that speed may be very slightly different if the arc lengths are very slightly different, so that they both end up at the end point at the same time).
 
 ## Stating the problem
 
@@ -50,13 +50,13 @@ Then, the control points of the Bézier are $(0, 0)$, $(\delta_0 \cos \theta_0, 
 
 Having stated the problem, we can take a look at the existing literature.
 
-An important early solution is G2 geometric Hermite interpolation, as shown by de Boor et al in [High accuracy geometric Hermite interpolation]. This solution finds the Bézier curve matching endpoints, tangents at endpoints, and curvature at endpoints. The paper expresses these constraints as a system of two simultaneous quadratic equations, and finds that there are up to three solutions. The paper also proves $O(n^6)$ scaling, meaning that subdiving the curve in half reduces the error by a factor of 64.
+An important early solution is G2 geometric Hermite interpolation, as shown by de Boor et al in [High accuracy geometric Hermite interpolation]. This solution finds a Bézier curve matching endpoints, tangents at endpoints, and curvature at endpoints. The paper expresses these constraints as a system of two simultaneous quadratic equations, and finds that there are up to three solutions. The paper also proves $O(n^6)$ scaling, meaning that subdiving the curve in half reduces the error by a factor of 64.
 
 A much more recent result is the paper [Fitting a Cubic Bézier to a Parametric Function] by Alvin Penner. This paper presents three different solutions. First, it reimplements the curvature fitting approach of de Boor et al, finding that while it does have $O(n^6)$ error scaling, there is also a constant factor of around 5-10, which is not great. The two simultaneous quadratics can be combined into a single quartic polynomial, which is readily and efficiently solved.
 
 Next, Penner presents a solution based on matching the center of mass of the Bézier to the source curve, and also reduces this to a quartic polynomial. This approach generally works well, but does not find an optimal solution in all cases.
 
-Finally, Penner proposes the use of Orthogonal Distance Fitting, a newer optimization technique. This technique finds an optimal value, but needs help with an initial setting of the parameters (Penner proposes using the center of mass solution for this), and is also very slow as it requires repeated calculation of error metrics and iterates towards the optimal solution.
+Finally, Penner proposes the use of Orthogonal Distance Fitting, a newer optimization technique. This technique finds an optimal value, but needs help with an initial setting of the parameters (Penner proposes using the center of mass solution for this), and is also very slow as it requires repeated calculation of error metrics and iteration towards the optimal solution.
 
 A well-known solution to curve fitting is the Graphics Gems chapter [An algorithm for automatically fitting digitized curves]. It should be noted, this takes scattered points as input, and doesn't guarantee the tangent angles at the endpoints. It's based on iterative improvement of the solution, and as such can get "stuck" in one of the local minima, as we'll explore in much more detail below.
 
@@ -217,7 +217,7 @@ Thanks to Bernat Guillen for discussion.
 [parallel curve]: https://raphlinus.github.io/curves/2021/02/19/parallel-curves.html
 [hyperbezier]: https://www.cmyr.net/blog/hyperbezier.html
 [Fréchet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
-[L2]: https://mathworld.wolfram.com/L2-Norm.html
+[L2 error metric]: https://mathworld.wolfram.com/L2-Norm.html
 [Green's theorem]: https://en.wikipedia.org/wiki/Green%27s_theorem
 [Approximate a circle with cubic Bézier curves]: https://spencermortensen.com/articles/bezier-circle/
 [thesis]: https://www.levien.com/phd/phd.html
@@ -226,3 +226,4 @@ Thanks to Bernat Guillen for discussion.
 [Runebender]: https://github.com/linebender/runebender
 [Potrace]: http://potrace.sourceforge.net/
 [Euler spiral]: https://en.wikipedia.org/wiki/Euler_spiral
+[Hausdorff distance]: https://en.wikipedia.org/wiki/Hausdorff_distance

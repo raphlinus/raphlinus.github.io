@@ -8,7 +8,7 @@
     <circle cx='500.0' cy='170.0' r='3' fill='black' />
     <circle cx='199.0402737891614' cy='102.24290319259576' r='2' fill='blue' />
     <circle cx='389.9162751932531' cy='31.277089566227744' r='2' fill='blue' />
-    <text x='100' y='190' text-anchor='middle'>(0, 0)</text>
+    <text x='105' y='190' text-anchor='left'>(0, 0)</text>
     <text x='500' y='190' text-anchor='middle'>(1, 0)</text>
     <text x='140' y='130' text-anchor='middle'>δ₀</text>
     <text x='460' y='100' text-anchor='middle'>δ₁</text>
