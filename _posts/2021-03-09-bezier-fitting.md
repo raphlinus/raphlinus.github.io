@@ -210,7 +210,7 @@ We have presented a highly efficient and accurate solution to cubic Bézier curv
 
 Because of branches and double roots in this polynomial, the parameters of the solution can move around a lot or even jump in response to small changes in the source curve. It is the nature of cubic Béziers to be able to fit a source curve very accurately (with $O(n^6)$ scaling), but if these optimized curves are to be used as masters in an interpolation scheme, for example for variable fonts, they are not necessarily interpolation compatible, meaning that the result of interpolating between two of these masters may not closely resemble either one of them.
 
-Thanks to Bernat Guillen for discussion.
+Thanks to Bernat Guillen for discussion. Discuss on [Hacker News](https://news.ycombinator.com/item?id=26448100) and [TypeDrawers](https://typedrawers.com/discussion/3975/fitting-cubic-bezier-curves/).
 
 [Fitting a Cubic Bézier to a Parametric Function]: https://www.tandfonline.com/doi/abs/10.1080/07468342.2019.1583038
 [Secrets of smooth Béziers revealed]: https://raphlinus.github.io/curves/2018/12/08/euler-spiral.html
