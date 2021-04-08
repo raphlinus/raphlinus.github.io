@@ -34,7 +34,7 @@ As with many things, there is a choice between building a 2D graphics engine, or
 
 An advantage of "build" is that rendering is more likely to be consistent across multiple platforms; similarly, the testing burden is reduced. In addition, a state-of-the art renderer has the potential to be more performant.
 
-An advantage of "buy" is that the amount of Rust code to be compiled is potentially a lot smaller. As an extreme, [Skia](https://skia.org/) is a 349MB git clone, not counting any of the dependencies (which of course are managed with a [bespoke tool](https://skia.org/user/download)). Also, depending on relative quality of implementation, it might also be more performant, as there's potential. Finally, very mature 2D graphics libraries already exist, while there's a lot to do to build a new one.
+An advantage of "buy" is that the amount of Rust code to be compiled is potentially a lot smaller. As an extreme, [Skia](https://skia.org/) is a 349MB git clone, not counting any of the dependencies (which of course are managed with a [bespoke tool](https://skia.org/docs/user/download/)). Also, depending on relative quality of implementation, it might also be more performant, as there's potential. Finally, very mature 2D graphics libraries already exist, while there's a lot to do to build a new one.
 
 Ultimately I think both choices are valid, it comes down to quantitative issues, and, in an ideal world, it's a config choice.
 
