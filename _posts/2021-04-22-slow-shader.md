@@ -1,12 +1,12 @@
 ---
 layout: post
 title:  "The case of the curiously slow shader"
-date:   2021-04-22 07:53:42 -0700
+date:   2021-04-28 07:53:42 -0700
 categories: [gpu]
 ---
-These, days a significant amount of my time and energy is getting [piet-gpu], a compute-focused 2D rendering engine, to run well on mobile hardware. Not too long ago, I got it running on Pixel 4, and breathlessly waited for the performance numbers, which turned out to be... disappointing. I was able to figure out why, but therein lies a story.
+These days, a significant amount of my time and energy is getting [piet-gpu], a compute-focused 2D rendering engine, to run well on mobile hardware. Not too long ago, I got it running on Pixel 4, and breathlessly waited for the performance numbers, which turned out to be... disappointing. I was able to figure out why, but therein lies a story.
 
-To track this down, I had to dive pretty deep into the lower levels of GPU infrastructure, and learned a lot in the process. And I'll end with a look into the Vulkan memory model and why it can help with these performance portability concerns going forward.
+To track this down, I had to dive pretty deep into the lower levels of GPU infrastructure, and learned a lot in the process. And I'll end with a look into the Vulkan memory model and why it could help with these performance portability concerns going forward.
 
 ## Initial results
 
@@ -14,15 +14,17 @@ To recap, piet-gpu is an experimental rendering engine designed for vector graph
 
 The early results on desktop GPU where encouraging. On high-end discrete cards, performance is amazing, but that's not surprising considering how much raw horsepower they have. Integrated graphics is perhaps a more useful baseline for comparison.
 
-[TODO: Intel 630 timings]
+The test is rendering a Ghostscript tiger at a resolution of 1088x2288 pixels. There are 7 pipeline stages, most of which are very quick to run, so the bulk is in the final stage, fine rasterization. On Intel HD Graphics 630, the first six pipelines take a total of 0.86 ms, and the fine rasterization 2.04ms at the best setting of CHUNK (about which more later; in any case performance is not very sensitive to this tuning parameter).
 
-Running the same workload on a Pixel 4 gave these results.
+<img src="/assets/gpu_intel_630_timings.png" width="608" alt="Timings of Intel 630" />
 
-[TODO: fill in real numbers]
+Running the same workload on a Pixel 4 gave much worse results. The first six stages take a total of 2.45ms, but the fine rasterization stage is 11.7ms, which is *much* slower than the Intel reference. Further, it's very dependent on this CHUNK parameter, which if nothing else is evidence that the performance characteristics are very differnt.
 
-These numbers are disappointing. It's barely capable of 60fps on the tiger, but that's a simpler workload, and the hardware is actually capable of 90fps.
+<img src="/assets/gpu_adreno_640_timings.png" width="608" alt="Timings of Adreno 640" />
 
-But already there are some clues. Most of the pipeline stages are reasonably fast, but the fine rasterization stage is disproportionately slow. That's evidence that the GPU has raw horsepower comparable to the Intel chip, but there's something going wrong in this one shader.
+These numbers are disappointing. It's barely capable of 60fps on the tiger, but that's a simpler workload, and the display on this hardware actually has a refresh rate of 90fps.
+
+But already there are some clues. Most of the pipeline stages are reasonably fast, but the fine rasterization stage is disproportionately slow. That's evidence that the GPU has raw horsepower roughly half of the Intel chip, but there's something going wrong in this one shader.
 
 ## Reading performance counters
 
@@ -32,13 +34,15 @@ These performance counters are especially useful for ruling out some hypotheses.
 
 At first, I couldn't get AGI to work, but [upgrading to the 1.1 dev version](https://github.com/google/agi/issues/760) fixed that problem.
 
+![Screenshot of Android GPU inspector](/assets/gpu_agi_screenshot.png)
+
 When I did get it running, initially the information didn't seem very useful. The one thing that stood out was very low ALU utilization, which wasn't a surprise considering the other things I was seeing.
 
 To me, performance counters are a fairly rough indicator. But I was also able to do some black box testing and instrumentation, and that helped rule out several hypotheses. One knob I could easily adjust is what's called `CHUNK` in the shader source. One of the optimizations available to a compute shader (but not a fragment shader) is that each thread can render and write multiple pixels, which especially has the effect of amortizing the memory traffic cost of reading the input scene description. On the flip side, increasing `CHUNK` also makes the shader more register-hungry, as each thread has to maintain the RGBA color value and other state (area coverage buffer) per-pixel.
 
 AGI has no direct way to indicate the number of workgroups running concurrently, but it was fairly easy to instrument the code to report that, using atomic counters. (Increment a counter at the beginning of the shader, decrement at the end, and accumulate that into a maximum occupancy value).
 
-[TODO include occupancy measurements]
+This testing shows that the number of workgroups is 13, 24, 32, for a CHUNK size of 1, 2, and 4, respectively. Since the number of subgroups is 4/CHUNK, that's actually saying that the number of subgroups scheduled is quite good even for low values of CHUNK. Additionally, these occupancy numbers are comparable to much simple shaders.
 
 So at this point, we know basically two things. First, we can essentially rule out any effect of "too few registers," either spilling or low occupancy. Second, by adjusting `CHUNK` it seems that the memory reads (of the vector path data in particular) are more expensive than they should be. On desktop GPUs, the effect of decreasing `CHUNK` has some performance impact, but not very much, largely because the reads by different subgroups of the same path data are expected to hit in L1 cache. As we'll see later, this is a real clue.
 
@@ -49,6 +53,10 @@ By the way, another way in which performance counters are extremely useful is re
 From experimentation, a vague shape was beginning to form. Something about this shader was causing poor performance; simple workloads (even fairly ALU intensive) ran just fine, but the real thing did not. Given that, at this point, the shader compiler and hardware were pretty much a black box, I set to systematically create a series of workloads that explored the space between a simple fast shader and the actual piet-gpu fine rasterizer, to see where the cliff was.
 
 After a fair amount of time exploring dead ends, I found that commenting out the BeginClip and EndClip operations improved performance signficicantly (of course at the expense of making clips not render correctly). This was especially interesting because the tiger workload doesn't have any clip operations; it was the mere presence of these in the code that was causing the problem.
+
+The performance was much closer to what I was hoping - only about 2x slower than the Intel reference, in line with my expectations for the hardware capability and clock speed. In particular, fine rasterization was 4.22ms at the best CHUNK value, and, like the Intel reference, not hugely sensitive to the setting.
+
+<img src="/assets/gpu_adreno_640_noclip_timings.png" width="608" alt="Timings of Adreno 640 with clip disabled" />
 
 Continuing to bisect, it was specifically the lines in BeginClip that were writing to memory. Further, in what I started to call the "happy path," overall performance was only weakly affected by `CHUNK`, pointing strongly to the hypothesis that whatever was happening was making memory reads slow, and in particular caching not effective.
 
@@ -62,22 +70,22 @@ The way this works in piet-gpu is that the earlier stages of the pipeline (coars
 
 At this point, I had no desire to remain an ignoramus; I felt that we must know what's really going on, and determined that we shall know. The next step was to [read shader assembly][How To Read Shader Assembly].
 
-For certain GPUs, especially Radeon, this is easy, as the shader compiler is open source and widely available. In fact, the Radeon shader analyzer is available on the [Shader playground], a resource analogous to [Godbolt] for shaders. But for mobile GPUs, it's a bit harder, as the drivers are proprietary.
+For certain GPUs, especially Radeon, this is easy, as the shader compiler is open source and widely available. In fact, the Radeon shader analyzer is available on the [Shader playground], a resource analogous to [Godbolt] for shaders. But for mobile GPUs, it's a bit harder, as the vendor drivers are proprietary.
 
 Fortunately, for someone as determined as I was, it's possible, largely thanks to the existence of free tools, especially [Freedreno]. I was prepared to go as deep as I needed, including getting Freedreno working on some hardware; if it performed well, that would point to the proprietary driver. But if the performance matched, I would easily be able to see the ISA it produced, and dig into that.
 
-As it turned out, I didn't have to go that far. The [glGetProgramBinary] function can be used to spit out a binary, and then the [disassembly tools] in Mesa could spit out disassembler for me to read. There's a bit more complexity to this, as the drivers produce both a compressed and an uncompressed format. The corresponding Vulkan call is [vkGetPipelineCacheData], but I was only able to get the compressed form. I strongly suspect it's possible to work out the compression format, but when I got readable results from the GL route, that was good enough for me.
+As it turned out, I didn't have to go that far. The [glGetProgramBinary] function can be used to spit out a binary even from the vendor driver, and then the [disassembly tools] in Mesa could spit out disassembler for me to read. This way, I could gain more insight into the performance characteristics of the configuration I actually care about, which is vendor drivers. There's a bit more complexity to this, as the drivers produce both a compressed and an uncompressed format. The corresponding Vulkan call is [vkGetPipelineCacheData], but I was only able to get the compressed form. I strongly suspect it's possible to work out the compression format, but when I got readable results from the GL route, that was good enough for me. (It's possible that the OpenGL and Vulkan paths would give different binaries, but I don't have any reason to believe that)
 
-Looking at the disassembly (the full traces are in the [piet-gpu bug]), one thing immediately stuck out. In the happy path, all reads from memory use the `isam` (Image SAMple) instruction, like this:
+Looking at the disassembly (the full traces are in the [piet-gpu bug], and also in [a gist](https://gist.github.com/raphlinus/2bf7e8dcc2d2cb7a3eda3aff359f69e0)), one thing immediately stuck out. In the happy path, all reads from memory use the `isam` (Image SAMple) instruction, like this:
 
 ```
-:5:0166:0205[a0005100x_02000001x] isam (s32)(x)r0.x, r0.x, s#0, t#1
+    isam (s32)(x)r0.x, r0.x, s#0, t#1
 ```
 
 But in the sad path, the same memory buffer is being read with the `ldib` (LoaD Image Buffer) instruction instead:
 
 ```
-:6:0339:0402[c0260201x_01618001x] ldib.untyped.1d.u32.1.imm r0.y, r0.y, 1
+    ldib.untyped.1d.u32.1.imm r0.y, r0.y, 1
 ```
 
 Checking in with [Rob Clark], the author of Freedreno, who now works at Google also, yielded more insight. The `isam` instruction goes through the texture cache (TPL1), while the `ldib` instruction bypasses that and goes straight to memory.
@@ -92,7 +100,7 @@ Given this knowledge, a fix is fairly straightforward, and we also know how to a
 
 In the middle of the investigation, I viewed the proprietary shader compiler with extreme suspicion: it's making my code run slow, for no good reason that I could see, and also not matching the performance expectations set by other (desktop) GPUs. But now I understand much better why it's doing that.
 
-Even so, in the longer term I think it's possible to do much better, and I believe the key to that is the [Vulkan memory model]. (I've written about this before in my [prefix sum][Prefix sum on Vulkan] blog post, but at that time I did not observe a substantial performance difference and this time I do)
+Even so, in the longer term I think it's possible to do much better, and I believe the key to that is the [Vulkan memory model]. (I've written about this before in my [prefix sum][Prefix sum on Vulkan] blog post, but at that time I did not observe a substantial performance difference and this time I do.)
 
 As in the [CPU case,][Memory Consistency Models: A Tutorial] the memory model is an abstraction over certain hardware and compiler mechanisms that can either uphold or break assumptions about memory coherence. And in both cases, it's all about the program *explicitly* indicating what guarantees it needs, so the shader compiler and hardware are free to apply whatever optimizations they like, as long as the semantics are respected.
 
@@ -101,6 +109,8 @@ On an Intel CPU, respecting the memory model is fairly simple; its total store o
 On a GPU, much more can go wrong, but the principles are the same. There are generally more levels of explicit caching, and more opportunities for parallelism, but at the end of the day, the compiler will convert explicit atomic operations with memory order semantics into code that respects that semantics. Depending on the details, it may emit barrier instructions, select load/store instructions that bypass cache (as would be the case here), or other similar mechanisms. Note that the pipeline barriers familiar to all Vulkan programmers are similar, but different in granularity - those generally cause a cache flush and barrier *between* shader dispatches, while the memory model is about enforcing semantics *within* a shader, but possibly between different workgroups, different subgroups, or even different threads (invocations) within a subgroup.
 
 In this particular case, the shader needs only the most relaxed possible memory semantics; each memory write is consumed only by a read on the same thread, which means no special semantics are necessary. Without taking the Vulkan memory model into account, the compiler has no way to know that. The proprietary compiler *does* [report][Pixel 4 at vulkan.gpuinfo.org] that it respects the Vulkan memory model, but it's not lying; if it always generates conservative code and then ticks the "support" bit, it's satisfying the requirements. What is fair to say is that it's missing an opportunity to optimize. Even so, I understand why they haven't prioritized it. When I researched my prefix sum blog post, I didn't find any evidence people were actually writing shaders that used the Vulkan memory model, and I haven't heard of any since.
+
+In the above, I'm assuming that relaxed read/writes are as efficient as a memory traffic pattern consisting only of reads. I believe that's true on the Adreno hardware, but might not be universally true. The safest bet is to segregate buffers so that if you have read-only traffic from one of them, it's in a separate buffer from others you may be writing to.
 
 I should also note that these differences in the way compilers handle memory coherence are not in any way specific to mobile vs desktop; it would not have been surprising to see this issue pop up on desktop GPU with very aggressive caching but not on a simpler mobile architecture. As an example of aggressive caching, [RDNA](https://www.amd.com/system/files/documents/rdna-whitepaper.pdf) has some cache attached to a SIMD execution unit, which is not necessarily coherent with caches of other SIMD execution units even in the same workgroup.
 
@@ -112,7 +122,7 @@ Developing GPU compute shaders risks mysterious performance slowdowns when deplo
 
 One such slowdown is overly conservative memory coherency. In the future, the Vulkan memory model promises to make these performance concerns more explicit and predictable - a slowdown when you're explicitly asking for barriers or coherent semantics would not be surprising. In the meantime, it's something to be aware of and test. In particular, just because performance is good on one set of GPUs and drivers is not a guarantee it won't be a problem on others.
 
-Thanks to Rob Clark for much valuable insight about Adreno ISA, Lei Zhang for pointing me to many useful Adreno (and mobile GPU resources), Hugues Hevrard for help with AGI, and Elias Naur for going on this journey with me, as well as tool support in the form of making glGetProgramBinary easy to run.
+Thanks to Rob Clark for much valuable insight about Adreno ISA, Lei Zhang for pointing me to many useful Adreno (and mobile GPU resources), Hugues Evrard for help with AGI, and Elias Naur for going on this journey with me, as well as tool support in the form of making glGetProgramBinary easy to run.
 
 [Android GPU Inspector]: https://gpuinspector.dev/
 [A6xx SP]: https://gitlab.freedesktop.org/freedreno/freedreno/-/wikis/A6xx-SP
