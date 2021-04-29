@@ -18,7 +18,7 @@ The test is rendering a Ghostscript tiger at a resolution of 1088x2288 pixels. T
 
 <img src="/assets/gpu_intel_630_timings.png" width="608" alt="Timings of Intel 630" />
 
-Running the same workload on a Pixel 4 gave much worse results. The first six stages take a total of 2.45ms, but the fine rasterization stage is 11.7ms, which is *much* slower than the Intel reference. Further, it's very dependent on this CHUNK parameter, which if nothing else is evidence that the performance characteristics are very differnt.
+Running the same workload on a Pixel 4 gave much worse results. The first six stages take a total of 2.45ms, but the fine rasterization stage is 11.7ms, which is *much* slower than the Intel reference. Further, it's very dependent on this CHUNK parameter, which if nothing else is evidence that the performance characteristics are very different.
 
 <img src="/assets/gpu_adreno_640_timings.png" width="608" alt="Timings of Adreno 640" />
 
