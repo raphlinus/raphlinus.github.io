@@ -133,7 +133,8 @@ Thanks to Rob Clark for much valuable insight about Adreno ISA, Lei Zhang for po
 [Freedreno]: https://docs.mesa3d.org/drivers/freedreno.html
 [glGetProgramBinary]: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramBinary.xhtml
 [disassembly tools]: https://github.com/mesa3d/mesa/blob/master/src/freedreno/decode/pgmdump2.c
-[piet-gpu]: https://github.com/linebender/piet-gpu/issues/83
+[piet-gpu]: https://github.com/linebender/piet-gpu
+[piet-gpu bug]: https://github.com/linebender/piet-gpu/issues/83
 [vkGetPipelineCacheData]: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkGetPipelineCacheData.html
 [Rob Clark]: https://www.phoronix.com/scan.php?page=news_item&px=Google-Graphics-Rob-Clark
 [Prefix sum on Vulkan]: https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html
