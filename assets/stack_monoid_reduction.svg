@@ -1,0 +1,230 @@
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text {
+      font-family: Arial, sans-serif;
+    }
+  </style>
+  <text x="13.0" y="30" fill="#444" font-size="12px">0</text>
+  <text x="28.125" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="49.25" y="30" fill="#444" font-size="12px">1</text>
+  <text x="64.375" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="85.5" y="30" fill="#444" font-size="12px">2</text>
+  <text x="100.625" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="121.75" y="30" fill="#444" font-size="12px">3</text>
+  <text x="136.875" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="158.0" y="30" fill="#444" font-size="12px">4</text>
+  <text x="173.125" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="194.25" y="30" fill="#444" font-size="12px">5</text>
+  <text x="209.375" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="230.5" y="30" fill="#444" font-size="12px">6</text>
+  <text x="245.625" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="266.75" y="30" fill="#444" font-size="12px">7</text>
+  <text x="281.875" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="303.0" y="30" fill="#444" font-size="12px">8</text>
+  <text x="318.125" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="339.25" y="30" fill="#444" font-size="12px">9</text>
+  <text x="354.375" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="375.5" y="30" fill="#444" font-size="12px">10</text>
+  <text x="390.625" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="411.75" y="30" fill="#444" font-size="12px">11</text>
+  <text x="426.875" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="448.0" y="30" fill="#444" font-size="12px">12</text>
+  <text x="463.125" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="484.25" y="30" fill="#444" font-size="12px">13</text>
+  <text x="499.375" y="53" text-anchor="middle" fill="#000">(</text>
+  <text x="520.5" y="30" fill="#444" font-size="12px">14</text>
+  <text x="535.625" y="53" text-anchor="middle" fill="#000">)</text>
+  <text x="556.75" y="30" fill="#444" font-size="12px">15</text>
+  <text x="571.875" y="53" text-anchor="middle" fill="#000">(</text>
+  <rect x="10" y="34" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="34" x2="46.25" y2 ="64" stroke="#000" />
+  <line x1="82.5" y1="34" x2="82.5" y2 ="64" stroke="#000" />
+  <line x1="118.75" y1="34" x2="118.75" y2 ="64" stroke="#000" />
+  <line x1="155.0" y1="34" x2="155.0" y2 ="64" stroke="#000" />
+  <line x1="191.25" y1="34" x2="191.25" y2 ="64" stroke="#000" />
+  <line x1="227.5" y1="34" x2="227.5" y2 ="64" stroke="#000" />
+  <line x1="263.75" y1="34" x2="263.75" y2 ="64" stroke="#000" />
+  <line x1="300.0" y1="34" x2="300.0" y2 ="64" stroke="#000" />
+  <line x1="336.25" y1="34" x2="336.25" y2 ="64" stroke="#000" />
+  <line x1="372.5" y1="34" x2="372.5" y2 ="64" stroke="#000" />
+  <line x1="408.75" y1="34" x2="408.75" y2 ="64" stroke="#000" />
+  <line x1="445.0" y1="34" x2="445.0" y2 ="64" stroke="#000" />
+  <line x1="481.25" y1="34" x2="481.25" y2 ="64" stroke="#000" />
+  <line x1="517.5" y1="34" x2="517.5" y2 ="64" stroke="#000" />
+  <line x1="553.75" y1="34" x2="553.75" y2 ="64" stroke="#000" />
+  <text x="13.0" y="90" fill="#a33">1</text>
+  <text x="49.25" y="90" fill="#a33">1</text>
+  <text x="85.5" y="90" fill="#a33">1</text>
+  <text x="121.75" y="90" fill="#a33">0</text>
+  <text x="136.875" y="114" text-anchor="middle" fill="#181">3</text>
+  <text x="158.0" y="90" fill="#a33">0</text>
+  <text x="173.125" y="114" text-anchor="middle" fill="#181">4</text>
+  <text x="194.25" y="90" fill="#a33">0</text>
+  <text x="209.375" y="114" text-anchor="middle" fill="#181">5</text>
+  <text x="230.5" y="90" fill="#a33">0</text>
+  <text x="245.625" y="114" text-anchor="middle" fill="#181">6</text>
+  <text x="266.75" y="90" fill="#a33">1</text>
+  <text x="303.0" y="90" fill="#a33">0</text>
+  <text x="318.125" y="114" text-anchor="middle" fill="#181">8</text>
+  <text x="339.25" y="90" fill="#a33">1</text>
+  <text x="375.5" y="90" fill="#a33">1</text>
+  <text x="411.75" y="90" fill="#a33">0</text>
+  <text x="426.875" y="114" text-anchor="middle" fill="#181">11</text>
+  <text x="448.0" y="90" fill="#a33">0</text>
+  <text x="463.125" y="114" text-anchor="middle" fill="#181">12</text>
+  <text x="484.25" y="90" fill="#a33">0</text>
+  <text x="499.375" y="114" text-anchor="middle" fill="#181">13</text>
+  <text x="520.5" y="90" fill="#a33">1</text>
+  <text x="556.75" y="90" fill="#a33">0</text>
+  <text x="571.875" y="114" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="94" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="94" x2="46.25" y2 ="124" stroke="#000" />
+  <line x1="82.5" y1="94" x2="82.5" y2 ="124" stroke="#000" />
+  <line x1="118.75" y1="94" x2="118.75" y2 ="124" stroke="#000" />
+  <line x1="155.0" y1="94" x2="155.0" y2 ="124" stroke="#000" />
+  <line x1="191.25" y1="94" x2="191.25" y2 ="124" stroke="#000" />
+  <line x1="227.5" y1="94" x2="227.5" y2 ="124" stroke="#000" />
+  <line x1="263.75" y1="94" x2="263.75" y2 ="124" stroke="#000" />
+  <line x1="300.0" y1="94" x2="300.0" y2 ="124" stroke="#000" />
+  <line x1="336.25" y1="94" x2="336.25" y2 ="124" stroke="#000" />
+  <line x1="372.5" y1="94" x2="372.5" y2 ="124" stroke="#000" />
+  <line x1="408.75" y1="94" x2="408.75" y2 ="124" stroke="#000" />
+  <line x1="445.0" y1="94" x2="445.0" y2 ="124" stroke="#000" />
+  <line x1="481.25" y1="94" x2="481.25" y2 ="124" stroke="#000" />
+  <line x1="517.5" y1="94" x2="517.5" y2 ="124" stroke="#000" />
+  <line x1="553.75" y1="94" x2="553.75" y2 ="124" stroke="#000" />
+  <path d="m14.0 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m50.25 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m86.5 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m122.75 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m159.0 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m195.25 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m231.5 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m267.75 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m304.0 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m340.25 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m376.5 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m412.75 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m449.0 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m485.25 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m521.5 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <path d="m557.75 128l0 3l28.25 0l0 -3" stroke="#000" />
+  <text x="13.0" y="150" fill="#a33">2</text>
+  <text x="85.5" y="150" fill="#a33">1</text>
+  <text x="136.875" y="174" text-anchor="middle" fill="#181">3</text>
+  <text x="158.0" y="150" fill="#a33">0</text>
+  <text x="173.125" y="174" text-anchor="middle" fill="#181">4</text>
+  <text x="209.375" y="174" text-anchor="middle" fill="#181">5</text>
+  <text x="230.5" y="150" fill="#a33">0</text>
+  <text x="303.0" y="150" fill="#a33">0</text>
+  <text x="375.5" y="150" fill="#a33">1</text>
+  <text x="426.875" y="174" text-anchor="middle" fill="#181">11</text>
+  <text x="448.0" y="150" fill="#a33">0</text>
+  <text x="463.125" y="174" text-anchor="middle" fill="#181">12</text>
+  <text x="499.375" y="174" text-anchor="middle" fill="#181">13</text>
+  <text x="520.5" y="150" fill="#a33">1</text>
+  <text x="571.875" y="174" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="154" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="154" x2="46.25" y2 ="184" stroke="#000" />
+  <line x1="82.5" y1="154" x2="82.5" y2 ="184" stroke="#000" />
+  <line x1="118.75" y1="154" x2="118.75" y2 ="184" stroke="#000" />
+  <line x1="155.0" y1="154" x2="155.0" y2 ="184" stroke="#000" />
+  <line x1="191.25" y1="154" x2="191.25" y2 ="184" stroke="#000" />
+  <line x1="227.5" y1="154" x2="227.5" y2 ="184" stroke="#000" />
+  <line x1="263.75" y1="154" x2="263.75" y2 ="184" stroke="#000" />
+  <line x1="300.0" y1="154" x2="300.0" y2 ="184" stroke="#000" />
+  <line x1="336.25" y1="154" x2="336.25" y2 ="184" stroke="#000" />
+  <line x1="372.5" y1="154" x2="372.5" y2 ="184" stroke="#000" />
+  <line x1="408.75" y1="154" x2="408.75" y2 ="184" stroke="#000" />
+  <line x1="445.0" y1="154" x2="445.0" y2 ="184" stroke="#000" />
+  <line x1="481.25" y1="154" x2="481.25" y2 ="184" stroke="#000" />
+  <line x1="517.5" y1="154" x2="517.5" y2 ="184" stroke="#000" />
+  <line x1="553.75" y1="154" x2="553.75" y2 ="184" stroke="#000" />
+  <path d="m14.0 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m86.5 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m159.0 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m231.5 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m304.0 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m376.5 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m449.0 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <path d="m521.5 188l0 3l64.5 0l0 -3" stroke="#000" />
+  <text x="13.0" y="210" fill="#a33">3</text>
+  <text x="136.875" y="234" text-anchor="middle" fill="#181">3</text>
+  <text x="158.0" y="210" fill="#a33">0</text>
+  <text x="245.625" y="234" text-anchor="middle" fill="#181">4</text>
+  <text x="281.875" y="234" text-anchor="middle" fill="#181">5</text>
+  <text x="303.0" y="210" fill="#a33">1</text>
+  <text x="426.875" y="234" text-anchor="middle" fill="#181">11</text>
+  <text x="448.0" y="210" fill="#a33">0</text>
+  <text x="535.625" y="234" text-anchor="middle" fill="#181">12</text>
+  <text x="571.875" y="234" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="214" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="214" x2="46.25" y2 ="244" stroke="#000" />
+  <line x1="82.5" y1="214" x2="82.5" y2 ="244" stroke="#000" />
+  <line x1="118.75" y1="214" x2="118.75" y2 ="244" stroke="#000" />
+  <line x1="155.0" y1="214" x2="155.0" y2 ="244" stroke="#000" />
+  <line x1="191.25" y1="214" x2="191.25" y2 ="244" stroke="#000" />
+  <line x1="227.5" y1="214" x2="227.5" y2 ="244" stroke="#000" />
+  <line x1="263.75" y1="214" x2="263.75" y2 ="244" stroke="#000" />
+  <line x1="300.0" y1="214" x2="300.0" y2 ="244" stroke="#000" />
+  <line x1="336.25" y1="214" x2="336.25" y2 ="244" stroke="#000" />
+  <line x1="372.5" y1="214" x2="372.5" y2 ="244" stroke="#000" />
+  <line x1="408.75" y1="214" x2="408.75" y2 ="244" stroke="#000" />
+  <line x1="445.0" y1="214" x2="445.0" y2 ="244" stroke="#000" />
+  <line x1="481.25" y1="214" x2="481.25" y2 ="244" stroke="#000" />
+  <line x1="517.5" y1="214" x2="517.5" y2 ="244" stroke="#000" />
+  <line x1="553.75" y1="214" x2="553.75" y2 ="244" stroke="#000" />
+  <path d="m14.0 248l0 3l137.0 0l0 -3" stroke="#000" />
+  <path d="m159.0 248l0 3l137.0 0l0 -3" stroke="#000" />
+  <path d="m304.0 248l0 3l137.0 0l0 -3" stroke="#000" />
+  <path d="m449.0 248l0 3l137.0 0l0 -3" stroke="#000" />
+  <text x="13.0" y="270" fill="#a33">3</text>
+  <text x="209.375" y="294" text-anchor="middle" fill="#181">3</text>
+  <text x="245.625" y="294" text-anchor="middle" fill="#181">4</text>
+  <text x="281.875" y="294" text-anchor="middle" fill="#181">5</text>
+  <text x="303.0" y="270" fill="#a33">1</text>
+  <text x="499.375" y="294" text-anchor="middle" fill="#181">11</text>
+  <text x="535.625" y="294" text-anchor="middle" fill="#181">12</text>
+  <text x="571.875" y="294" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="274" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="274" x2="46.25" y2 ="304" stroke="#000" />
+  <line x1="82.5" y1="274" x2="82.5" y2 ="304" stroke="#000" />
+  <line x1="118.75" y1="274" x2="118.75" y2 ="304" stroke="#000" />
+  <line x1="155.0" y1="274" x2="155.0" y2 ="304" stroke="#000" />
+  <line x1="191.25" y1="274" x2="191.25" y2 ="304" stroke="#000" />
+  <line x1="227.5" y1="274" x2="227.5" y2 ="304" stroke="#000" />
+  <line x1="263.75" y1="274" x2="263.75" y2 ="304" stroke="#000" />
+  <line x1="300.0" y1="274" x2="300.0" y2 ="304" stroke="#000" />
+  <line x1="336.25" y1="274" x2="336.25" y2 ="304" stroke="#000" />
+  <line x1="372.5" y1="274" x2="372.5" y2 ="304" stroke="#000" />
+  <line x1="408.75" y1="274" x2="408.75" y2 ="304" stroke="#000" />
+  <line x1="445.0" y1="274" x2="445.0" y2 ="304" stroke="#000" />
+  <line x1="481.25" y1="274" x2="481.25" y2 ="304" stroke="#000" />
+  <line x1="517.5" y1="274" x2="517.5" y2 ="304" stroke="#000" />
+  <line x1="553.75" y1="274" x2="553.75" y2 ="304" stroke="#000" />
+  <path d="m14.0 308l0 3l282.0 0l0 -3" stroke="#000" />
+  <path d="m304.0 308l0 3l282.0 0l0 -3" stroke="#000" />
+  <text x="13.0" y="330" fill="#a33">3</text>
+  <text x="426.875" y="354" text-anchor="middle" fill="#181">3</text>
+  <text x="463.125" y="354" text-anchor="middle" fill="#181">4</text>
+  <text x="499.375" y="354" text-anchor="middle" fill="#181">11</text>
+  <text x="535.625" y="354" text-anchor="middle" fill="#181">12</text>
+  <text x="571.875" y="354" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="334" width="580" height="30" stroke="#000" />
+  <line x1="46.25" y1="334" x2="46.25" y2 ="364" stroke="#000" />
+  <line x1="82.5" y1="334" x2="82.5" y2 ="364" stroke="#000" />
+  <line x1="118.75" y1="334" x2="118.75" y2 ="364" stroke="#000" />
+  <line x1="155.0" y1="334" x2="155.0" y2 ="364" stroke="#000" />
+  <line x1="191.25" y1="334" x2="191.25" y2 ="364" stroke="#000" />
+  <line x1="227.5" y1="334" x2="227.5" y2 ="364" stroke="#000" />
+  <line x1="263.75" y1="334" x2="263.75" y2 ="364" stroke="#000" />
+  <line x1="300.0" y1="334" x2="300.0" y2 ="364" stroke="#000" />
+  <line x1="336.25" y1="334" x2="336.25" y2 ="364" stroke="#000" />
+  <line x1="372.5" y1="334" x2="372.5" y2 ="364" stroke="#000" />
+  <line x1="408.75" y1="334" x2="408.75" y2 ="364" stroke="#000" />
+  <line x1="445.0" y1="334" x2="445.0" y2 ="364" stroke="#000" />
+  <line x1="481.25" y1="334" x2="481.25" y2 ="364" stroke="#000" />
+  <line x1="517.5" y1="334" x2="517.5" y2 ="364" stroke="#000" />
+  <line x1="553.75" y1="334" x2="553.75" y2 ="364" stroke="#000" />
+  <path d="m14.0 368l0 3l572.0 0l0 -3" stroke="#000" />
+</svg>

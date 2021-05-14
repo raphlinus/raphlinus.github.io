@@ -1,0 +1,71 @@
+<svg width="600" height="330" viewBox="0 0 600 330" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text {
+      font-family: Arial, sans-serif;
+    }
+  </style>
+  <text x="13.0" y="30" fill="#444" font-size="12px">8</text>
+  <text x="46.25" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="85.5" y="30" fill="#444" font-size="12px">9</text>
+  <text x="118.75" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="158.0" y="30" fill="#444" font-size="12px">10</text>
+  <text x="191.25" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="230.5" y="30" fill="#444" font-size="12px">11</text>
+  <text x="263.75" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="303.0" y="30" fill="#444" font-size="12px">12</text>
+  <text x="336.25" y="63" text-anchor="middle" fill="#000">)</text>
+  <text x="375.5" y="30" fill="#444" font-size="12px">13</text>
+  <text x="408.75" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="448.0" y="30" fill="#444" font-size="12px">14</text>
+  <text x="481.25" y="63" text-anchor="middle" fill="#000">(</text>
+  <text x="520.5" y="30" fill="#444" font-size="12px">15</text>
+  <text x="553.75" y="63" text-anchor="middle" fill="#000">(</text>
+  <rect x="10" y="34" width="580" height="50" stroke="#000" />
+  <line x1="82.5" y1="34" x2="82.5" y2 ="84" stroke="#000" />
+  <line x1="155.0" y1="34" x2="155.0" y2 ="84" stroke="#000" />
+  <line x1="227.5" y1="34" x2="227.5" y2 ="84" stroke="#000" />
+  <line x1="300.0" y1="34" x2="300.0" y2 ="84" stroke="#000" />
+  <line x1="372.5" y1="34" x2="372.5" y2 ="84" stroke="#000" />
+  <line x1="445.0" y1="34" x2="445.0" y2 ="84" stroke="#000" />
+  <line x1="517.5" y1="34" x2="517.5" y2 ="84" stroke="#000" />
+  <text x="46.25" y="154" text-anchor="middle" fill="#181">8</text>
+  <text x="118.75" y="154" text-anchor="middle" fill="#181">9</text>
+  <text x="191.25" y="154" text-anchor="middle" fill="#181">10</text>
+  <text x="263.75" y="154" text-anchor="middle" fill="#181">11</text>
+  <text x="408.75" y="154" text-anchor="middle" fill="#181">13</text>
+  <text x="481.25" y="154" text-anchor="middle" fill="#181">14</text>
+  <text x="553.75" y="154" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="124" width="580" height="50" stroke="#000" />
+  <line x1="82.5" y1="124" x2="82.5" y2 ="174" stroke="#000" />
+  <line x1="155.0" y1="124" x2="155.0" y2 ="174" stroke="#000" />
+  <line x1="227.5" y1="124" x2="227.5" y2 ="174" stroke="#000" />
+  <line x1="300.0" y1="124" x2="300.0" y2 ="174" stroke="#000" />
+  <line x1="372.5" y1="124" x2="372.5" y2 ="174" stroke="#000" />
+  <line x1="445.0" y1="124" x2="445.0" y2 ="174" stroke="#000" />
+  <line x1="517.5" y1="124" x2="517.5" y2 ="174" stroke="#000" />
+  <text x="191.25" y="284" text-anchor="middle" fill="#181">8</text>
+  <text x="263.75" y="284" text-anchor="middle" fill="#181">9</text>
+  <text x="336.25" y="284" text-anchor="middle" fill="#181">10</text>
+  <text x="408.75" y="284" text-anchor="middle" fill="#181">13</text>
+  <text x="481.25" y="284" text-anchor="middle" fill="#181">14</text>
+  <text x="553.75" y="284" text-anchor="middle" fill="#181">15</text>
+  <rect x="10" y="254" width="580" height="50" stroke="#000" />
+  <line x1="82.5" y1="254" x2="82.5" y2 ="304" stroke="#000" />
+  <line x1="155.0" y1="254" x2="155.0" y2 ="304" stroke="#000" />
+  <line x1="227.5" y1="254" x2="227.5" y2 ="304" stroke="#000" />
+  <line x1="300.0" y1="254" x2="300.0" y2 ="304" stroke="#000" />
+  <line x1="372.5" y1="254" x2="372.5" y2 ="304" stroke="#000" />
+  <line x1="445.0" y1="254" x2="445.0" y2 ="304" stroke="#000" />
+  <line x1="517.5" y1="254" x2="517.5" y2 ="304" stroke="#000" />
+  <text x="100" y="115" fill="#000">pop: 0, push: 4</text>
+  <text x="400" y="115" fill="#000">pop: 1, push: 3</text>
+  <text x="250" y="240" fill="#000">pop: 0, push: 6</text>
+  <rect x="20" y="100" width="270" height="85" rx="10" stroke="#888" />
+  <rect x="310" y="100" width="270" height="85" rx="10" stroke="#888" />
+  <rect x="20" y="220" width="560" height="95" rx="10" stroke="#888" />
+  <path d="M60.75 160L176.75 265M174.64235457163187 260.46592559078715L176.75 265L172.02904339509055 263.35301222391854" stroke="#000" />
+  <path d="M133.25 160L249.25 265M247.14235457163187 260.46592559078715L249.25 265L244.52904339509055 263.35301222391854" stroke="#000" />
+  <path d="M205.75 160L321.75 265M319.64235457163187 260.46592559078715L321.75 265L317.0290433950905 263.35301222391854" stroke="#000" />
+  <path d="M256.5 185L292.75 220M290.78937609849083 215.40043981267436L292.75 220L288.08449765747514 218.20192105515488" stroke="#444" />
+  <path d="M343.5 185L307.25 220M311.91550234252486 218.20192105515488L307.25 220L309.21062390150917 215.40043981267436" stroke="#444" />
+</svg>
