@@ -90,7 +90,7 @@ Then, for a workgroup of, say, size 16, it's possible to compute the stack monoi
 
 ![Diagram showing reduction of a sequence of 16 parentheses in 4 stages](/assets/stack_monoid_reduction.svg)
 
-There's one more detail to take care of. In some cases, the result for an element can be computed just from inputs in the same workgroup. Those need to be detected after each one of the reductions steps, otherwise the information may be lost. But again, that's at most a single write operation per thread per reduction step, so not a huge amount of additional work. At the end of the reduction, the remaining outputs are still pending; they will need to refer to previous partitions.
+Note that these stack slices are *not* the final output. Rather, they are intermediate values used to compute the final output. In general, when doing a combination of two stack slices (monoid elements), some of the outputs in the second slice can be resolved. For example, when combining a single push and a single pop, the output corresponding to the pop element is the index of the push, but the resulting stack slice is empty. When parentheses are matched in this manner, they are recorded to the output then erased from the resulting stack slice. In other cases, the outputs are still pending, and wait for a later combination. This generation of the output is not shown in the figures above, but features prominently in the [code][working code].
 
 ## Look-back
 
@@ -106,7 +106,7 @@ This *almost* solves the problem, but there is one remaining detail. It's possib
 
 Back in the early '90s, it was trendy to come up with parallel algorithms for problems like this. At the time, it wasn't clear what massively parallel hardware would look like, so computer scientists mostly used the [Parallel RAM] (PRAM) model.
 
-After publishing my stack monoid post, a colleague (TODO: decloak?) pointed me to the PRAM literature on parentheses matching, and in particular I found one paper from 1994 that is especially relevant: [Efficient EREW PRAM algorithms for parentheses-matching]. In particular, the in-place reduction is basically the same as their Algorithm II (Fig. 4). Sometimes studying the classics pays off!
+After publishing my stack monoid post, a colleague pointed me to the PRAM literature on parentheses matching, and in particular I found one paper from 1994 that is especially relevant: [Efficient EREW PRAM algorithms for parentheses-matching]. In particular, the in-place reduction is basically the same as their Algorithm II (Fig. 4). Sometimes studying the classics pays off!
 
 The PRAM model is good for theoretical analysis of how much parallelism is inherent in a problem, but it's not a particularly accurate model of actual GPU hardware of today.
 
@@ -126,9 +126,11 @@ Experimentation shows that `volatile` alone is indeed not sufficient, and on oth
 
 Shader language abstractions have an opportunity to fix this. It would be very nice to specify desired memory semantics very precisely, as in the Vulkan memory model, and have that compile to the target API. If recent Vulkan is available, it's a direct mapping. Figuring out the exact translation to other APIs is not easy, partly because documentation is sparse; it really requires detailed insider knowledge of how these other GPUs work. See [gpuweb#1621] for a bit more discussion. I believe WebGPU is the most promising place for this work, but it's also tricky and subtle for a variety of reasons (lack of good documentation of existing APIs being one), so I expect it to take some time. There are other potential efforts to watch, including [rust-gpu]. In any case, I would consider ability to run decoupled look-back to be a benchmark for whether a bit of GPU infrastructure can run reasonably ambitious compute workloads.
 
+Another thing to note is that the current prototype, while otherwise portable, can get stuck because the GPU may not offer a forward progress guarantee. There is code (thanks to Elias Naur) in piet-gpu to guarantee [forward progress] in this case, basically a scalar loop that slowly makes progress in what would otherwise be a spinlock, and similar logic is needed here too.
+
 ## Performance
 
-One of the most important things about having working code is that it's possible to measure its performance. Testing that it's correct is also important, of course!
+One of the most important things about having [working code] is that it's possible to measure its performance. Testing that it's correct is also important, of course!
 
 I measured this implementation on an AMD 5700 XT, which is a reasonably high end graphics card, though not top of the line. The bottom line performance number is 2.4 billion elements per second (the test was processing a sequence of 1M pseudorandom parens). This is about 10x faster than the Rust scalar code to verify the result. I would characterize this as pretty good but not necessarily jaw-dropping. You probably wouldn't want to upload a dataset to the GPU just to match parenthesis, but if you can integrate this into a pipeline with other stages and *keep* the data on GPU rather than doing readback to the CPU, it's potentially a big win.
 
@@ -158,7 +160,7 @@ The algorithm turned out well, with reasonably straightforward implementation (b
 
 It is likely there are other practical applications. The main motivation for theoretical work has been parsing, and I think this algorithm could serve as the basis for a parser for a tree-structured format such as JSON.
 
-Thanks to DN [TODO: decloak?] for pointing me to the PRAM literature, and to Elias Naur for advocating improvements in the current handling of clip bounding box handling in piet-gpu.
+Thanks to Elias Naur for advocating improvements in the current handling of clip bounding box handling in piet-gpu.
 
 
 [stack monoid]: https://raphlinus.github.io/gpu/2020/09/05/stack-monoid.html
@@ -176,3 +178,5 @@ Thanks to DN [TODO: decloak?] for pointing me to the PRAM literature, and to Eli
 [seriot json]: http://seriot.ch/parsing_json.php
 [piet-gpu]: https://github.com/linebender/piet-gpu
 [Vulkan memory model]: https://www.khronos.org/blog/comparing-the-vulkan-spir-v-memory-model-to-cs
+[working code]: https://github.com/linebender/piet-gpu/pull/90
+[forward progress]: https://github.com/linebender/piet-gpu/blob/f6c2558743937f1e5d0eeb9ae1998a3746133349/piet-gpu/shader/elements.comp#L251
