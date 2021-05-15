@@ -38,13 +38,13 @@ The simplified problem can be stated as:
 ```
 stack = []
 for i in 0..len(input):
+    result.push(stack.last())
     match input[i]:
         '(' => stack.push(i)
         ')' => stack.pop()
-    result.push(stack.last())
 ```
 
-Here, every open parenthesis is assigned the index of its parent in the tree, and every close parenthesis is assigned the index of its corresponding open parenthesis.
+Here, every open parenthesis is assigned the index of its parent in the tree, and every close parenthesis is assigned the index of its corresponding open parenthesis. Note that here I've also changed the order so that generating the result happens *before* processing the element. This is analogous to the distinction between inclusive and exclusive prefix sum; generally the same algorithm can be used for both, but sometimes one or the other is more convenient. When compputing bounding boxes, the inclusive version is better, because we want the bounding box of the element, as modified by the clips. But for purely tracking tree structure, the exclusive version is easier.
 
 An example:
 
@@ -112,6 +112,8 @@ The PRAM model is good for theoretical analysis of how much parallelism is inher
 
 A detailed theoretical analysis of the algorithm I propose here is tricky, for a number of reasons. An adversarial input can force following a chain of backlinks up to the size of the workgroup, though I expect in practice this will almost never be more than one. Analysis is further complicated by the degree of look-back. However, there is one simple case: when the stack is bounded by the workgroup size, there is never a backlink, and thus the analysis is basically the same as decoupled look-back. Since the workgroup size is typically 1024, for both parsing tasks and 2D scene structure, it's plausible it will never be hit in practice. Even so, randomized testing suggests the algorithm is still very efficient even with deeper nesting.
 
+Other older literature that's relevant is section 1.23 (ordered trees) in Iverson's [APL book]. Generally this requires a matrix proportional to the number of elements times the maximum depth, but perhaps could be useful as the basis for other, more space-efficient algorithms. A particularly intriguing direction is Aaron Hsu's [thesis on co-dfns], which has data structures similar to this post, though generally prefering a depth-first rather than breadth-first sort of the input elements.
+
 ## More on memory coherence
 
 Part of the development of this algorithm was revisiting memory coherence, as I had some nasty bugs on that front. I was able to resolve them in a satisfactory way.
@@ -162,6 +164,7 @@ It is likely there are other practical applications. The main motivation for the
 
 Thanks to Elias Naur for advocating improvements in the current handling of clip bounding box handling in piet-gpu.
 
+There's a bit of discussion on [lobste.rs](https://lobste.rs/s/xivkj6/stack_monoid_revisited).
 
 [stack monoid]: https://raphlinus.github.io/gpu/2020/09/05/stack-monoid.html
 [gpu-check]: https://github.com/linebender/piet-gpu/pull/92
@@ -180,3 +183,5 @@ Thanks to Elias Naur for advocating improvements in the current handling of clip
 [Vulkan memory model]: https://www.khronos.org/blog/comparing-the-vulkan-spir-v-memory-model-to-cs
 [working code]: https://github.com/linebender/piet-gpu/pull/90
 [forward progress]: https://github.com/linebender/piet-gpu/blob/f6c2558743937f1e5d0eeb9ae1998a3746133349/piet-gpu/shader/elements.comp#L251
+[APL book]: http://www.softwarepreservation.org/projects/apl/Books/APROGRAMMING%20LANGUAGE
+[thesis on co-dfns]: https://scholarworks.iu.edu/dspace/handle/2022/24749

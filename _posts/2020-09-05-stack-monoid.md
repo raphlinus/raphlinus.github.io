@@ -6,6 +6,8 @@ categories: [gpu]
 ---
 (Updated 2020-09-06 with pointers to related work and a bit more explanation)
 
+(Update 2021-05-15: see [the stack monoid revisited](https://raphlinus.github.io/gpu/2021/05/13/stack-monoid-revisited.html) for followup on the ideas in this post)
+
 This is a bit of a followup to [Towards GPGPU JSON parsing]. That proposed a rather roundabout way to parallelize a simple parsing task. Having had more GPU programming experience under my belt, I don't expect that particular approach to work well, but it did suggest that parallelism exists in the problem.
 
 This post is a writeup of a new idea, but with a caution, no implementation. It probably contains some mistakes, and maybe the idea is flawed. But if it holds up, I think it's an exciting line of research on how to port sequential algorithms to GPU.
