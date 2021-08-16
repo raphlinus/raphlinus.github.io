@@ -86,7 +86,7 @@ For optimizing compile times in [unicode-normalization][unicode-normalization#37
 
 Compile time and executable size are aspects of performance (even though often not as visible as runtime speed), and [performance culture] applies. Always measure, using tools like [cargo-bloat] where appropriate, and keep track of regressions.
 
-A good case study for cargo-bloat is [clap](https://clap.rs/2018/01/09/new-years-weight-loss/) ([archived link](http://ghostarchive.org/archive/APVxZ)), though it's still pretty heavyweight today (it accounts for about 1M of Zola's debug build, measured on macOS).
+A good case study for cargo-bloat is [clap](https://web.archive.org/web/20191224123911/https://clap.rs/2018/01/09/new-years-weight-loss/), though it's still pretty heavyweight today (it accounts for about 1M of Zola's debug build, measured on macOS).
 
 There's also an effort to [analyze binary sizes](https://www.reddit.com/r/rust/comments/c9fzyp/analysis_of_rust_crate_sizes_on_cratesio/) more systematically. I applaud such efforts and would love it if they were even more visible. Ideally, [crates.io] would include some kind of bloat report along with its other metadata, although using fully automated tools has limitations (for example, a "hello world" example using clap might be pretty modest, but one with hundreds of options might be huge).
 
