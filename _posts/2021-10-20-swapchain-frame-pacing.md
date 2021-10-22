@@ -100,17 +100,17 @@ That's why the queue submit call takes an acquire semaphore. The call *schedules
 
 The presentation call is similar. It's a request to present the rendered image, but at the time the application makes the call, rendering may not have completed (indeed, it might not even have started).
 
-This strategy basically tries to keep queues as full as possible. That's great for throughput, but not necessarily ideal for latency. In addition, the actual behavior might be pretty different from one GPU to another. In my experimentation, I've seen both acquireNextImage and queuePresent block, depending on details of swapchain settings and workload, but it's possible.
+This strategy basically tries to keep queues as full as possible. That's great for throughput, but not necessarily ideal for latency. In addition, the actual behavior might be pretty different from one GPU to another. In my experimentation, I've seen both acquireNextImage and queuePresent block, depending on details of swapchain settings and workload.
 
 ## Enter the compositor
 
 The above discussion assumes fullscreen mode, ie scanout directly from the swapchain to the display. Modern systems generally add a compositor to the mix, so that the output from the application can be composited with other windows (and notifications and so on), and scanout happens from the compositor's target surface (not visible to applications at all).
 
-In theory, adding the compositor doesn't change things much, other than adding one frame time of latency (more or less unavoidably) and taking the "vsync off" option off the table. Because of those limitations, it's also common to offer a "fullscreen" option specialized for gaming that bypasses the compositor, often with special affordances for compositing notifications (the FLIP_DISCARD mode in DXGI is designed for this, see the note on "reverse composition" in this doc [recommending flip modes](https://devblogs.microsoft.com/directx/dxgi-flip-model/)).
+In theory, adding the compositor doesn't change things much, other than adding one frame time of latency (more or less unavoidably, though on Linux there's [recent work][mutter latency patch] to improve it) and taking the "vsync off" option off the table. Because of those limitations, it's also common to offer a "fullscreen" option specialized for gaming that bypasses the compositor, often with special affordances for compositing notifications (the FLIP_DISCARD mode in DXGI is designed for this, see the note on "reverse composition" in this doc [recommending flip modes](https://devblogs.microsoft.com/directx/dxgi-flip-model/)).
 
 The major complication is the presence of hardware overlays, which are a factor on both [Windows][direct flip] and [Android][HWC] (and possibly other systems). The idea of a hardware overlay is that *sometimes* the contents of a window can be scanned out by the video hardware directly from an app-owned swapchain, rather than that swapchain simply being used as the texture source by the compositor (most of the time resulting in bit-identical RGB pixels in the compositor's target buffer). The display adapter usually has a very small number of overlays available (3 or 4 is common), so it's generally only available for the frontmost window. The compositor makes the decision heuristically, and the app is generally not involved.
 
-On Windows, from my understanding, a hardware overlay window has one frame less latency. That's generally good, but not necessarily good for smoothness, as transitioning between the overlay and fallback compositing can cause jank (and very likely audio synchronization issues for video playback). The details are not clear to me, and don't seem to be well documented. If timing is critical to your Windows application, I recommend spending a lot of quality time in PresentMon in conditions where direct flip may be enabled and disabled.
+On Windows, from my understanding, a hardware overlay window has one frame less latency. That's generally good, but not necessarily good for smoothness, as transitioning between the overlay and fallback compositing can cause jank (and very likely audio synchronization issues for video playback). The details are not clear to me, and don't seem to be well documented. If timing is critical to your Windows application, I recommend spending a lot of quality time in [PresentMon] in conditions where direct flip may be enabled and disabled.
 
 Android takes a different approach. A hardware overlay window is scheduled for scanout at the same time as if it were composited using OpenGL, in other words the choice is effectively invisible to the user; the main benefit is reduced power consumption. However, one consequence is that the compositor may need to hold on to the swapchain buffer longer than would be the case in a fullscreen or Windows/mac style compositor, as it might be read until the end of actual scanout. Thus, the minimum acceptable value for the swapchain size (minImageCount in Vulkan-speak) to sustain a smooth framerate is 3 for Android, while 2 is fine on desktop.
 
@@ -209,6 +209,7 @@ Thanks to Ian Elliott for explaining some of the arcane details of how Android m
 [Myths and Misconceptions of Frame Pacing]: https://www.youtube.com/watch?v=n0zT8YSSFzw
 [glXSwapBuffers]: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXSwapBuffers.xml
 [keyboard to photon latency tester]: https://thume.ca/2020/05/20/making-a-latency-tester/
-[https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing]: https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing
+[Event Tracing for Windows]: https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing
 [PresentMon]: https://github.com/GameTechDev/PresentMon
 [systrace]: https://developer.android.com/topic/performance/tracing
+[mutter latency patch]: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/1620
