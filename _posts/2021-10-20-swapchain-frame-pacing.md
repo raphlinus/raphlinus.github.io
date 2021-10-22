@@ -164,6 +164,12 @@ But a special reason it's hard is that rendering time may depend on when frames 
 
 For example, an app might decide to downgrade FPS based on some lost frames (let's say due to transient workload, such as an assistant running some machine learning workloads on the GPU). The GPU driver will happily scale down its frequency, which is good for battery, but that also gives feedback to the controller that the GPU performance has degraded, so it should sustain the low frame rate. Restarting the game would restore the higher frame rate, but there's no way for the controller to know that, so it stays stuck at the low rate. I'm not sure if there's any good solution to these kinds of system-wide performance factors, but I think it's worth looking into.
 
+## Measure, measure, measure
+
+Performance engineering depends critically on accurate measurement of the performance targets. In this case, that's input-to-photon latency. It's easy to get misled by looking only at software traces; the only way to *really* get to the source of truth is measurement on a real, physical system. Tristan Hume has an excellent blog post on a [keyboard to photon latency tester], which touches on display timing issues as well.
+
+Another invaluable source of information is system traces (ideally validated by measuring photons as above). On Android, [systrace] (or Perfetto for the UI version) is the tool of choice, and is conveniently available as part of [Android GPU Inspector]. On Windows, use [Event Tracing for Windows], and also [PresentMon] for analyzing data specific to display presentation. On mac, the Instruments application gives nice timing data.
+
 ## Conclusion
 
 Frame pacing is a poorly understood and oft overlooked aspect of the total performance story, especially as it affects latency. Doing things the simplest way will generally optimize for throughput at the expense of latency.
@@ -202,3 +208,7 @@ Thanks to Ian Elliott for explaining some of the arcane details of how Android m
 [Controller to display latency in Call of Duty]: https://www.activision.com/cdn/research/Hogge_Akimitsu_Controller_to_display.pdf
 [Myths and Misconceptions of Frame Pacing]: https://www.youtube.com/watch?v=n0zT8YSSFzw
 [glXSwapBuffers]: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glXSwapBuffers.xml
+[keyboard to photon latency tester]: https://thume.ca/2020/05/20/making-a-latency-tester/
+[https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing]: https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing
+[PresentMon]: https://github.com/GameTechDev/PresentMon
+[systrace]: https://developer.android.com/topic/performance/tracing
