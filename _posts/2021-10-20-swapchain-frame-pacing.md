@@ -178,7 +178,11 @@ On Android in particular, the default strategy (2 frame swapchain, blocking pres
 
 On systems other than Android, the frame pacing story is still evolving. Standardization of techniques for reliably measuring and controlling display timing will help a lot. In addition, faster display refresh rates will also improve latency. We may look forward to a future in which we can expect games and other graphical applications to have latency better than the Playstation 2, rather than worse.
 
+After posting this article, I learned of a similar blog post on [Fixing Time.deltaTime in Unity], detailing fairly recent improvements in frame pacing in that engine.
+
 Thanks to Ian Elliott for explaining some of the arcane details of how Android manages swapchains.
+
+Discuss on [Hacker News]().
 
 [the compositor is evil]: https://raphlinus.github.io/ui/graphics/2020/09/13/compositor-is-evil.html
 [piet-gpu]: https://github.com/linebender/piet-gpu
@@ -213,3 +217,4 @@ Thanks to Ian Elliott for explaining some of the arcane details of how Android m
 [PresentMon]: https://github.com/GameTechDev/PresentMon
 [systrace]: https://developer.android.com/topic/performance/tracing
 [mutter latency patch]: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/1620
+[Fixing Time.deltaTime in Unity]: https://blog.unity.com/technology/fixing-time-deltatime-in-unity-2020-2-for-smoother-gameplay-what-did-it-take

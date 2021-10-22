@@ -8,6 +8,8 @@ First, I want to make it clear that I'm not accusing the compositor of true evil
 
 I will also outline a better design that might be implemented in the future, as well as some possibilities for how applications can deal with the current situation. But first, to understand better how we got into this mess, we'll look a bit into the past.
 
+**Update 2021-10-22:** Also see the new followup post [Swapchains and frame pacing](https://raphlinus.github.io/ui/graphics/gpu/2021/10/22/swapchain-frame-pacing.html).
+
 ## 8-bit systems: video processing engines
 
 Early home computers and video games had 8-bit CPUs and only a few kilobytes of RAM. Some computers, like the Apple II, allocated some of the RAM as a frame buffer and used the CPU to fill it, but this approach is quite limiting. So designers of most other systems of the time got creative - in particular, they augmented the CPU with a graphics processing engine. This engine did a fair amount of processing during *scanout,* in other words on the fly as the system generated a video signal.
