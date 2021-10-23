@@ -16,7 +16,7 @@ At that time, it was traditional for UI to be drawn using a *single* display buf
 
 But such an approach would be completely unworkable for 3D. There, you start with a completely blank buffer, then draw in one triangle at a time, using Z testing so if the newly drawn triangle is farther away than the one in the buffer, the pixel is discarded. After all triangles are drawn, the scene is complete. But if you were to scan out during this process, you'd see a terrible flickery half-drawn mess.
 
-The standard solution is *double buffering.* One buffer is designated the "front buffer," and video scanout occurs from that. The other buffer is the "back buffer," and it is free for the application to scribble on. Once painting is complete, the app *swaps* the two buffers, the front buffer becoming back and vice versa, so scanout occurs from.
+The standard solution is *double buffering.* One buffer is designated the "front buffer," and video scanout occurs from that. The other buffer is the "back buffer," and it is free for the application to scribble on. Once painting is complete, the app *swaps* the two buffers, the front buffer becoming back and vice versa, so scanout occurs from the current front buffer.
 
 There are two choices regarding syncronization with the frame rate. With "vsync off," scanout immediately switches to the newly rendered frame, and the formerly front buffer immediately becomes available for rendering the next one. This is ideal for both throughput and latency, but the downside is a "tearing" artifact, as the frame presented to the user contains horizontal bands of different rendered frames.
 
@@ -182,7 +182,7 @@ After posting this article, I learned of a similar blog post on [Fixing Time.del
 
 Thanks to Ian Elliott for explaining some of the arcane details of how Android manages swapchains.
 
-Discuss on [Hacker News]().
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=28963392).
 
 [the compositor is evil]: https://raphlinus.github.io/ui/graphics/2020/09/13/compositor-is-evil.html
 [piet-gpu]: https://github.com/linebender/piet-gpu
