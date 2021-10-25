@@ -10,7 +10,7 @@ My primary interest is improving the performance of (2D) UI graphics, but the mo
 
 ## Front and back buffers
 
-Let's wind the clock back about 30 years, to a video game console or PC in the Playstation 2 class.
+Let's wind the clock back about 25 years, to a video game console or PC in the Nintendo 64 class (or even 30 years ago, to an [SGI Indigo][Elan Graphics], which had similar graphics but was much more expensive and less widely available).
 
 At that time, it was traditional for UI to be drawn using a *single* display buffer. The application would draw its graphics by writing into that buffer, and concurrently the video would be *scanned out* by reading from that memory. Sometimes that led to flickering artifacts, but generally not too bad, as an application would generally write the final pixels for a region fairly quickly, rather than leaving it in an intermediate partly-drawn state for long enough for the scan to catch it.
 
@@ -33,7 +33,7 @@ while true:
     glXSwapBuffers()
 ```
 
-In systems of this era, generally the 3D acceleration functions as a co-processor to the main CPU, basically synchronously executing commands (or with a small queue), so the latency between the CPU initiating a drawing command and it completing with a write to buffer memory is short. Good models include the [Playstation 2] and [Nintendo 64]. (Note though that even in these early days, there was signficant architectural diversity, and  the [Dreamcast] employed tile-based deferred rendering, which lives on today in many mobile GPUs).
+In systems of this era, generally the 3D acceleration functions as a co-processor to the main CPU, basically synchronously executing commands (or with a small queue), so the latency between the CPU initiating a drawing command and it completing with a write to buffer memory is short. Good models include the [Nintendo 64] and [Playstation 2]. (Note though that even in these early days, there was signficant architectural diversity, and  the [Dreamcast] employed tile-based deferred rendering, which lives on today in many mobile GPUs).
 
 Overall, it looks like this:
 
@@ -67,9 +67,9 @@ While triple buffering is at least moderately popular for games, I know of no UI
 
 ## Asynchronous rendering
 
-One of the big changes since the Playstation 2 era is that the interaction between CPU and GPU has become *much* more asynchronous, and modern APIs such as Vulkan, Metal, and DX12 expose that asynchrony to the application (OpenGL largely tries to hide it, with mixed success). Essentially, GPU work is recorded into command buffers, which are then placed into a queue, and completion of that unit of work happens some time later.
+One of the big changes since the Nintendo 64 era is that the interaction between CPU and GPU has become *much* more asynchronous, and modern APIs such as Vulkan, Metal, and DX12 expose that asynchrony to the application (OpenGL largely tries to hide it, with mixed success). Essentially, GPU work is recorded into command buffers, which are then placed into a queue, and completion of that unit of work happens some time later.
 
-At the same time, the number of cores on the CPU has gone up. Let's say that physics simulation takes about one frame time on a CPU, and recording the command buffers also takes about one frame time. Then, a very reasonable architecture is *pipelining,* where one thread does the physics simulation, hands it to another thread for rendering, then those recorded command lists are submitted to the GPU for another frametime, and finally scanout happens (or perhaps is delayed another frame due to the compositor, and a "game overlay" can easily add *another* frame of latency). Thus, we're in a fun situation where modern hardware is something like 100 times faster than the Playstation 2, but latency is maybe 50ms worse.
+At the same time, the number of cores on the CPU has gone up. Let's say that physics simulation takes about one frame time on a CPU, and recording the command buffers also takes about one frame time. Then, a very reasonable architecture is *pipelining,* where one thread does the physics simulation, hands it to another thread for rendering, then those recorded command lists are submitted to the GPU for another frametime, and finally scanout happens (or perhaps is delayed another frame due to the compositor, and a "game overlay" can easily add *another* frame of latency). Thus, we're in a fun situation where modern hardware is something like 100 times faster than the Nintendo 64, but latency is maybe 50ms worse.
 
 It *is* possible to mitigate the latency issues, but it takes serious engineering effort. Aside from frame pacing issues (the major focus of this blog), scalable multicore algorithms for things like physics simulation work better than pipelining, and it's similarly possible to split up the work of recording into command buffers into multiple parallel threads — this is one of the biggest potential gains of Vulkan and other modern APIs over OpenGL.
 
@@ -148,6 +148,8 @@ There is work towards evolving this Android-specific extension into a Khronos st
 
 It is also possible to get past presentation statistics on Windows, using [GetFrameStatistics], and games that have been optimized for latency use it to control the scheduling of rendering work. An excellent case study is [Controller to display latency in Call of Duty], which goes into great detail (and covers some of the same ground as this blog).
 
+Also note that Windows 11 is a major upgrade on this front, with a [composition swapchain] API that provides most of the features needed for good frame pacing, including insight into whether there's a hardware overlay, ability to request presentation of a frame at a specific timestamp, and ability to revise frames in the queue even after they've been placed there. I haven't experimented with it yet, but one question I have is whether it supports [smooth resize], or whether that's still broken by design. The documentation is not reassuring on this front, as it doesn't explicitly discuss window resize.
+
 There is evidence that a lot of Windows games are suboptimal when it comes to frame pacing. One such indication is the the existence of SpecialK, an open-source tool that dynamically tweaks games (their [SwapChain science] page goes into some of the same issues as this post), in many cases showing dramatic improvement.
 
 ### Animation timebase
@@ -176,7 +178,7 @@ Frame pacing is a poorly understood and oft overlooked aspect of the total perfo
 
 On Android in particular, the default strategy (2 frame swapchain, blocking present calls) will produce especially poor results, not even keeping up with the maximum frame rate. Fortunately, the Swappy library provides a good solution to frame pacing. On other platforms, you need to dig deeper. While most of the attention has been on games, applying these kinds of techniques should also significantly improve UI latency.
 
-On systems other than Android, the frame pacing story is still evolving. Standardization of techniques for reliably measuring and controlling display timing will help a lot. In addition, faster display refresh rates will also improve latency. We may look forward to a future in which we can expect games and other graphical applications to have latency better than the Playstation 2, rather than worse.
+On systems other than Android, the frame pacing story is still evolving. Standardization of techniques for reliably measuring and controlling display timing will help a lot. In addition, faster display refresh rates will also improve latency. We may look forward to a future in which we can expect games and other graphical applications to have latency better than the Nintendo 64, rather than worse.
 
 After posting this article, I learned of a similar blog post on [Fixing Time.deltaTime in Unity], detailing fairly recent improvements in frame pacing in that engine.
 
@@ -218,3 +220,6 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=28963392).
 [systrace]: https://developer.android.com/topic/performance/tracing
 [mutter latency patch]: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/1620
 [Fixing Time.deltaTime in Unity]: https://blog.unity.com/technology/fixing-time-deltatime-in-unity-2020-2-for-smoother-gameplay-what-did-it-take
+[Elan Graphics]: http://www.sgistuff.net/hardware/graphics/documents/ElanTR.html
+[composition swapchain]: https://docs.microsoft.com/en-us/windows/win32/comp_swapchain/comp-swapchain-portal
+[smooth resize]: https://raphlinus.github.io/rust/gui/2019/06/21/smooth-resize-test.html
