@@ -63,7 +63,7 @@ The most obvious is the wasted power consumption for rendering frames which will
 
 A more subtle issue is that smoothness isn't as good as it might be; the delay between the start of the game loop and the scanout jitters by a uniform distribution of zero to one GPU rendering interval. When the GPU is very fast, that might not be noticeable, but when the FPS is just under the refresh rate of the monitor, triple buffering can add a significant amount of jitter (compared to double-buffered vsync on) with little improvement in latency.
 
-While triple buffering is at least moderately popular for games, I know of no UI toolkit that employs it, and the power concerns basically take it off the table for mobile. Thus, I am *not* recommending it, and will suggest other techniques for attaining the same goal.
+While triple buffering is at least moderately popular for games, I know of no UI toolkit that employs triple buffering with an unconstrained frame rate, and the power concerns basically take it off the table for mobile. Thus, I am *not* recommending it, and will suggest other techniques for attaining the same goal.
 
 ## Asynchronous rendering
 
