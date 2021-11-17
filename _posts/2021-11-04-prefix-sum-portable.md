@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Prefix sum on portable compute shaders"
-date:   2021-11-15 10:37:42 -0800
+date:   2021-11-17 07:04:42 -0800
 categories: [gpu]
 ---
 This is a followup to my previous post, [prefix sum on Vulkan]. Last year, I got a fancy algorithm for this problem running well on one device. This time, I will dive into the question of how to make it work well across a wide range of devices. The short answer is, it can be made to work pretty portably on Vulkan and DX12, but Metal remains out of reach, at least for now, as is WebGPU. Even on Vulkan, there are some sharp edges to watch out for.
@@ -28,9 +28,11 @@ This limitation of Metal wasn't clear at the outset. Partly as a result of my in
 
 Even if this barrier were to be added, I found [other problems][Atomic concerns]. One such problem is uniformity analysis, which originally showed up as a failure to compile the shader on DX12, as the [FXC] compiler's uniformity analysis failed to recognize that my shader had uniform control flow, and thus rejected it. WebGPU will also need a strict uniformity analysis when doing operations such as control barriers that are unsafe unless control flow is uniform, and it appears that the [current proposal][uniformity analysis proposal] also wouldn't accept my code. It is possible that could be improved, though.
 
-The fact that FXC is on the critical path points to a deeper difference in approach between WebGPU and piet-gpu. By necessity, shaders pulled from the Web must be compiled at runtime, and FXC is considerably more convenient for that than the more advanced [DXC], as FXC is included in Windows and can be called by any application. The DLL for DXC is approximately 20MB. A potential longer term solution is build a new lightweight shader translation tool that can go direct from WGSL to DXIL, but that will take a while.
+The fact that FXC is on the critical path points to a deeper difference in approach between WebGPU and piet-gpu. By necessity, shaders pulled from the Web must be compiled at runtime, and FXC is considerably more convenient for that than the more advanced [DXC], as FXC is included in Windows and can be called by any application. The DLL for DXC is approximately 20MB.
 
 In piet-gpu, by contrast, shaders are compiled to IR ahead of time as part of the build pipeline, so there is no need for runtime translation. That helps a lot with binary size and startup time, as well as a lot more flexibility in tools that can be run as part of the build.
+
+The Windows story with Dawn (Chrome's WebGPU implementation) continues to evolve. Currently they run with their own version of FXC, which brings compatibility to the widest range of devices (there's still a large fraction that can't run code from DXC) and lets them roll fixes if the version that ships with the OS is stale. I'm concerned that even so, there will be shaders that fail because of FXC limitations. There are a number of ways forward, including direct translation from WGSL into DXBC (and DXIL as well, for access to [Shader Model 6] capabilities), but at best this work will take a while.
 
 There is a [WebGPU implemenation of decoupled look-back] by Reese Levine, but at this point it's not expected to pass. Hopefully it will be useful to shake out bugs (it would pass if the barrier scope were upgraded), and also to point the way for extensions to WebGPU that would allow this algorithm to run.
 
@@ -46,13 +48,15 @@ Maintaining source in WGSL and translating to other shader languages would be vi
 
 It's worth noting that the Vulkan memory model faced a similar choice when they were defining the semantics of atomics for Vulkan, and came to a different decision than WGSL. As is clear from [their blog post,][Atomic Operations vs Atomic Objects] they recognize the importance of working with existing shaders and shader languages, even if it isn't as aesthetically pleasing as a strictly typed approach.
 
+While I've been disappointed to run into these problems, I remain optimistic about the propsects for WebGPU to run real compute loads. I just think it'll take a while to get there. In the meantime, I will continue to track progress and help where I can with things like test cases and spec clarifications.
+
 ## GPU bugs
 
 I've encountered a lot of GPU bugs in my work on piet-gpu. That's largely because it's off the beaten path, trying to do advanced things with compute shaders that haven't been done before. I've probably spent about half my time in the last three weeks tracking down exciting crashes and hangs, trying to figure out whether it was a problem with my code, a spec, my understanding of the spec, or the GPU driver.
 
 My approach to bugs is a little different than most people who work with GPUs. While I have been doing quite a bit of experimentation, I'm also trying to work with specs in a principled way, so there is a solid argument my code is correct with respect to the spec. Then, when there is a failure, once we figure out it isn't in my code, I try to create a reduced test case to clearly demonstrate GPU behavior that is not compliant with the spec. And then I would like to get some form of that test case into the official test suite, so it hopefully gets fixed and stays fixed. I believe this will help the entire ecosystem.
 
-It's expected that decoupled look-back should run well on Nvidia hardware, as the algorithm was invented there, but less so on other hardware. While it is mainstream to structure compute pipelines so each dispatch can depend on data written in previous stages, there is something slightly taboo about coordination between workgroups in the same dispatch. Many GPU experts I've talked with express skepticism that this can work at all. Even so, interest in this type of pattern is picking up, in part because of advanced rendering engines like Nanite, which also uses atomics to coordinate work between workgroups in a live-running dispatch. Future GPUs will be expected to run this type of workload reliably; right now there's a flavor of hacking around until it works on a specific GPU, then hoping a driver update doesn't break things.
+It's expected that decoupled look-back should run well on Nvidia hardware, as the algorithm was invented there, but less so on other hardware. While it is mainstream to structure compute pipelines so each dispatch can depend on data written in previous stages, there is something slightly taboo about coordination between workgroups in the same dispatch. Many GPU experts I've talked with express skepticism that this can work at all. Even so, interest in this type of pattern is picking up, in part because of advanced rendering engines like ]p[Nanite][A Deep Dive into Nanite], which also uses atomics to coordinate work between workgroups in a live-running dispatch. Future GPUs will be expected to run this type of workload reliably; right now there's a flavor of hacking around until it works on a specific GPU, then hoping a driver update doesn't break things.
 
 One device I tested, the AMD 5700 XT running under Windows with Vulkan, had a very interesting pattern of failures. The "compatibility mode" variant of prefix sum (which uses barriers and coherent buffers, but no explicit atomic loads or stores) worked just fine, and with impressive performance to boot (around 48 G elements/s, basically the same as memcpy). But the other two variants, based on atomics, failed badly. I spent some time tracking this down, and was ultimately able to reduce the failure to a version of the classical message-passing atomic litmus test. This was surprising to me, as there's also a version of that test in the [Vulkan Conformance Test Suite][Vulkan CTS]. Why didn't that catch it?
 
@@ -64,7 +68,7 @@ I'm also starting to populate the tests/ subdirectory of the [piet-gpu repo] wit
 
 One controversial aspect of the original decoupled look-back algorithm is that it depends a forward progress guarantee from the GPU. If a workgroup is running, and an adversarial scheduler unfairly schedules threads that are waiting on the flag in favor of threads that would set it if they were run, then the dispatch as a whole will hang (this is similar to a deadlock in a classical setting, but a bit more subtle). My code from last year also depended on this guarantee, and while it ran well on the hardware I tested on, it might not everywhere. The Vulkan specification itself is careful to make no forward progress guarantees.
 
-There are a number of interesting workloads that depend on or benefit from these kind of guarantees, likely including the Nanite renderer. To help those applications, Tyler Sorensen's group has been characterizing existing GPUs, with the aim of defining a GPU property that might be queried at runtime. Their latest paper is [Specifying and Testing GPU Workgroup Progress Models]. Among its findings, Apple and ARM exhibit failures of forward progress, so it cannot be specified in the Vulkan core, but only as an optional property.
+There are a number of interesting workloads that depend on or benefit from these kind of properties, likely including the Nanite renderer. To help those applications, Tyler Sorensen's group has been characterizing existing GPUs, with the aim of defining a GPU property that might be queried at runtime. Their latest paper is [Specifying and Testing GPU Workgroup Progress Models]. Among its findings, Apple and ARM exhibit failures of forward progress, so it cannot be specified in the Vulkan core, but only as an optional property.
 
 Separately, Elias Naur coded up a modification to my code that makes a bit of scalar progress instead of spinning uselessly. Thus, even in the face of completely adversarial scheduling, the code is guaranteed to complete, it might just be slow. Hopefully, those types of events are rare, and statistically, performance is good. It seems OK so far, but we haven't done extremely careful testing. The piet-gpu test suite might be useful for identifying whether there are any GPUs where this is a real problem.
 
@@ -73,6 +77,8 @@ Separately, Elias Naur coded up a modification to my code that makes a bit of sc
 I explored DX11 compatibility this time around, but did not actually build the port. I believe it is possible, but would take some work and involve some compromises. One challenge is the relatively simplistic uniformity analysis in FXC mentioned above; it doesn't seem to accept the relatively common pattern (in advanced compute) of broadcasting a value from one thread to other threads in a workgroup through a shared variable, at least in the presence of "interesting" control flow. I could hand-craft a version that does all the decoupled look-back logic on single thread, and uses pure memory fences rather than barriers involving control flow synchronization, so it gets by FXC. In fact I have written a [draft of that][FXC workaround], but didn't feel it was worth the work, at least at this time.
 
 Based on experience of other projects, I also think it's likely that DX11, and FXC in particular, would be more likely to trigger shader compilation bugs than actively maintained toolchains. At some point, I hope to port piet-gpu to DX11 as well, but I expect to stick to shaders optimized for compatibility, rather than using advanced features, even if DX11 can theoretically support them.
+
+There will always be devices where the GPU is not capable enough to run the workload, or is on a blocklist because of bugs that preclude correct execution. In those cases, I think [SwiftShader] is the best way forward; it compiles the shader to run on the CPU, but using SIMD and multithreading extensively for potentially big speedups compared with scalar code. Elias Naur has also done successful experiments with running SwiftShader ahead of time, and that might also be a promising avenue to reduce the runtime costs of shader translation.
 
 ## Other projects
 
@@ -90,7 +96,6 @@ Writing GLSL is painfully low-level, and WGSL isn't much of an improvement. I'd 
 
 The [Kompute] project addresses another side of the problem: it provides a clean way to run compute shaders, but is dependent on Vulkan, and generally the shaders are written in GLSL. Like IREE, they focus on machine learning workloads.
 
-
 ## Summary and conclusion
 
 There are a number of new findings in this blog post, so it might be useful to summarize them.
@@ -107,9 +112,9 @@ There are a number of new findings in this blog post, so it might be useful to s
 
 * WebGPU continues to look promising but has a number of serious issues which need to be resolved before it's suitable for heavy compute.
 
-These findings affect decisions in piet-gpu. It's now capable of running compute shaders on a wide range of devices, as long as they're not too aggressive in use of advanced capabilities such as the full set of Vulkan atomics. Thus, in rewriting the element pipeline, I'm going to focus on tree reduction, as it should pose no compaitbility problems, and the performance is likely to be "good enough" (the redesign should have other optimizations which I hope will make up for this regression). We can always come back to decoupled look-back later, as the story becomes clearer exactly which devices will support it reliably.
+These findings affect decisions in piet-gpu. It's now capable of running compute shaders on a wide range of devices, as long as they're not too aggressive in use of advanced capabilities such as the full set of Vulkan atomics. Thus, in rewriting the element pipeline, I'm going to focus on tree reduction, as it should pose no compatibility problems, and the performance is likely to be "good enough" (the redesign should have other optimizations which I hope will make up for this regression). We can always come back to decoupled look-back later, as the story becomes clearer exactly which devices will support it reliably.
 
-This blog benefitted from discussions with many people, though the (no doubt numerous) mistakes are my own. I'd like to thank in particular Elias Naur for tracking down many Metal and shader issues, Jeff Bolz for spotting a particularly subtle write-after-read hazard and insight into atomic issues, Reese Levine for collaboration on the WebGPU tests, and a number of people working at GPU vendors, who tend not to be used to working in the open [NOTE IN DRAFT: if we've had a discussion and you'd like to be named, just lemme know. I tend not to put names without permission unless there's already been some public interaction]
+This blog benefitted from discussions with many people, though the (no doubt numerous) mistakes are my own. I'd like to thank in particular Elias Naur for tracking down many Metal and shader issues, Jeff Bolz for spotting a particularly subtle write-after-read hazard and insight into atomic issues, Reese Levine for collaboration on the WebGPU tests, and a number of people working at GPU vendors, who tend not to be used to working in the open, but whose generosity with time and insight I appreciate.
 
 [prefix sum on Vulkan]: https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html
 [Point of WebGPU on native]: https://kvark.github.io/web/gpu/native/2020/05/03/point-of-webgpu-native.html
@@ -137,3 +142,6 @@ This blog benefitted from discussions with many people, though the (no doubt num
 [Atomic Operations vs Atomic Objects]: https://www.khronos.org/blog/comparing-the-vulkan-spir-v-memory-model-to-cs#_atomic_operations_vs_atomic_objects
 [Metal Shading Language Specification]: https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf
 [rust-gpu]: https://github.com/EmbarkStudios/rust-gpu
+[A Deep Dive into Nanite]: https://www.youtube.com/watch?v=eviSykqSUUw
+[SwiftShader]: https://swiftshader.googlesource.com/SwiftShader
+[Shader Model 6]: https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/hlsl-shader-model-6-0-features-for-direct3d-12
