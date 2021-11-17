@@ -8,7 +8,7 @@ This is a followup to my previous post, [prefix sum on Vulkan]. Last year, I got
 
 When writing code that runs on CPU, most developers don't spend a lot of time agonizing over the infrastructure. You write your code in some source language, let's say Rust, type `cargo build`, and you get a nice self-contained executable that you can run on your system or distribute to others. Then that just runs. There might be some interesting things going on under the hood, such as runtime detection of SIMD capabilities, but that's mostly hidden. Things work.
 
-That is sadly not the case for GPU compute code. The most common scenario is dependency on a large, vendor-dependent toolkit such as CUDA (that installer is a 2.4GB download). If you have the right hardware, and the runtime installed properly, *then* your code can run.
+That is sadly not the case for GPU compute code. The most common scenario is dependency on a large, vendor-dependent toolkit such as CUDA (that installer is a 2.4GB download). If you have the right hardware, and the runtime installed properly, *then* your code can run. [Update: I need to find a better way to say this. CUDA is a heavyweight dependency for sure, but it is possible to build an executable that runs, at least on Nvidia hardware.]
 
 What's standing in the way of a clean simple executable that can run GPU code? This is something I've been exploring for at least the last year, as I'd like to ship piet-gpu as a 2D rendering engine that just works, rather than something that requires excessive fiddling with GPU infrastructure. To that end, I've built an abstraction layer that pretty much works, at least for my needs - you write a compute shader once, in GLSL, and it runs it on Vulkan, Metal, or DX12, dynamically detecting which is supported at runtime. A binary that runs a simple shader is around 400k.
 
@@ -115,6 +115,8 @@ There are a number of new findings in this blog post, so it might be useful to s
 These findings affect decisions in piet-gpu. It's now capable of running compute shaders on a wide range of devices, as long as they're not too aggressive in use of advanced capabilities such as the full set of Vulkan atomics. Thus, in rewriting the element pipeline, I'm going to focus on tree reduction, as it should pose no compatibility problems, and the performance is likely to be "good enough" (the redesign should have other optimizations which I hope will make up for this regression). We can always come back to decoupled look-back later, as the story becomes clearer exactly which devices will support it reliably.
 
 This blog benefitted from discussions with many people, though the (no doubt numerous) mistakes are my own. I'd like to thank in particular Elias Naur for tracking down many Metal and shader issues, Jeff Bolz for spotting a particularly subtle write-after-read hazard and insight into atomic issues, Reese Levine for collaboration on the WebGPU tests, and a number of people working at GPU vendors, who tend not to be used to working in the open, but whose generosity with time and insight I appreciate.
+
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=29254668).
 
 [prefix sum on Vulkan]: https://raphlinus.github.io/gpu/2020/04/30/prefix-sum.html
 [Point of WebGPU on native]: https://kvark.github.io/web/gpu/native/2020/05/03/point-of-webgpu-native.html

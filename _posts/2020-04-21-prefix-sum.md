@@ -6,6 +6,8 @@ categories: [gpu]
 ---
 **Update 2020-05-22:** A new section on [forward progress](#forward-progress) has been added, and the discussion of synchronized shuffles has been improved.
 
+**Update 2021-11-17:** See the follow-up post [Prefix sum on portable compute shaders.](https://raphlinus.github.io/gpu/2021/11/17/prefix-sum-portable.html)
+
 Today, there are two main ways to run compute workloads on GPU. One is CUDA, which has a fantastic ecosystem including highly tuned libraries, but is (in practice) tied to Nvidia hardware. The other is graphics APIs used primarily for gaming, which run on a wide variety of hardware, but historically offer much less power than CUDA. Also, the tooling for compute in that space is terrible. Historically, a lot of compute has also been done with OpenCL, but its future is cloudy as it's been officially deprecated by Apple, and GPU vendors are not consistently keeping their OpenCL implementations up to date.
 
 Vulkan has been catching up fast in its raw capabilities, with recent extensions supporting more advanced GPU compute features such as subgroups, pointers, and a memory model. Is it getting to the point where it can run serious compute workloads?
