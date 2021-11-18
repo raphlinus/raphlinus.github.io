@@ -48,7 +48,7 @@ Maintaining source in WGSL and translating to other shader languages would be vi
 
 It's worth noting that the Vulkan memory model faced a similar choice when they were defining the semantics of atomics for Vulkan, and came to a different decision than WGSL. As is clear from [their blog post,][Atomic Operations vs Atomic Objects] they recognize the importance of working with existing shaders and shader languages, even if it isn't as aesthetically pleasing as a strictly typed approach.
 
-While I've been disappointed to run into these problems, I remain optimistic about the propsects for WebGPU to run real compute loads. I just think it'll take a while to get there. In the meantime, I will continue to track progress and help where I can with things like test cases and spec clarifications.
+While I've been disappointed to run into these problems, I remain optimistic about the prospects for WebGPU to run real compute loads. I just think it'll take a while to get there. In the meantime, I will continue to track progress and help where I can with things like test cases and spec clarifications.
 
 ## GPU bugs
 
