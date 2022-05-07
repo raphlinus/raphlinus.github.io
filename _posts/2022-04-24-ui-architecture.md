@@ -62,7 +62,7 @@ This was carefully designed to be clean and simple. A few notes about this code,
 This function is run whenever there are significant changes (more on that later). It takes the current app state (in this case a single number, but in general app state can be anything), and returns a view tree. The exact type of the view tree is not specified, rather it uses the [impl Trait] feature to simply assert that it's something that implments the View trait (parameterized on the type of the app state). The full type happens to be:
 
 ```rust
-VStack<u32, (), (String, Button<u32, (), {anonymous function of type FnMut(u32) -> ()}>)>
+VStack<u32, (), (String, Button<u32, (), {anonymous function of type for <'a> FnMut(&'a mut u32) -> ()}>)>
 ```
 
 For such a simple example, this is not too bad (other than the callback), but would get annoying quickly.
