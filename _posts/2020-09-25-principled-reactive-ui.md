@@ -4,6 +4,8 @@ title:  "Towards principled reactive UI"
 date:   2020-09-25 07:44:42 -0700
 categories: [rust, druid]
 ---
+**Update 7 May 2022:** A followup to this post containing significant conceptual advance is [Xilem: an architecture for UI in Rust](https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html). I consider the Crochet experiment to be mostly negative, as there were a number of ergonomic and functional "paper cuts," though several of the research goals were met, at least to some extent.
+
 This is a followup to my post about a year ago, [Towards a unified theory of reactive UI]. It is a deeper exploration of the question: "what is the best way to express reactive UI in Rust?"
 
 ## Introduction

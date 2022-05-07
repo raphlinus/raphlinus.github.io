@@ -6,6 +6,8 @@ categories: [ui, druid]
 ---
 **Update 26 Sep 2020:** A followup to this post is [Towards principled reactive UI](https://raphlinus.github.io/rust/druid/2020/09/25/principled-reactive-ui.html).
 
+**Update 7 May 2022:** A followup to this post containing significant conceptual advance is [Xilem: an architecture for UI in Rust](https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html).
+
 In trying to figure out the best reactive structure for [druid], as well as how to communicate that to the world, I've been studying a wide range of reactive UI systems. I've found an incredible diversity, even though they have fairly consistent goals. This post is an attempt to find common patterns, to characterize the design space as a whole. It will be rough, at some points almost a stream of consciousness. If I had the time and energy, I think it could be expanded into an academic paper. But, for now, perhaps these rough thoughts are interesting to some people working in the space.
 
 ## Reactive UI

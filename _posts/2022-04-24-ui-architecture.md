@@ -8,7 +8,7 @@ Rust is an appealing language for building user interfaces for a variety of reas
 
 This post presents a new architecture, which is a synthesis of existing work and a few new ideas. The goals include expression of modern reactive, declarative UI, in components which easily compose, and a high performance implementation. UI code written in this architecture will look very intuitive to those familiar with state of the art toolkits such as SwiftUI, Flutter, and React, while at the same time being idiomatic Rust.
 
-The name "Xilem" is derived from a [xylem], a type of transport tissue in vascular plants, including trees. The word is spelled with an "i" in several languages including Romanian and Malay, and is a reference to [xi-editor], a starting place for explorations into UI in Rust (now on hold).
+The name "Xilem" is derived from [xylem], a type of transport tissue in vascular plants, including trees. The word is spelled with an "i" in several languages including Romanian and Malay, and is a reference to [xi-editor], a starting place for explorations into UI in Rust (now on hold).
 
 Like most modern UI architectures, Xilem is based on a *view tree* which is a simple declarative description of the UI. For incremental update, successive versions of the view tree are *diffed,* and the results are applied to a widget tree which is more of a traditional retained-mode UI. Xilem also contains at heart an incremental computation engine with precise change propagation, specialized for UI use.
 
@@ -256,6 +256,8 @@ The work presented in this blog post is conceptual, almost academic, though it i
 One way to test that would be to try it in other domains. There are quite a few projects that implement reactive UI ideas over a TUI, and it would also be interesting to try the Xilem architecture on top of Web infrastructure, generating DOM nodes in place of the associated widget tree.
 
 I'd like to thank a large number of people, though of course the mistakes in this post are my own. The Xilem architecture takes a lot of inspiration from Olivier's [Panoramix] and Manmeet's [olma] explorations, as well as Taylor Holliday's [rui]. Jan Pochyla provided useful feedback on early versions, and conversations with the entire Druid crew on [xi.zulipchat.com] were also informative. Ben Saunders provided valuable insight regarding Rust's async ecosystem.
+
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=31297550) and [/r/rust](https://www.reddit.com/r/rust/comments/ukk1p4/xilem_an_architecture_for_ui_in_rust/).
 
 [Druid]: https://github.com/linebender/druid
 [Xylem]: https://en.wikipedia.org/wiki/Xylem
