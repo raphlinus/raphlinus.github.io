@@ -59,7 +59,7 @@ fn app(count: &mut u32) -> impl View<u32> {
 
 This was carefully designed to be clean and simple. A few notes about this code, then we'll get in to what happens downstream to actually build and run the UI.
 
-This function is run whenever there are significant changes (more on that later). It takes the current app state (in this case a single number, but in general app state can be anything), and returns a view tree. The exact type of the view tree is not specified, rather it uses the [impl Trait] feature to simply assert that it's something that implments the View trait (parameterized on the type of the app state). The full type happens to be:
+This function is run whenever there are significant changes (more on that later). It takes the current app state (in this case a single number, but in general app state can be anything), and returns a view tree. The exact type of the view tree is not specified, rather it uses the [impl Trait] feature to simply assert that it's something that implements the View trait (parameterized on the type of the app state). The full type happens to be:
 
 ```rust
 VStack<u32, (), (String, Button<u32, (), {anonymous function of type for <'a> FnMut(&'a mut u32) -> ()}>)>
