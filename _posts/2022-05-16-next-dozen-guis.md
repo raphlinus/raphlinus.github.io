@@ -150,7 +150,7 @@ And I remain very hopeful about the potential for GUI in Rust. It seems likely t
 [tao]: https://github.com/tauri-apps/tao
 [makepad]: https://github.com/makepad/makepad
 [Xilem]: https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html
-[winit keyboard issue]: https://github.com/rust-windowing/winit/issue/753
+[winit keyboard issue]: https://github.com/rust-windowing/winit/issues/753
 [iced doesn't suppor system menus]: https://github.com/iced-rs/iced/pull/1047
 [Vizia]: https://github.com/vizia/vizia
 [GUI framework ingredients]: https://www.cmyr.net/blog/gui-framework-ingredients.html
