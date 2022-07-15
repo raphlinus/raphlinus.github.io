@@ -123,8 +123,6 @@ Doing accessibility *well* is of course tricky. It requires architectural suppor
 
 Also, to provide a high quality accessibility experience, the toolkit needs to export fine-grained control of accesibility features to the app developer. Hopefully, generic form-like UI can be handled automatically, but for things like custom widgets, the developer needs to build parts of the accessibility tree directly. There are also tricky interactions with features such as virtualized scrolling.
 
-As a historical note, in the "bad old days" of user32 native Windows apps, the usual implementation for screen readers was an "off-screen" model, which basically traversed the HWND tree and extracted text and other similar semantic data. The advent of windowless (including IE 9) broke this model, of course. Today platforms provide proper abstractions with at least reasonably good layering, and with some care by authors of the UI toolkit and application it is possible to basically get it right.
-
 Accessibility is one of the great strengths of the Web technology stack. A lot of thought went into defining a cross-platform abstraction which could actually be implemented, and a lot of users depend on this every day. AccessKit borrows liberally from the Web approach, including the implementation in Chromium.
 
 Advice: start thinking about accessibility early, and try to build prototypes to get a good understanding of what's required for a high quality experience.
@@ -173,4 +171,3 @@ And I remain very hopeful about the potential for GUI in Rust. It seems likely t
 [Carbon]: https://en.wikipedia.org/wiki/Carbon_(API)
 [Uno platform]: https://platform.uno/
 [AccessKit]: https://github.com/AccessKit/accesskit
-[off-screen model]: https://en.wikipedia.org/wiki/Screen_reader#Off-screen_models
