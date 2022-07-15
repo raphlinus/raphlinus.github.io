@@ -1,32 +1,59 @@
 ---
 layout: post
 title:  "Advice for the next dozen Rust GUIs"
-date:   2022-07-01 14:26:42 -0700
+date:   2022-07-15 10:53:42 -0700
 categories: [rust, gui]
 ---
-A few times a week, someone asks on the #gui-and-ui channel on the Rust Discord, "what is the best UI toolkit for my application?" Unfortunately there is still no clear answer to this question. Generally the top contenders are egui, Iced, and Druid, but web-based approaches are in the running, and of course there's always the temptation to just build a new one. And every couple or months or so, a post appears with a new GUI toolkit.
-
-
-
-// Old text below
+A few times a week, someone asks on the [#gui-and-ui channel] on the Rust Discord, "what is the best UI toolkit for my application?" Unfortunately there is still no clear answer to this question. Generally the top contenders are egui, Iced, and Druid, but web-based approaches are in the running, and of course there's always the temptation to just build a new one. And every couple or months or so, a post appears with a new GUI toolkit.
 
 This post is something of a sequel to [Rust 2020: GUI and community]. I hope to offer a clear-eyed survey of the current state of affairs, and suggestions for how to improve it. It also includes some lessons so far from Druid.
 
-The motivations for building GUI in Rust remain strong. While Electron continues to gain momentum, especially for desktop use cases, there is considerable desire for a less resource-hungry alternative. That said, a consensus has not emerged what that alternative should look like. Rather, it seems there is a new experimental Rust UI toolkit every couple months or so.
-
-In addition, unfortunately there is fragmentation at the level of infrastructure as well.
+The motivations for building GUI in Rust remain strong. While Electron continues to gain momentum, especially for desktop use cases, there is considerable desire for a less resource-hungry alternative. That said, a consensus has not emerged what that alternative should look like. In addition, unfortunately there is fragmentation at the level of infrastructure as well.
 
 Fragmentation is not entirely a bad thing. To some extent, specialization can be a good thing, resulting in solutions more adapted to the problem at hand, rather than a one-size-fits-all approach. More importantly, the diversity of UI approaches is a rich ground for experimentation and exploration, as there are many aspects to GUI in Rust where we still don't know the best approach.
 
 ## A large tradeoff space
 
-One of the great truths to understand about GUI is that there are few obviously correct ways to do things, and many, many tradeoffs. At present, this tradeoff space is very *sensitive,* in that small differences in requirements and priorities may end up with considerably different implementation choices. I believe this is a main factor driving the fragmentation of Rust GUI.
+One of the great truths to understand about GUI is that there are few obviously correct ways to do things, and many, many tradeoffs. At present, this tradeoff space is very *sensitive,* in that small differences in requirements and priorities may end up with considerably different implementation choices. I believe this is a main factor driving the fragmentation of Rust GUI. Many of the tradeoffs have to do with the extent to use platform capabilities for various things (of which text layout and compositing are perhaps the most intersting), as opposed to a cross-platform implementation of those capabilities, layered on top of platform abstractions.
+
+### A small rant about native
+
+You'll see the word "native" used quite a bit in discussions about UI, but I think that's more confusing than illuminating, for a number of reasons.
+
+In the days of Windows XP, "native" on Windows would have had quite a specific and precise meaning, it would be the use of [user32 controls], which for the most part created a HWND per control and used GDI+ for drawing. Thanks to the strong compatibility guarantees of Windows, such code will still run, but it will look ancient and out of place compared to building on other technology stacks, also considered "native." In the Windows 7 era, that would be [windowless controls] drawn with Direct2D (this was the technology used for Microsoft Office, using the internal DirectUI toolkit, which was not available to third party developers, though there were other windowless toolkits such as WPF). Starting with Windows 8 and the (relatively unsuccessful) [Metro design language], many of the elements of the UI came together in the compositor rather than being directly drawn by the app. As of Windows 10, Microsoft started pushing [Universal Windows Platform] as the preferred "native" solution, but that also didn't catch on. As of Windows 11, there is a new [Fluent design language], natively supported only in WinUI 3 (which in turn is an evolution of UWP). "Native" on Windows can refer to all of these technology stacks.
+
+On Windows in particular, there's also quite a bit of confusion about UI functionality that's directly provided by the platform (as is the case for user32 controls and much of UWP, including the Windows.UI namespace), vs lower level capabilities (Direct2D, DirectWrite, and DirectComposition, for example) provided to a library which mostly lives in userspace. The new WinUI (and Windows App SDK more generally) is something of a hybrid, with this distinction largely hidden from the developer. An advantage of this hybrid approach is that OS version is abstracted to a large extent; for example, even though UWP proper is Windows 10 and up only, it is possible to use the [Uno platform] to deploy WinUI apps on other systems, though it is a very good question to what extent that kind of deployment can be considered "native."
+
+On macOS the situation is not quite as chaotic and fragmented, but there is an analogous evolution from Cocoa (AppKit) to SwiftUI; going forward, it's likely that new capabilities and evolutions of the design language will be provided for the latter but not the former. There was a similar deprecation of [Carbon] in favor of Cocoa, many years ago. (One of the main philosophical differences is that Windows maintains backwards compatibility over many generations, while Apple actually deprecates older technology)
+
+The idea of abstracting and wrapping platform native GUI has been around a long time. Classic implementations include wxWidgets and Java AWT, while a more modern spin is React Native. It is very difficult to provide high quality experiences with this approach, largely because of the impedance mismatch between platforms, and few successful applications have been shipped this way.
+
+The meaning of "native" varies from platform to platform. On macOS, it would be extremely jarring and strange for an app not to use the system menubar, for example (though it would be acceptable for a game). On Windows, there's more diversity in the way apps draw menus, and of course Linux is fragmented by its nature.
+
+Instead of trying to decide whether a GUI toolkit is native or not, I recommend asking a set of more precise questions:
+
+* What is the binary size for a simple application?
+* What is the startup time for a simple application?
+* Does text look like the platform native text?
+* To what extent does the app support preferences set at the system level?
+* What subset of expected text control functionality is provided?
+  + Complex text rendering including BiDi
+  + Support for keyboard layouts including "dead key" for alphabetic scripts
+  + Keyboard shortcuts according to platform human interface guidelines
+  + Input Method Editor
+  + Color emoji rendering and use of platform emoji picker
+  + Copy-paste (clipboard)
+  + Drag and drop
+  + Spelling and grammar correction
+  + Accessibility (including reading the text aloud)
+
+If a toolkit does well on all these axes, then I don't think it much matters it's built with "native" technology; that's basically internal details. That said, it's also very hard to hit all these points if there is a huge stack of non-native abstractions in the way.
 
 ## On winit
 
 All GUIs (and all games) need a way to create windows, and wire up interactions with that window - primarily drawing pixels into the window and dealing with user inputs such as mouse and keyboard, but potentially a much larger range. The implementation is platform specific and involves many messy details. There is one very popular crate for this function – [winit] – but I don't think a consensus, at least yet, so there are quite a few other alternatives, including the [tao] fork of winit used by Tauri, druid-shell, baseview (which is primarily used in audio applications because it supports the VST plug-in case), and handrolled approaches such as the one used by [makepad].
 
-I would describe the tension this way (perhaps not everyone will agree with me). The *stated* scope of winit is to create a window and leave the details of what happens inside that window to the application. For some interactions (especially GPU rendering, which is well developed in Rust space), that split works well, but for other interactions it is not nearly as clean. In practice, I think winit has evolved to become quite satisfactory for game use cases, but less so for GUI. Big chunks of functionality, such as access to native menus, are missing (the main motivation behind the tao fork), and keyboard support is [persistently below][winit keyboard issue] what's needed for high quality text input in a GUI.
+I would describe the tension this way (perhaps not everyone will agree with me). The *stated* scope of winit is to create a window and leave the details of what happens inside that window to the application. For some interactions (especially GPU rendering, which is well developed in Rust space), that split works well, but for other interactions it is not nearly as clean. In practice, I think winit has evolved to become quite satisfactory for game use cases, but less so for GUI. Big chunks of functionality, such as access to native menus, are missing (the main motivation behind the tao fork, and the reason [iced doesn't suppor system menus]), and keyboard support is [persistently below][winit keyboard issue] what's needed for high quality text input in a GUI.
 
 I think resolving some of this fragmentation is possible and would help move the broader ecosystem forward. For the time being, the Druid family of projects will continue developing druid-shell, but is open to collaboration with winit. One way to frame this is that the extra capabilities of druid-shell serve as a set of requirements, as well as guidance and experience how to implement them well.
 
@@ -44,11 +71,9 @@ If the GUI can be decomposed into the schema supported by the compositor, there 
 
 As an illustration of how a Rust UI app may depend on the compositor, see the [Minesweeper using windows-rs] demo. Essentially all presentation is done using the compositor rather than a drawing API (this is why the numbers are drawn using dots rather than fonts). This sample application depends on the [Windows.UI] namespace to be provided by the operating system, so will only run on Windows 10 (build 1803 or later).
 
-TODO: is this a good time for a brief tutorial on Windows deployment choices? This is *massively* confusing from MS. The default choice is WinAPI, which goes back to Windows NT and Windows 95 (when it was called Win32; writing code that works on both 32 and 64 bit targets is relatively straightforward). There are also various iterations of WinRT, of which UWP was heavily promoted then deprecated. Today Windows APP SDK is one of the 
-
 All that said, there are significant *disadvantages* to the compositor as well. One is cross-platform support and compatibility. There is currently no good cross-platform abstraction for the compositor ([planeshift] was an attempt, but is abandoned). Further, older systems (Windows 7 and X11) cannot rely on the compositor, so there has to be a compatibility path, generally with degraded behavior.
 
-There are other more subtle drawbacks. One is a lowest-common-denominator approach, emphasizing visual effects supported by the compositor, especially cross-platform. As just one example, translation and alpha fading is well-supported, but scaling of bitmap surfaces comes with visual degradation, compared with re-rendering the vector original. [TODO: need to explain what it means to depend on WinRT APIs such as Windows.UI] There's also the issue of additional RAM usage for all the intermediate texture layers.
+There are other more subtle drawbacks. One is a lowest-common-denominator approach, emphasizing visual effects supported by the compositor, especially cross-platform. As just one example, translation and alpha fading is well-supported, but scaling of bitmap surfaces comes with visual degradation, compared with re-rendering the vector original. There's also the issue of additional RAM usage for all the intermediate texture layers.
 
 Perhaps the biggest motivation to use the compositor extensively is stitching together diverse visual sources, particularly video, 3D, and various UI embeddings including web and "native" controls. If you want a video playback window to scroll seamlessly and other UI elements to blend with it, there is essentially no other game in town. These embeddings were declared as out of scope for Druid, but people request them often.
 
@@ -90,6 +115,20 @@ A final problem with emulating immediate mode is that the architecture tends to 
 
 Advice: of course try to figure out a good architecture, but also plan for it to evolve.
 
+## Accessibility
+
+It's fair to say that a UI toolkit cannot be considered production-ready unless it supports accessibility features such as support for screen readers for visually impaired users. Unfortunately, accessibility support has often taken the back seat, but fortunately the situation looks like it might improve. In particular, the [AccessKit] project hopes to provide common accessibility infrastructure to UI toolkits in the Rust ecosystem.
+
+Doing accessibility *well* is of course tricky. It requires architectural support from the toolkit. Further, platform accessibility capabilities often make architectural assumptions about the way apps are built. In general, they expect a retained mode widget tree; this is a significant impedance mismatch with immediate mode GUI, and generally requires stable widget ID and a diffing approach to create the accessibility tree. For the accessibility part (as opposed to the GPU-drawn part) of the UI, it's fair to say pure immediate mode cannot be used, only a hybrid approach which resembles emulation of an immediate mode API on top of a more traditional retained structure.
+
+Also, to provide a high quality accessibility experience, the toolkit needs to export fine-grained control of accesibility features to the app developer. Hopefully, generic form-like UI can be handled automatically, but for things like custom widgets, the developer needs to build parts of the accessibility tree directly. There are also tricky interactions with features such as virtualized scrolling.
+
+As a historical note, in the "bad old days" of user32 native Windows apps, the usual implementation for screen readers was an "off-screen" model, which basically traversed the HWND tree and extracted text and other similar semantic data. The advent of windowless (including IE 9) broke this model, of course. Today platforms provide proper abstractions with at least reasonably good layering, and with some care by authors of the UI toolkit and application it is possible to basically get it right.
+
+Accessibility is one of the great strengths of the Web technology stack. A lot of thought went into defining a cross-platform abstraction which could actually be implemented, and a lot of users depend on this every day. AccessKit borrows liberally from the Web approach, including the implementation in Chromium.
+
+Advice: start thinking about accessibility early, and try to build prototypes to get a good understanding of what's required for a high quality experience.
+
 ## What of Druid?
 
 I admit I had hopes that Druid would become the popular choice for Rust GUI, though I've never explicitly had that as a goal. In any case, that hasn't happened, and now is a time for serious thought about the future of the project.
@@ -111,11 +150,11 @@ And I remain very hopeful about the potential for GUI in Rust. It seems likely t
 [tao]: https://github.com/tauri-apps/tao
 [makepad]: https://github.com/makepad/makepad
 [Xilem]: https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html
-[winit keyboard issue]: https://github.com/rust-windowing/winit/pull/1890
-[iced revert system menus]: https://github.com/iced-rs/iced/pull/1047
+[winit keyboard issue]: https://github.com/rust-windowing/winit/issue/753
+[iced doesn't suppor system menus]: https://github.com/iced-rs/iced/pull/1047
 [Vizia]: https://github.com/vizia/vizia
 [GUI framework ingredients]: https://www.cmyr.net/blog/gui-framework-ingredients.html
-[piet-gpu]: TODO
+[piet-gpu]: https://github.com/linebender/piet-gpu
 [The compositor is evil]: https://raphlinus.github.io/ui/graphics/2020/09/13/compositor-is-evil.html
 [DirectComposition]: https://docs.microsoft.com/en-us/windows/win32/directcomp/directcomposition-portal
 [Windows.UI.Composition]: https://docs.microsoft.com/en-us/uwp/api/windows.ui.composition?view=winrt-22621
@@ -125,3 +164,13 @@ And I remain very hopeful about the potential for GUI in Rust. It seems likely t
 [GLFW]: https://www.glfw.org/
 [planeshift]: https://github.com/pcwalton/planeshift
 [Towards principled reactive UI]: https://raphlinus.github.io/rust/druid/2020/09/25/principled-reactive-ui.html
+[#gui-and-ui channel]: https://discord.com/channels/273534239310479360/441714251359322144
+[user32 controls]: https://docs.microsoft.com/en-us/windows/win32/controls/window-controls
+[windowless controls]: https://devblogs.microsoft.com/oldnewthing/20050211-00/?p=36473
+[Metro design language]: https://en.wikipedia.org/wiki/Metro_(design_language)
+[Universal Windows Platform]: https://en.wikipedia.org/wiki/Universal_Windows_Platform
+[Fluent design language]: https://docs.microsoft.com/en-us/windows/apps/design/signature-experiences/design-principles
+[Carbon]: https://en.wikipedia.org/wiki/Carbon_(API)
+[Uno platform]: https://platform.uno/
+[AccessKit]: https://github.com/AccessKit/accesskit
+[off-screen model]: https://en.wikipedia.org/wiki/Screen_reader#Off-screen_models
