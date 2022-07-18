@@ -4,7 +4,7 @@ title:  "Advice for the next dozen Rust GUIs"
 date:   2022-07-15 10:53:42 -0700
 categories: [rust, gui]
 ---
-A few times a week, someone asks on the [#gui-and-ui channel] on the Rust Discord, "what is the best UI toolkit for my application?" Unfortunately there is still no clear answer to this question. Generally the top contenders are egui, Iced, and Druid, but web-based approaches are in the running, and of course there's always the temptation to just build a new one. And every couple or months or so, a post appears with a new GUI toolkit.
+A few times a week, someone asks on the [#gui-and-ui channel] on the Rust Discord, "what is the best UI toolkit for my application?" Unfortunately there is still no clear answer to this question. Generally the top contenders are egui, Iced, and Druid, with [Slint] looking promising as well, but web-based approaches such as [Tauri] are also gaining some momentum, and of course there's always the temptation to just build a new one. And every couple or months or so, a post appears with a new GUI toolkit.
 
 This post is something of a sequel to [Rust 2020: GUI and community]. I hope to offer a clear-eyed survey of the current state of affairs, and suggestions for how to improve it. It also includes some lessons so far from Druid.
 
@@ -143,6 +143,8 @@ Meanwhile we will be pushing forward with Druid. It won't be for everyone, but I
 
 And I remain very hopeful about the potential for GUI in Rust. It seems likely to me that it will be the language the next major GUI toolkit is written in, as no other language offers the combination of performance, safety, and high level expressiveness. All of the issues in this post are problems to be solved rather than obstacles why Rust isn't a good choice for building UI.
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=32112846) and [/r/rust](https://old.reddit.com/r/rust/comments/vzz4mt/advice_for_the_next_dozen_rust_guis/).
+
 [Rust 2020: GUI and community]: https://raphlinus.github.io/rust/druid/2019/10/31/rust-2020.html
 [winit]: https://github.com/rust-windowing/winit
 [tao]: https://github.com/tauri-apps/tao
@@ -171,3 +173,6 @@ And I remain very hopeful about the potential for GUI in Rust. It seems likely t
 [Carbon]: https://en.wikipedia.org/wiki/Carbon_(API)
 [Uno platform]: https://platform.uno/
 [AccessKit]: https://github.com/AccessKit/accesskit
+[Slint]: https://slint-ui.com/
+[Tauri]: https://tauri.app/
+
