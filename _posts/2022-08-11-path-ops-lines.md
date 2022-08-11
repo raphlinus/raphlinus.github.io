@@ -20,23 +20,7 @@ The first cut looks like this: line segments in the input can be *perturbed* by 
 
 What does it mean to perturb a line? We won't move endpoints (preserving the topology), but we can insert any number of additional points, as long as those are within epsilon of the original line. As a preview of what's to follow, there will be three reasons for inserting these points: intersections as in the classical Bentley-Ottman algorithm, splitting of a line when a point comes too close, and introduction of short horizontal segments to resolve tricky intersection cases.
 
-<svg version="1.1" width="640" height="200" xmlns="http://www.w3.org/2000/svg">
-    <title>TODO</title>
-
-    <line x1="50" y1="60" x2="250" y2="140" stroke="#fda" stroke-width="20" stroke-linecap="round" />
-    <circle cx="50" cy="60" r="3" />
-    <circle cx="250" cy="140" r="3" />
-    <line x1="50" y1="60" x2="250" y2="140" stroke="#000"  />
-
-    <line x1="300" y1="60" x2="500" y2="140" stroke="#fda" stroke-width="20" stroke-linecap="round" />
-     <line x1="300" y1="60" x2="500" y2="140" stroke="#000" opacity="0.4" />
-   <circle cx="300" cy="60" r="3" />
-    <circle cx="500" cy="140" r="3" />
-    <circle cx="400" cy="93" r="2" />
-    <circle cx="450" cy="127" r="2" />
-    <path d="M300 60 L400 93 450 127 500 140" stroke="#000" fill="none" />
-
-</svg>
+![perturbed line](/assets/pathops_perturb_line.svg)
 
 The algorithm internally works by maintaining an *active list* with an associated invariant. Maintaining that invariant lets us state an even stronger form of the problem, which implies the previous one: for any horizontal slice bounded between y0 and y1 such that no line segments have endpoints y0 < y < y1, all line segments in the output intersecting that interval are *ordered* in nondecreasing order, meaning each successive line segment can be equal to the previous one, or is strictly to the right of it (note to self: I'm wondering if strictly horizontal segments need to be treated separately). We'll need to define that ordering predicate quite carefully; that is a major contribution of this blog post.
 
@@ -50,35 +34,11 @@ There are two versions of the point-line orientation: a simpler one, used for an
 
 The simpler one is defined as follows. The point is on top of the line if it is equal to either endpoint. Otherwise, if it is within epsilon of the line, the result is ambiguous. Finally, if it is more than epsilon away, it is right or left of the line consistent with the exact answer.
 
-<svg version="1.1" width="640" height="380" xmlns="http://www.w3.org/2000/svg">
-    <title>graphic showing point-line orientation</title>
-    <g transform="scale(0.8) translate(0, -60)">
-        <line x1="100" y1="100" x2="700" y2="500" stroke="#006" />
-        <line x1="100" y1="100" x2="700" y2="500" stroke="#fe0" opacity="0.4" stroke-width="40" stroke-linecap="round" />
-        <path d="M20 100 L80 100 A20 20 0 0 0 89.5 117 L664 500 20 500" fill="#c00" opacity="0.3" />
-        <path d="M780 100 L136 100 710.5 483 A20 20 0 0 1 720 500L780 500" fill="#0a0" opacity="0.3" />
-        <circle cx="100" cy="100" r="3" fill="#00c" />
-        <circle cx="700" cy="500" r="3" fill="#00c" />
-    </g>
-</svg>
+![graphic showing point-line orientation](/assets/pathops_capsule_orient.svg)
 
 If we were able to completely avoid ambiguous orientations in the output, such a predicate could be the basis for a correct algorithm. However, doing so is hard. Thus, we introduce a more sophisticated "scanline" version of the orientation predicate: when the point has a y coordinate equal to either endpoint, orientation is determined based on comparison of the x coordinate with that endpoint.
 
-<svg version="1.1" width="640" height="380" xmlns="http://www.w3.org/2000/svg">
-    <title>graphic showing point-line orientation, sweep line version</title>
-    <g transform="scale(0.8) translate(0, -60)">
-        <line x1="100" y1="100" x2="700" y2="500" stroke="#006" />
-        <line x1="100" y1="100" x2="700" y2="500" stroke="#fe0" opacity="0.4" stroke-width="40" stroke-linecap="round" />
-        <path d="M20 100 L80 100 A20 20 0 0 0 89.5 117 L664 500 20 500" fill="#c00" opacity="0.3" />
-        <path d="M780 100 L136 100 710.5 483 A20 20 0 0 1 720 500L780 500" fill="#0a0" opacity="0.3" />
-        <line x1="20" y1="100" x2="100" y2="100" stroke="#c00" />
-        <line x1="20" y1="500" x2="700" y2="500" stroke="#c00" />
-        <line x1="780" y1="100" x2="100" y2="100" stroke="#0a0" />
-        <line x1="780" y1="500" x2="700" y2="500" stroke="#0a0" />
-        <circle cx="100" cy="100" r="3" fill="#00c" />
-        <circle cx="700" cy="500" r="3" fill="#00c" />
-    </g>
-</svg>
+![graphic showing point-line orientation, sweep line version](/assets/pathops_sweep_orient.svg)
 
 As we will see, this version of the predicate gives us a convenient way to avoid ambiguous orientations: when a point is ambiguously oriented to a line, split the line there (possibly introducing additional error from the "solve for x given y" floating point calculation, but within epsilon).
 
@@ -98,24 +58,7 @@ Now that we have point-line orientation sorted, we can look at the relative orde
 
 If the two top endpoints have the same y value, the ordering is fully determined by the x coordinates. Otherwise, we solve both lines for x given the maximum y value, and compute the point-line orientations. If either is ambiguous, the ordering is ambiguous, otherwise the ordering is determined from the orientations (note that the orientations can't be inconsistent with each other, as that would break mathematics).
 
-<svg version="1.1" width="640" height="200" xmlns="http://www.w3.org/2000/svg">
-    <title>TODO</title>
-    <line x1="20" y1="20" x2="40" y2="180" stroke="#080" />
-    <line x1="80" y1="60" x2="50" y2="180" stroke="#080" />
-
-    <line x1="170" y1="20" x2="200" y2="180" stroke="#080" />
-    <line x1="170" y1="20" x2="240" y2="180" stroke="#080" />
-
-    <line x1="280" y1="20" x2="365" y2="20" stroke="#8c8" />
-    <line x1="320" y1="20" x2="350" y2="180" stroke="#080" />
-    <line x1="325" y1="20" x2="390" y2="180" stroke="#080" />
-
-    <line x1="470" y1="20" x2="500" y2="180" stroke="#fda" stroke-width="15" stroke-linecap="round" />
-    <line x1="470" y1="20" x2="500" y2="180" stroke="#a00" />
-    <line x1="475" y1="25" x2="540" y2="180" stroke="#a00" />
-
-
-</svg>
+![TODO](/assets/line_seg_order.svg)
 
 Similarly for the bottom ordering. Note that all combinations of top and bottom orderings are possible; if one line segment is top-ordered to the right of the other, but bottom-ordered to the left of it, they intersect somewhere in the middle.
 
@@ -143,25 +86,9 @@ If the second line is top-ordered to the left of the first, then it is in the wr
 
 That leaves us with (right, left), meaning there is an intersection. In classic Bentley-Ottmann, we would always determine the intersection point by solving the relevant line equations, but this may be ill-conditioned, so we apply different strategies. We still do that if all relevant endpoints are > epsilon from the line, otherwise we choose one of the two endpoints and insert that into the *other* line. If we choose the line segment with the more vertical slope, that guarantees it is within epsilon of the other line.
 
-<svg version="1.1" width="640" height="200" xmlns="http://www.w3.org/2000/svg">
-    <title>TODO</title>
-    <line x1="20" y1="20" x2="200" y2="180" stroke="black" />
-    <line x1="180" y1="30" x2="50" y2="180" stroke="black" />
+![intersection of two lines, X case](/assets/pathops_intersect_x.svg)
 
-    <line x1="320" y1="20" x2="500" y2="180" stroke="black" />
-    <line x1="480" y1="30" x2="350" y2="180" stroke="black" />
-    <circle cx="415.272" cy="104.686" r="3" />
-</svg>
-
-<svg version="1.1" width="640" height="200" xmlns="http://www.w3.org/2000/svg">
-    <title>TODO</title>
-    <line x1="20" y1="20" x2="200" y2="30" stroke="black" />
-    <line x1="100" y1="20" x2="110" y2="180" stroke="black" />
-
-    <path d="M320 20 L400 20 500 30" x1="320" stroke="black" fill="none" />
-    <line x1="400" y1="20" x2="410" y2="180" stroke="black" />
-    <circle cx="400" cy="20" r="3" />
-</svg>
+![intersection of two lines, T case](/assets/pathops_intersect_t.svg)
 
 ### Horizontal segments
 
