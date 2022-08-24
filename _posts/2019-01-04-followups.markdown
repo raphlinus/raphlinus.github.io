@@ -29,7 +29,7 @@ $$
 \int_0^1 \frac{|\mathbf{x}''(t)|^2}{|\mathbf{x}'(t)|^2} dt
 $$
 
-Once you've got that, you can take it to pretty much any power you like, and that accurately predicts the error of a corresponding order of quadrature. What I've got now in my [research branch](https://github.com/linebender/kurbo/tree/more_cubic_arclen) uses 8th order Legendre-Gauss quadrature to compute this integral. Luckily, I've found that you don't need to compute the error bound any more accurately than that.
+Once you've got that, you can take it to pretty much any power you like, and that accurately predicts the error of a corresponding order of quadrature. What I've got now in my [research branch](https://github.com/linebender/kurbo/pull/225) uses 8th order Legendre-Gauss quadrature to compute this integral. Luckily, I've found that you don't need to compute the error bound any more accurately than that.
 
 This lets me use considerably higher orders of quadrature. What I've got now uses 8, 16, and 24, and then subdivides if 24 is not good enough. A good way to visualize its performance is to raise quadratic Béziers to cubic, run the algorithm, and visualize the error (this methodology of course has the potential to miss any contribution from the third derivative, if any, but it's consistent with evaluation of random cubics). Here's what I get:
 
@@ -79,5 +79,5 @@ I'm excited about all these things in the new year. I've had lots of ideas recen
 [Context]: https://cairographics.org/documentation/pycairo/2/reference/context.html
 [CanvasRenderingContext2D]: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
 [`Shape`]: https://github.com/linebender/kurbo/pull/5
-[research branch]: https://github.com/linebender/kurbo/tree/more_cubic_arclen
+[research branch]: https://github.com/linebender/kurbo/pull/225
 [`RenderContext`]: https://github.com/linebender/piet/blob/master/piet/src/render_context.rs
