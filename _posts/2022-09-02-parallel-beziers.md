@@ -1798,11 +1798,19 @@ Each of these numeric techniques has its own subtleties.
 
 One of the challenges of parallel curves in general is *cusps.* These happen when the curvature of the source curve is equal to one over the offset distance. Cubic Béziers have fairly complex curvature profiles, so there can be a number of cusps - it's easy to find examples with four, and it wouldn't be surprising to me if there were more. By contrast, Euler spirals have simple curvature profiles, and the location of the cusp is extremely simple to determine.
 
+The general equation for curvature of a parametric curve is as follows:
+
 $$
 \kappa = \frac{\mathbf{x}''(t) \times \mathbf{x}'(t)}{|\mathbf{x}'(t)|^3}
 $$
 
-As with many such numerical root-finding approaches, missing a cusp is a risk. The approach *currently* used in the code is a form of interval arithmetic: over the (t0..t1) interval, a minimum and maximum value of $\mathbf{x}'$ is computed, while the cross product is quadratic in t. Solving that partitions the interval into ranges where the curvature is definitely above or below the threshold for a cusp, and a (hopefully) smaller interval where it's possible.
+The cusp happens when $\kappa d + 1 = 0$. With a bit of rewriting, we get
+
+$$
+(\mathbf{x}''(t) \times \mathbf{x}'(t))d + |\mathbf{x}'(t)|^3 = 0
+$$
+
+As with many such numerical root-finding approaches, missing a cusp is a risk. The approach *currently* used in the code in this blog post is a form of interval arithmetic: over the (t0..t1) interval, a minimum and maximum value of $\|\mathbf{x}'\|$ is computed, while the cross product is quadratic in t. Solving that partitions the interval into ranges where the curvature is definitely above or below the threshold for a cusp, and a (hopefully) smaller interval where it's possible.
 
 This algorithm is robust, but convergence is not super-fast - it often hits the case where it has to subdivide in half, so convergence is similar to a bisection approach for root-finding. I'm exploring another approach of computing bounding parabolas, and that seems to have cubic convergence, but is a bit more complicated and fiddly.
 
@@ -1858,7 +1866,7 @@ If generation of an absolute minimum number of output segments is the goal, then
 
 ## Evaluation
 
-Somebody evaluating this work for use in production would care about several factors: accuracy of result, robustness, and performance. The interactive demo on this page speaks for itself: the results are accurate, the performance is quite good for interactive use, and it is robust (though I make no claims it handles all adversarial inputs corrects; that always tends to require extra work).
+Somebody evaluating this work for use in production would care about several factors: accuracy of result, robustness, and performance. The interactive demo on this page speaks for itself: the results are accurate, the performance is quite good for interactive use, and it is robust (though I make no claims it handles all adversarial inputs correctly; that always tends to require extra work).
 
 In terms of accuracy of result, this work is a dramatic advance over anything in the literature. I've implemented and compared it against two other techniques that are widely cited as reasonable approaches to this problem: [Tiller-Hanson] and the "shape control" approach of Yang and Huang. For generating a single segment, it can be considerably more accurate than either.
 
@@ -1870,7 +1878,7 @@ In addition to the accuracy for generating a single line segment, it is interest
 
 The shape control technique has good scaling, but stability issues when the tangents are nearly parallel. That can happen for an S-shaped curve, and also for a U with nearly 180 degrees of arc.
 
-The Tiller-Hanson technique is geometrically intuitive; it offsets each edge of the control polygon by the offset amount, as illustrated in the diagram below. It doesn't have the stability issues with nearly-parallel tangents and can produce better results for those "S" curves, but the sacling is much worse.
+The Tiller-Hanson technique is geometrically intuitive; it offsets each edge of the control polygon by the offset amount, as illustrated in the diagram below. It doesn't have the stability issues with nearly-parallel tangents and can produce better results for those "S" curves, but the scaling is much worse.
 
 <img src="/assets/parallel-tiller-hanson.png" width="560" height="250" alt="diagram showing Tiller-Hanson technique">
 
@@ -1891,6 +1899,8 @@ This work also provides a bit of insight into the nature of cubic Bézier curves
 There's clearly more work that could be done to make the evalation more rigorous, including more optimization of the code. I believe this result would make a good paper, but my bandwidth for writing papers is limited right now. I would be more than open to collaboration, and invite interested people to get in touch.
 
 Thanks to Linus Romer for helpful discussion and refinement of the polynomial equations regarding quartic solving of the core curve fitting algorithm.
+
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=32784491).
 
 ## References
 
