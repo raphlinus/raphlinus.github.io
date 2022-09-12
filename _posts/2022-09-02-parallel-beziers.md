@@ -1242,7 +1242,14 @@ class CubicOffset {
         for (let sample of samples) {
             let best_err = null;
             // Project sample point onto approximate curve along normal.
-            for (let t of cu.intersect_ray(sample.p, sample.d)) {
+            let samples = cu.intersect_ray(sample.p, sample.d);
+            if (samples.length == 0) {
+                // In production, if no rays intersect we probably want
+                // to reject this candidate altogether. But we sample the
+                // endpoints so you can get a plausible number.
+                samples = [0, 1];
+            }
+            for (let t of samples) {
                 const p_proj = cu.eval(t);
                 const this_err = sample.p.minus(p_proj).hypot2();
                 if (best_err === null || this_err < best_err) {
