@@ -17,6 +17,7 @@ categories: [curves]
 <style>
     svg {
         touch-action: pinch-zoom;
+        overflow: visible;
     }
     svg .handle {
         pointer-events: all;
