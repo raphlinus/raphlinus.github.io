@@ -206,7 +206,7 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=24599560) or [/r/r
 [Crochet]: https://github.com/raphlinus/crochet
 [diff]: https://github.com/google/diff-match-patch
 [Jetpack Compose]: https://medium.com/androiddevelopers/under-the-hood-of-jetpack-compose-part-2-of-2-37b2c20c6cdd
-[RRB-Trees]: http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.592.5377
+[RRB-Trees]: https://infoscience.epfl.ch/record/169879?ln=en
 [strict equality]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality
 [useState]: https://reactjs.org/docs/hooks-state.html
 [Rules of Hooks]: https://reactjs.org/docs/hooks-rules.html
