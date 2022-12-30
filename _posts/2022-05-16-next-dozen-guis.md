@@ -151,7 +151,7 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=32112846) and [/r/
 [makepad]: https://github.com/makepad/makepad
 [Xilem]: https://raphlinus.github.io/rust/gui/2022/05/07/ui-architecture.html
 [winit keyboard issue]: https://github.com/rust-windowing/winit/issues/753
-[iced doesn't suppor system menus]: https://github.com/iced-rs/iced/pull/1047
+[iced doesn't support system menus]: https://github.com/iced-rs/iced/pull/1047
 [Vizia]: https://github.com/vizia/vizia
 [GUI framework ingredients]: https://www.cmyr.net/blog/gui-framework-ingredients.html
 [piet-gpu]: https://github.com/linebender/piet-gpu
