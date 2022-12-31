@@ -1477,9 +1477,9 @@ function cubic_fit(th0, th1, area, mx) {
         let d1 = (2 * d0 * s0 - area * (20 / 3.)) / (d0 * s01 - 2 * s1);
         if (d0 < 0) {
             d0 = 0;
-            d1 = s1 / s01;
+            d1 = s0 / s01;
         } else if (d1 < 0) {
-            d0 = s0 / s01;
+            d0 = s1 / s01;
             d1 = 0;
         }
         if (d0 >= 0 && d1 >= 0) {
