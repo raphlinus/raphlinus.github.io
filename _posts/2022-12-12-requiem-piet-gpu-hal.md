@@ -76,6 +76,8 @@ One thing we were watching for was whether there was any interest in using piet-
 
 An intriguing potential application space is machine learning. It would be an ambitious but doable project to get, say, Stable Diffusion running on portable compute using either piet-gpu-hal or something like it, so that very little runtime (probably less than a megabyte of code) would be required. Related projects include [Kompute.cc], which runs machine learning workloads but is Vulkan only, and also [MediaPipe].
 
+One downside to trying to implement machine learning workloads in terms of portable compute shaders is that it doesn't get access to neural accelerators such the [Apple Neural Engine]. When running in native Vulkan, you *may* get access to [cooperative matrix] features, which on Nvidia are branded "tensor cores," but for the most part these are proprietary vendor extensions and it is not clear if and when they might be exposed through WebGPU. Even so, at least on Nvidia hardware it seems likely that using these features can unlock very high performance.
+
 Going forward, one approach I find particularly promising for running machine learning is [wonnx], which implements the ONNX spec on top of WebGPU. No doubt in the first release, performance will lag highly tuned native implementations considerably, but once such a thing exists as a viable open source project, I think it will be improved rapidly. And WebGPU is not standing still...
 
 ## Beyond WebGPU 1.0
@@ -136,3 +138,5 @@ In any case, we look forward to productive development and collaboration with th
 [wgsl-analyzer]: https://github.com/wgsl-analyzer/wgsl-analyzer
 [intent to ship]: https://groups.google.com/a/chromium.org/g/blink-dev/c/VomzPhvJCxI/m/SUhU9Z0vAgAJ
 [fidget prototype]: https://github.com/mkeeter/fidget/blob/1b41b6b8e4bdb017e2ca28c151391a4a080b581a/jitfive/src/metal.rs
+[cooperative matrix]: https://www.khronos.org/assets/uploads/developers/presentations/Cooperative_Matrix_May22.pdf
+[Apple Neural Engine]: https://github.com/hollance/neural-engine
