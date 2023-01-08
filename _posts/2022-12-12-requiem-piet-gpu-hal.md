@@ -26,7 +26,7 @@ After considering the alternatives, we landed on GLSL as the authoritative sourc
 
 Another choice considered seriously was [rust-gpu]. That looks promising, and it has many desirable properties, not least being able to run the same code on CPU and GPU, but just isn't mature enough. Hopefully that will change. I think porting Vello to it would be an interesting exercise, and would shake out many of the issues needing to be solved to use it in production.
 
-Another appealing choice would be [Circle], a C++ dialect that targets compute shaders among other things.
+Another appealing choice would be [Circle], a C++ dialect that targets compute shaders among other things. It might have made it over the edge if it were released as open source; someone should buy out Sean's excellent work and relicense it.
 
 ### Ahead of time compilation
 
@@ -100,7 +100,7 @@ And on the topic of that experimentation, it's difficult to do so without adequa
 
 ## Conclusion
 
-Choosing the right GPU infrastructure depends on the goals, as sadly there is not yet a good consensus choice for. For the goals of researching the cutting edge of performance, hand-rolled infrastructure was the right choice, and piet-gpu-hal served that well. For the goal of lowering the friction for developing our engine, and also interoperating with other projects, WebGPU and wgpu are a better choice. Our experience with the port suggests that the performance and features are good enough, and that it is a good experience all-around.
+Choosing the right GPU infrastructure depends on the goals, as sadly there is not yet a good consensus choice for a GPU runtime suitable for a wide variety of workloads including compute. For the goals of researching the cutting edge of performance, hand-rolled infrastructure was the right choice, and piet-gpu-hal served that well. For the goal of lowering the friction for developing our engine, and also interoperating with other projects, WebGPU and wgpu are a better choice. Our experience with the port suggests that the performance and features are good enough, and that it is a good experience all-around.
 
 We hope to make Vello useful enough to use in production within the next few months. For many applications, WebGPU will be an appropriate infrastructure. For others, where the overhead of runtime shader compilation is not acceptable, we have a path forward but will need to consider alternatives. Either ahead-of-time shader compilation can be retrofitted to wpgu, or we will explore a more native approach.
 
