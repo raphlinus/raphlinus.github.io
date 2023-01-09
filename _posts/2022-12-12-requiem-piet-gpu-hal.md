@@ -4,7 +4,11 @@ title:  "Requiem for piet-gpu-hal"
 date:   2023-01-07 09:12:42 -0800
 categories: [rust, gpu]
 ---
-Recently we switched [Vello] to using [wgpu] for its GPU infrastructure and deleted piet-gpu-hal entirely. This was the right decision, but there was something special about piet-gpu-hal and I hope its vision is realized some day. This post talks about the reasons for the change and the tradeoffs involved. Oh, and as part of the same cycle of changes we renamed piet-gpu to Vello, as there was very little of the original piet-gpu implementation left.
+[Vello] is a new GPU accelerated renderer for 2D graphics that relies heavily on compute shaders for its operation. (It was formerly known as piet-gpu, but we renamed it recently because it is no longer based on the [Piet] render context abstraction, and has been substantially rewritten). As such, it depends heavily on having good infrastructure for writing and running compute shaders, consistent with its goals of running portably and reliably across a wide range of GPU hardware. Unfortunately, there hasn't been a great off-the-shelf solution for that, so we've spent a good part of the last couple years building our own hand-rolled GPU abstraction layer, piet-gpu-hal.
+
+During that time, the emerging [WebGPU] standard, along with the allied [WGSL] shader language, showed promise for providing such infrastructure, but it has seemed immature, and also has limitations that would have prevented us from doing experiments involving advanced GPU features. This motivated continued work on developing our own abstraction layer, so much so that the [piet-gpu vision] document has a section entitled "Why not wgpu?".
+
+Recently, however, we switched [Vello] to using [wgpu] for its GPU infrastructure and deleted piet-gpu-hal entirely. This was the right decision, but there was something special about piet-gpu-hal and I hope its vision is realized some day. This post talks about the reasons for the change and the tradeoffs involved.
 
 In the process of doing piet-gpu-hal, we learned a *lot* about portable compute infrastructure. We will apply that knowledge to improving WebGPU implementations to better suit our needs.
 
@@ -107,6 +111,9 @@ We hope to make Vello useful enough to use in production within the next few mon
 In any case, we look forward to productive development and collaboration with the broader community.
 
 [Vello]: https://github.com/linebender/vello
+[piet-gpu vision]: https://github.com/linebender/vello/blob/main/doc/vision.md#why-not-wgpu
+[WebGPU]: https://www.w3.org/TR/webgpu/
+[WGSL]: https://www.w3.org/TR/WGSL/
 [wgpu]: https://wgpu.rs
 [wgpu precompiled shaders]: https://github.com/gfx-rs/wgpu/issues/3103
 [indirect command encoding]: https://developer.apple.com/documentation/metal/indirect_command_encoding
