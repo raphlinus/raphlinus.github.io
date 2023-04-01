@@ -36,7 +36,7 @@ Fortunately, we have excellent leadership in the C++ community. Stroustrup's [pa
 
 ## Community
 
-I’ll close with some thoughts on community. I try not to spend a lot of time on social media, but I hear that the Rust community can be extremely imperious, constantly demanding that projects be rewritten in Rust, and denigrating all other programming languages. I will be glad to be rid of that, and am sure the C++ community will be much nicer and friendlier.
+I’ll close with some thoughts on community. I try not to spend a lot of time on social media, but I hear that the Rust community can be extremely imperious, constantly demanding that projects be rewritten in Rust, and denigrating all other programming languages. I will be glad to be rid of that, and am sure the C++ community will be much nicer and friendlier. In particular, the C++ subreddit is well known for their [sense of humor].
 
 The Rust community is also known for its code of conduct and other policies promoting diversity. I firmly believe that programming languages should be free of politics, focused strictly on the technology itself. In computer science, we have moved beyond prejudice and discrimination. I understand how some identity groups may desire more representation, but I feel it is not necessary.
 
@@ -46,9 +46,12 @@ Rust was a good experiment, and there are aspects I will look back on fondly, bu
 
 We’re looking for people to help with the C++ rewrite. If you’re interested, please join our [Zulip instance].
 
+Discuss on [Hacker News](https://news.ycombinator.com/item?id=35400047) and [/r/rust](https://old.reddit.com/r/rust/comments/128m5wn/moving_from_rust_to_c/).
+
 [Stroustrup on safety]: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2739r0.pdf
 [Scaling Rust builds with Bazel]: https://mmapped.blog/posts/17-scaling-rust-builds-with-bazel.html
 [font parsing code in Android]: https://nvd.nist.gov/vuln/detail/CVE-2016-2414
 [C++ core guidelines]: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
 [Zulip instance]: https://xi.zulipchat.com
 [cppfront]: https://github.com/hsutter/cppfront
+[sense of humor]: https://www.reddit.com/r/cpp/comments/128xpps/comment/jekwww0
