@@ -27,7 +27,7 @@ The curve fitting process uses those position and derivative samples to compute 
 
 Two implementations are provided: parallel curves of cubic Béziers, and arbitrary Bézier paths for simplification. Implementing the trait is not very difficult, so it should be possible to add more source curves and transformations, taking advantage of powerful, general mechanisms to compute an optimized Bézier path.
 
-The core cubic Bézier fitting algorithm is based on measuring the area and moment of the source code. A default implementation is provided by the `ParamCurveFit` trait implementing numerical integration based on derivatives (Green's theorem), but if there's a better way to compute area and moment, source curves can provide their own implementation.
+The core cubic Bézier fitting algorithm is based on measuring the area and moment of the source curve. A default implementation is provided by the `ParamCurveFit` trait implementing numerical integration based on derivatives (Green's theorem), but if there's a better way to compute area and moment, source curves can provide their own implementation.
 
 For Bézier paths, an efficient analytic implementation is possible. No blog post of mine is complete without some reference to a monoid, and this one does not disappoint. It's relatively straightforward to compute area and moments from a cubic Bézier using symbolic evaluation of Green's theorem. The area and moments of a *sequence* of Bézier segments is the sum of the individual values for each segment. Thus, we precompute the prefix sum of the areas and moments for all segments in a path, then can query an arbitrary range in O(1) time by taking the difference between the end point and the start point.
 
@@ -35,7 +35,9 @@ For Bézier paths, an efficient analytic implementation is possible. No blog pos
 
 The problem of finding an optimal Bézier path approximation is always relative to some error metric. In general, an optimal path is one with a minimal number of segments while still meeting the error bound, and a minimal error compared to other paths with the same number of segments. A curve fitting algorithm will evaluate many error metrics, at least one for each candidate approximation to determine whether it meets the error bound. The simplest technique subdivides in half when the bound is not met, but a more sophisticated approach attempts to optimize the positions of the subdivision points as well.
 
-The main error metric used for curve fitting is [Fréchet distance]. Intuitively, it captures the idea of the maximum distance between two curves while also preserving orientation of direction along a path (the related Hausdorff metric does not preserve orientation and so a curve with a sharp zigzag may have a small Hausdorff metric).
+The main error metric used for curve fitting is [Fréchet distance]. Intuitively, it captures the idea of the maximum distance between two curves while also preserving orientation of direction along a path (the related Hausdorff metric does not preserve orientation and so a curve with a sharp zigzag may have a small Hausdorff metric measured against a straight line). The difference is shown in the following illustration:
+
+<img src="/assets/hausdorf_vs_frechet.svg" alt="Comparison of Hausdorff and Fréchet distance metrics" class="center">
 
 Computing the exact Fréchet distance between two curves is not in general tractable, so we have to use approximations. It is important for the approximation to not underestimate, as this will yield a result that exceeds the error bound.
 
@@ -51,7 +53,7 @@ A more robust metric is to parametrize the curves by arc length, and measure the
 
 ![Arc length parametrization is much more accurate](/assets/simplify-arc.svg)
 
-However, arc length parametrization is considerably slower (about a factor of 10) because it requires inverse arc length computations. The current approach is to classify whether the source curve is "spicy" (considering the deltas between successive normal angles) and use the more robust computation only in those cases.
+However, arc length parametrization is considerably slower (about a factor of 10) because it requires inverse arc length computations. The approach implemented in [kurbo#269] is to classify whether the source curve is "spicy" (considering the deltas between successive normal angles) and use the more robust computation only in those cases.
 
 ## Finding subdivision points
 
@@ -112,6 +114,8 @@ I haven't been working from noisy data and haven't done experiments, but I do su
 ## Discussion
 
 The current code in kurbo is likely considerably better than what's in your current drawing tool, but curve fitting remains work in progress. The core primitive feels solid, but applying it might require different tuning depending on the specifics of the use case. I invite collaboration along these lines.
+
+Many of the points in this blog were discussed in Zulip threads, particularly [curve offsets](https://xi.zulipchat.com/#narrow/stream/260979-kurbo/topic/curve.20offsets) and [More thoughts on cubic fitting](https://xi.zulipchat.com/#narrow/stream/260979-kurbo/topic/More.20thoughts.20on.20cubic.20fitting). The Zulip is a great place to discuss these ideas, and we welcome newcomers and people bringing questions.
 
 Thanks to Siqi Wang for insightful questions and making test data available.
 

@@ -1,3 +1,9 @@
+// Copyright 2022 the raphlinus.github.io Authors
+// SPDX-License-Identifier: Apache-2.0
+
+//! Program to generate figures for "Simplifying Bézier paths" blog. Run with
+//! figure type ("th" or "arc"), generates svg file as stdout.
+
 use kurbo::{CubicBez, ParamCurve, ParamCurveArclen, ParamCurveDeriv, Point, Shape, Vec2};
 use kurbo::common::solve_cubic;
 
