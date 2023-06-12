@@ -8,59 +8,17 @@ At WWDC, Apple introduced [Metal shader converter], a tool for converting shader
 
 The specific feature I'm salty about is atomic barriers that allow for some sharing of work between threadgroups. These barriers are present in HLSL, and in fact have been since 2009, when [Direct3D 11] and Shader Model 5 were first introduced.
 
-## Typed vs untyped atomics
+I've discussed the value of this barrier in my blog post [Prefix sum on portable compute shaders], but I'll briefly recap. Among other things, it enables a single-pass implementation of prefix sum, using a technique such as decoupled look-back or the [SAM prefix sum] algorithm. A single-pass implementation can achieve the same throughput as memcpy, while a more traditional tree-reduction approach can at best achieve 2/3 that throughput, as it has to read the entire input in two separate dispatches. Further, tree reduction can actually be more complex to implement in practice, as the number of dispatches varies with the input size (it is typically `2 * ceil(log(n) / log(threadgroup size))`). Prefix sum, in turn is an important primitive for advanced compute workloads. There are a number of instances of it in the [Vello] pipeline, and it's also commonly used in stream compaction, decoding of variable length data streams, and compression.
 
-Another challenge for reliable automated translation into Metal is typed vs untyped atomics. In C++, `atomic<int32_t>` and `int32_t` are distinct types, and atomic operations can only be performed on the former. This is a reasonable choice, and I'm generally in favor of relying on the type system to enforce invariants; Rust follows the same tradition.
+I believe there are other important techniques that are similarly unlocked by the availability of these primitives. For example, Nanite's advanced compute pipelines schedule work through job queues, and in general it is not possible to reliably coordinate work between different threadgroups (even within the same dispatch) without such a barrier.
 
-The problem is that other shader languages, in this case most importantly HLSL, have an *untyped* approach to atomics. A memory location simply has type `uint`, and that can be accessed both through ordinary loads and stores, and with atomic operations (called "interlocked" in HLSL argot). In some cases, atomic and non-atomic accesses can be cleanly separated, in other cases they might be inextricably mixed. The latter happens when a buffer is a [RWByteAddressBuffer](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwbyteaddressbuffer) which presents as a completely untyped array of 32-bit words, and the actual semantic meaning of types is expressed in program logic above the low-level access to the raw buffer.
+## Complexity and reasoning
 
-Other cases are somewhat in-between. Here's a simple shader that computes the maximum value of each 256 chunk of input:
-```hlsl
-ByteAddressBuffer input;
-RWByteAddressBuffer output;
+The GPU ecosystem exists at the knife edge of being strangled by complexity. A big part of the problem is that features tend to inhabit a quantum superposition of existing and not existing. Typically there is an anemic core, surrounded by a cloud of optional features. The Vulkan ecosystem is notorious for this: the [extension list at vulkan.gpuinfo.org] currently lists 146 extensions.
 
-groupshared uint max_value;
+The widespread use of shader translation makes the situation even worse. When writing HLSL that will be translated into other shader languages, it's no longer sufficient to consider [Shader Model 5] to be a baseline, but rather the developer needs to keep in mind all the features that don't translate to other languages. In some cases, the semantics change subtly (the rules for the various flavors "count leading zeros" when the input is 0 vary), and in other cases, like these device scoped barriers.
 
-[numthreads(256, 1, 1)]
-void main(uint index: SV_GroupIndex) {
-    if (index == 0) {
-        max_value = 0;
-    }
-    GroupMemoryBarrierWithGroupSync();
-    InterlockedMax(max_value, input.Load(index * 4));
-    GroupMemoryBarrierWithGroupSync();
-    if (index == 0) {
-        output.Store((index / 256) * 4, max_value);
-    }
-}
-```
-
-The initialization and use of `max_value` can be done with non-atomic operations, but of course the max computation needs to be atomic because all the threads are participating in parallel.
-
-Here's the translation of that using DXC and spirv-cross, a combination of open-source tools that accomplishes the same thing as the new Apple tool:
-
-```msl
-kernel void main0(const device type_ByteAddressBuffer& _input [[buffer(0)]], device type_RWByteAddressBuffer& _output [[buffer(1)]], uint gl_LocalInvocationIndex [[thread_index_in_threadgroup]])
-{
-    threadgroup uint max_value;
-    bool _26 = gl_LocalInvocationIndex == 0u;
-    if (_26)
-    {
-        max_value = 0u;
-    }
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    uint _33 = atomic_fetch_max_explicit((threadgroup atomic_uint*)&max_value, _input._m0[(gl_LocalInvocationIndex * 4u) >> 2u], memory_order_relaxed);
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-    if (_26)
-    {
-        _output._m0[((gl_LocalInvocationIndex / 256u) * 4u) >> 2u] = max_value;
-    }
-}
-```
-
-The key bit is `(threadgroup atomic_uint*)&max_value`, which is a pointer cast from a non-atomic type to an atomic type. In C++, this is considered undefined behavior. Almost certainly, this should be considered "technical undefined behavior," because if the Metal shader compiler did anything other than the reasonable interpretation, a great many games in the App Store that use spirv-cross to translate shaders from HLSL would be extremely unhappy.
-
-Even so, we're in a position where it's not possible to *reason* about correctness systematically. There's a tradition in lock-free algorithms and data structures where the first publication is almost always flawed, then there's a follow-up that fixes it. It's hard to be confident any of these algorithms are correct until there's been formal verification of some kind. Fortunately, these formal tools exist and are put to good use; there are Alloy formulations of the C++11 memory model, model checking tools such as [CDSChecker] (and its Rust counterpart [loom]), and a small academic industry of proving lock-free algorithms correct. Trying to use these formal techniques to prove correctness of an algorithm translated into Metal would result in an instant report of UB.
+A separate category is things technically forbidden by the spec, but expected to work in practice. A good example here is the mixing of atomic and non-atomic memory operations (see gpuweb#2229). The spirv-cross shader translation tool casts non-atomic pointers to atomic pointers to support this common pattern, which is technically undefined behavior in C++, but in practice lots of people would be unhappy if the Metal shader compiler did anything other than the reasonable thing. Since Metal's semantics are based on C++, I'd personally love to see this resolved by adopting std::atomic_ref from C++20 (Metal is still based on C++14). I'll also not that the official Metal shader compiler tool generates [reasonable IR] for this pattern. It's concerning that using open source tools such as spirv-cross triggers technical undefined behavior, but it's probably not a big problem in practice.
 
 ## Onward
 
@@ -70,7 +28,7 @@ For one, there *is* a GPU infrastructure stack that is based on careful specific
 
 For two, we can cheer on the work of Asahi Linux. They have recently announced [OpenGL 3.1 support] on Apple Silicon, and an intent to implement Vulkan. That work may be highly challenging, as obviously that implies implementing barriers which the Apple GPU engineers haven't been able to manage. But they have done consistently impressive work so far, and I certainly hope they succeed. If nothing else, their work will result in much better public documentation of the hardware's capabilities and limitations.
 
-
+I have a recommendations for Apple as well. I hope that they document which HLSL features are expected to work and which are not. Currently in their documentation (which is admittedly beta), it just says "Some features not supported," which I personally find not very useful. I would also like to give them credit for clarifying the [Metal Shading Language Specification] with respect to the scope of the `mem_device` flag to `threadgroup_barrier`. It now says, "The flag ensures the GPU correctly orders the memory operations to device memory for threads in the threadgroup," which to a very careful reader does indicate threadgroup scope and no guarantee at device scope. Previously it [said][gpuweb#2297] "Ensure correct ordering of memory operations to device memory," which could easily be misinterpreted as providing a device scope guarantee.
 
 [Metal shader converter]: https://developer.apple.com/metal/shader-converter/
 [Prefix sum on portable compute shaders]: https://raphlinus.github.io/gpu/2021/11/17/prefix-sum-portable.html
@@ -78,4 +36,12 @@ For two, we can cheer on the work of Asahi Linux. They have recently announced [
 [CDSChecker]: http://plrg.eecs.uci.edu/software_page/42-2/
 [loom]: https://github.com/tokio-rs/loom
 [OpenGL 3.1 support]: https://asahilinux.org/2023/06/opengl-3-1-on-asahi-linux/
-
+[gpuweb#2297]: https://github.com/gpuweb/gpuweb/pull/2297
+[Metal Shading Language Specification]: https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf
+[SAM prefix sum]: https://dl.acm.org/doi/10.1145/2980983.2908089
+[Vello]: https://github.com/linebender/vello
+[extension list at vulkan.gpuinfo.org]: https://vulkan.gpuinfo.org/listfeaturesextensions.php
+[Shader Model 5]: https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/d3d11-graphics-reference-sm5
+[ghpuweb#2229]: https://github.com/gpuweb/gpuweb/issues/2229
+[std::atomic_ref]: https://en.cppreference.com/w/cpp/atomic/atomic_ref
+[reasonable IR]: https://gist.github.com/raphlinus/a8e0a3a3683127149b746eb37822bdc8
