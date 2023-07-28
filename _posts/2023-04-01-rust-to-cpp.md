@@ -4,6 +4,8 @@ title:  "Moving from Rust to C++"
 date:   2023-04-01 06:00:42 -0700
 categories: [rust]
 ---
+**Note to readers: this is an April Fools post, intended to satirize bad arguments made against Rust. I have mixed feelings about it now, as I think people who understood the context appreciated the humor, but some people were confused. That's partly because it's written in a very persuasive style, and I mixed in some good points. For a *good* discussion of C++ safety in particular, see JF Bastien's talk [Safety and Security: The Future of C++](https://www.youtube.com/watch?v=Gh79wcGJdTg).**
+
 I’ve been involved in Rust and the Rust community for many years now. Much of my work has been related to creating infrastructure for building GUI toolkits in Rust. However, I have found my frustrations with the language growing, and pine for the stable, mature foundation provided by C++.
 
 ## Choice of build systems
