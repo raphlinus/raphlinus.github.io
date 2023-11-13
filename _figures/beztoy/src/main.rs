@@ -9,7 +9,7 @@ mod flatten;
 
 use xilem_svg::{
     group,
-    kurbo::{BezPath, Circle, CubicBez, Line, Point, Shape},
+    kurbo::{BezPath, Circle, CubicBez, Line, Point, Shape, PathEl},
     peniko::Color,
     App, PointerMsg, View, ViewExt,
 };
@@ -102,10 +102,21 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     }
     let offset = 40.0;
     let flat = flatten_offset(CubicToEulerIter::new(c, 1.0), offset);
+    let mut flat_pts = vec![];
+    for seg in flat.elements() {
+        match seg {
+            PathEl::MoveTo(p) | PathEl::LineTo(p) => {
+                let circle = Circle::new(*p, 2.0).fill(Color::BLACK);
+                flat_pts.push(circle);
+            }
+            _ => (),
+        }
+    }
     group((
         group(spirals).fill(NONE),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
         flat.stroke(Color::BLUE, stroke_thin).fill(NONE),
+        group(flat_pts),
         Line::new(state.p0, state.p1)
             .stroke(Color::BLUE, stroke.clone())
             .fill(NONE),
@@ -115,14 +126,16 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         Line::new((790., 300.), (790., 300. - 1000. * err))
             .stroke(Color::RED, stroke.clone())
             .fill(NONE),
-        Circle::new(state.p0, HANDLE_RADIUS)
-            .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p0, &msg)),
-        Circle::new(state.p1, HANDLE_RADIUS)
-            .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p1, &msg)),
-        Circle::new(state.p2, HANDLE_RADIUS)
-            .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p2, &msg)),
-        Circle::new(state.p3, HANDLE_RADIUS)
-            .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p3, &msg)),
+        group((
+            Circle::new(state.p0, HANDLE_RADIUS)
+                .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p0, &msg)),
+            Circle::new(state.p1, HANDLE_RADIUS)
+                .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p1, &msg)),
+            Circle::new(state.p2, HANDLE_RADIUS)
+                .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p2, &msg)),
+            Circle::new(state.p3, HANDLE_RADIUS)
+                .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p3, &msg)),
+        )),
     ))
 }
 
