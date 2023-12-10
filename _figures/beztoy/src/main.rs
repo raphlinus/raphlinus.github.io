@@ -91,7 +91,8 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let params = CubicParams::from_cubic(c);
     let err = params.est_euler_err();
     let mut spirals = vec![];
-    for (i, es) in CubicToEulerIter::new(c, 1.0).enumerate() {
+    const TOL: f64 = 1.0;
+    for (i, es) in CubicToEulerIter::new(c, TOL).enumerate() {
         for i in 0..10 {
             let t = i as f64 * 0.1;
             es.params.eval_th(t);
@@ -101,9 +102,10 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         spirals.push(path.stroke(color, stroke_thick.clone()));
     }
     let offset = 40.0;
-    let flat = flatten_offset(CubicToEulerIter::new(c, 1.0), offset);
+    let flat = flatten_offset(CubicToEulerIter::new(c, TOL), offset);
+    let flat2 = flatten_offset(CubicToEulerIter::new(c, TOL), -offset);
     let mut flat_pts = vec![];
-    for seg in flat.elements() {
+    for seg in flat.elements().iter().chain(flat2.elements().iter()) {
         match seg {
             PathEl::MoveTo(p) | PathEl::LineTo(p) => {
                 let circle = Circle::new(*p, 2.0).fill(Color::BLACK);
@@ -115,7 +117,8 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     group((
         group(spirals).fill(NONE),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
-        flat.stroke(Color::BLUE, stroke_thin).fill(NONE),
+        flat.stroke(Color::BLUE, stroke_thin.clone()).fill(NONE),
+        flat2.stroke(Color::PURPLE, stroke_thin).fill(NONE),
         group(flat_pts),
         Line::new(state.p0, state.p1)
             .stroke(Color::BLUE, stroke.clone())
