@@ -177,7 +177,7 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=26196470).
 [ordinary cusp]: https://en.wikipedia.org/wiki/Cusp_(singularity)
 [Euler explorer]: https://levien.com/euler_explorer/
 [ParamCurve]: https://docs.rs/kurbo/0.8.0/kurbo/trait.ParamCurve.html
-[Die Parallelkurve der Klothoide]: https://books.google.com/books?id=UvpZAAAAYAAJ&pg=PA373&lpg=PA373&dq=%22Die+Parallelkurve+der+Klothoide%22&source=bl&ots=fuY39VdPpd&sig=K0AbL03rXAm_g4J9KsheQbbxyaA&hl=en&sa=X&ved=2ahUKEwiUrcD1poTfAhVvFjQIHVthBPoQ6AEwAnoECAMQAQ#v=onepage&q=%22Die%20Parallelkurve%20der%20Klothoide%22&f=false
+[Die Parallelkurve der Klothoide]: https://archive.org/details/archivdermathem16unkngoog/page/n402/mode/1up
 [Rahix]: https://github.com/Rahix
 [gear]: https://ciechanow.ski/gears/
 [involute]: https://en.wikipedia.org/wiki/Involute
