@@ -7,12 +7,7 @@
 mod euler;
 mod flatten;
 
-use xilem_svg::{
-    group,
-    kurbo::{BezPath, Circle, CubicBez, Line, Point, Shape, PathEl},
-    peniko::Color,
-    App, PointerMsg, View, ViewExt,
-};
+use xilem_web::{svg::{kurbo::{Point, BezPath, CubicBez, PathEl, Circle, Line, Shape}, peniko::Color}, PointerMsg, View, App, elements::svg::{g, svg}, document_body, interfaces::*};
 
 use crate::{
     euler::{CubicParams, CubicToEulerIter},
@@ -82,10 +77,10 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let mut path = BezPath::new();
     path.move_to(state.p0);
     path.curve_to(state.p1, state.p2, state.p3);
-    let stroke = xilem_svg::kurbo::Stroke::new(2.0);
-    let stroke_thick = xilem_svg::kurbo::Stroke::new(8.0);
-    let stroke_thin = xilem_svg::kurbo::Stroke::new(1.0);
-    const NONE: Color = Color::rgba8(0, 0, 0, 0);
+    let stroke = xilem_web::svg::kurbo::Stroke::new(2.0);
+    let stroke_thick = xilem_web::svg::kurbo::Stroke::new(8.0);
+    let stroke_thin = xilem_web::svg::kurbo::Stroke::new(1.0);
+    const NONE: Color = Color::TRANSPARENT;
     const HANDLE_RADIUS: f64 = 4.0;
     let c = CubicBez::new(state.p0, state.p1, state.p2, state.p3);
     let params = CubicParams::from_cubic(c);
@@ -99,7 +94,7 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         }
         let path = es.to_cubic().into_path(1.0);
         let color = RAINBOW_PALETTE[(i * 7) % 12];
-        spirals.push(path.stroke(color, stroke_thick.clone()));
+        spirals.push(path.stroke(color, stroke_thick.clone()).fill(NONE));
     }
     let offset = 40.0;
     let flat = flatten_offset(CubicToEulerIter::new(c, TOL), offset);
@@ -114,22 +109,19 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
             _ => (),
         }
     }
-    group((
-        group(spirals).fill(NONE),
+    svg(g((
+        g(spirals),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
         flat.stroke(Color::BLUE, stroke_thin.clone()).fill(NONE),
         flat2.stroke(Color::PURPLE, stroke_thin).fill(NONE),
-        group(flat_pts),
+        g(flat_pts),
         Line::new(state.p0, state.p1)
-            .stroke(Color::BLUE, stroke.clone())
-            .fill(NONE),
+            .stroke(Color::BLUE, stroke.clone()),
         Line::new(state.p2, state.p3)
-            .stroke(Color::BLUE, stroke.clone())
-            .fill(NONE),
+            .stroke(Color::BLUE, stroke.clone()),
         Line::new((790., 300.), (790., 300. - 1000. * err))
-            .stroke(Color::RED, stroke.clone())
-            .fill(NONE),
-        group((
+            .stroke(Color::RED, stroke.clone()),
+        g((
             Circle::new(state.p0, HANDLE_RADIUS)
                 .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p0, &msg)),
             Circle::new(state.p1, HANDLE_RADIUS)
@@ -139,7 +131,9 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
             Circle::new(state.p3, HANDLE_RADIUS)
                 .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p3, &msg)),
         )),
-    ))
+    )))
+    .attr("width", 800)
+    .attr("height", 600)
 }
 
 pub fn main() {
@@ -150,5 +144,5 @@ pub fn main() {
     state.p2 = Point::new(500.0, 150.0);
     state.p3 = Point::new(700.0, 150.0);
     let app = App::new(state, app_logic);
-    app.run();
+    app.run(&document_body());
 }

@@ -3,7 +3,7 @@
 
 //! Calculations and utilities for Euler spirals
 
-use xilem_svg::kurbo::{CubicBez, ParamCurve, Point, Vec2};
+use xilem_web::svg::kurbo::{CubicBez, ParamCurve, Point, Vec2};
 
 #[derive(Debug)]
 pub struct CubicParams {

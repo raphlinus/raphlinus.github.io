@@ -5,7 +5,7 @@
 
 use std::f64::consts::FRAC_PI_4;
 
-use xilem_svg::kurbo::BezPath;
+use xilem_web::svg::kurbo::BezPath;
 
 use crate::euler::EulerSeg;
 
