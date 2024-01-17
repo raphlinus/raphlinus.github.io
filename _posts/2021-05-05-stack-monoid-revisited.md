@@ -44,7 +44,7 @@ for i in 0..len(input):
         ')' => stack.pop()
 ```
 
-Here, every open parenthesis is assigned the index of its parent in the tree, and every close parenthesis is assigned the index of its corresponding open parenthesis. Note that here I've also changed the order so that generating the result happens *before* processing the element. This is analogous to the distinction between inclusive and exclusive prefix sum; generally the same algorithm can be used for both, but sometimes one or the other is more convenient. When compputing bounding boxes, the inclusive version is better, because we want the bounding box of the element, as modified by the clips. But for purely tracking tree structure, the exclusive version is easier.
+Here, every open parenthesis is assigned the index of its parent in the tree, and every close parenthesis is assigned the index of its corresponding open parenthesis. Note that here I've also changed the order so that generating the result happens *before* processing the element. This is analogous to the distinction between inclusive and exclusive prefix sum; generally the same algorithm can be used for both, but sometimes one or the other is more convenient. When computing bounding boxes, the inclusive version is better, because we want the bounding box of the element, as modified by the clips. But for purely tracking tree structure, the exclusive version is easier.
 
 An example:
 
