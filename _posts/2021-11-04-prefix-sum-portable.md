@@ -34,7 +34,7 @@ In piet-gpu, by contrast, shaders are compiled to IR ahead of time as part of th
 
 The Windows story with Dawn (Chrome's WebGPU implementation) continues to evolve. Currently they run with their own version of FXC, which brings compatibility to the widest range of devices (there's still a large fraction that can't run code from DXC) and lets them roll fixes if the version that ships with the OS is stale. I'm concerned that even so, there will be shaders that fail because of FXC limitations. There are a number of ways forward, including direct translation from WGSL into DXBC (and DXIL as well, for access to [Shader Model 6] capabilities), but at best this work will take a while.
 
-There is a [WebGPU implemenation of decoupled look-back] by Reese Levine, but at this point it's not expected to pass. Hopefully it will be useful to shake out bugs (it would pass if the barrier scope were upgraded), and also to point the way for extensions to WebGPU that would allow this algorithm to run.
+There is a [WebGPU implementation of decoupled look-back] by Reese Levine, but at this point it's not expected to pass. Hopefully it will be useful to shake out bugs (it would pass if the barrier scope were upgraded), and also to point the way for extensions to WebGPU that would allow this algorithm to run.
 
 ### Shader translation
 
@@ -135,7 +135,7 @@ Discuss on [Hacker News](https://news.ycombinator.com/item?id=29254668).
 [Atomic concerns]: https://github.com/gpuweb/gpuweb/issues/2229
 [uniformity analysis proposal]: https://github.com/gpuweb/gpuweb/pull/1571
 [permuted parallel message passing test]: https://github.com/KhronosGroup/VK-GL-CTS/issues/295
-[WebGPU implemenation of decoupled look-back]: https://gpuharbor.ucsc.edu/prefix-sum/
+[WebGPU implementation of decoupled look-back]: https://gpuharbor.ucsc.edu/prefix-sum/
 [Specifying and Testing GPU Workgroup Progress Models]: https://users.soe.ucsc.edu/~tsorensen/publication/oopsla2021b/
 [Vulkan CTS]: https://github.com/KhronosGroup/VK-GL-CTS
 [piet-gpu repo]: https://github.com/linebender/piet-gpu
