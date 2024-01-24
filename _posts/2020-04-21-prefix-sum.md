@@ -42,7 +42,7 @@ The state of the art is [decoupled look-back]. I'm not going to try to summarize
 
 That work is a refinement of [Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda) from Nvidia's GPU Gems 3 book. A production-quality, open source implementation is [CUB]. Another implementation, designed to be more accessible but not as optimized, is [ModernGPU scan].
 
-My own [implementation] is very much a research-quality proof of concept. It exists as the [prefix] branch of the [piet-gpu] repository. Basically, I wanted to determine whether it was possible to come within a stone's throw of memcpy performance using Vulkan compute kernels. It's a fairly straightforward implementation of the decoupled look-back paper, and doesn't implement all the tricks. For example, the look-back is entirely sequential; I didn't parallelize the look-back as suggested in section 4.4 of the paper. This is probably the easiest performance win to be gotten. But it's not too horrible, as the partition size is quite big; each workgroup processes 16ki elements. Rough measurements indicate that look-back is on the order of 10-15% of the total time.
+My own [implementation] is very much a research-quality proof of concept. It exists in an archived branch of the [Vello] repository (edit from the future: formerly the prefix branch of when it was still called piet-gpu). Basically, I wanted to determine whether it was possible to come within a stone's throw of memcpy performance using Vulkan compute kernels. It's a fairly straightforward implementation of the decoupled look-back paper, and doesn't implement all the tricks. For example, the look-back is entirely sequential; I didn't parallelize the look-back as suggested in section 4.4 of the paper. This is probably the easiest performance win to be gotten. But it's not too horrible, as the partition size is quite big; each workgroup processes 16ki elements. Rough measurements indicate that look-back is on the order of 10-15% of the total time.
 
 The implementation is enough of a rough prototype I don't yet want to do careful performance evaluation, but initial results are encouraging: it takes 2.05ms of GPU time to compute the prefix sum of 64Mi 32-bit unsigned integers on a GTX 1080, a rate of 31.2 billion elements/second. Since each element involves reading and writing 4 bytes, that corresponds to a raw memory bandwidth of around 262GiB/s. The theoretical memory bandwidth is listed as 320GB/s, so clearly the code is able consume a large fraction of available memory bandwidth.
 
@@ -195,9 +195,8 @@ There is some interesting [HN discussion](https://news.ycombinator.com/item?id=2
 [WebGPU]: https://www.w3.org/community/gpu/
 [OpenCL 3.0]: https://www.khronos.org/news/press/khronos-group-releases-opencl-3.0
 [monoid]: https://en.wikipedia.org/wiki/Monoid
-[implementation]: https://github.com/linebender/piet-gpu/blob/prefix/piet-gpu-hal/examples/shader/prefix.comp
-[prefix]: https://github.com/linebender/piet-gpu/tree/prefix
-[piet-gpu]: https://github.com/linebender/piet-gpu
+[implementation]: https://github.com/linebender/vello/blob/custom-hal-archive-with-shaders/tests/shader/prefix.comp
+[Vello]: https://github.com/linebender/vello
 [specialization constants]: https://blogs.igalia.com/itoral/2018/03/20/improving-shader-performance-with-vulkans-specialization-constants/
 [limited forward progress guarantee]: https://www.khronos.org/blog/comparing-the-vulkan-spir-v-memory-model-to-cs#_limited_forward_progress_guarantees
 [GPU schedulers: how fair is fair enough?]: https://www.cs.princeton.edu/~ts20/files/concur2018.pdf
