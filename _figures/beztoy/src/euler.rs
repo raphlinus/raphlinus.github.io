@@ -3,7 +3,7 @@
 
 //! Calculations and utilities for Euler spirals
 
-use xilem_web::svg::kurbo::{CubicBez, ParamCurve, Point, Vec2};
+use xilem_web::svg::kurbo::{CubicBez, Point, Vec2};
 
 #[derive(Debug)]
 pub struct CubicParams {
@@ -35,9 +35,35 @@ pub struct CubicToEulerIter {
     // [t0 * dt .. (t0 + 1) * dt] is the range we're currently considering
     t0: u64,
     dt: f64,
+    last_p: Vec2,
+    last_q: Vec2,
+    last_t: f64,
 }
 
 impl CubicParams {
+    /// Compute parameters from endpoints and derivatives.
+    pub fn from_points_derivs(p0: Vec2, p1: Vec2, q0: Vec2, q1: Vec2, dt: f64) -> Self {
+        let chord = p1 - p0;
+        // Robustness note: we must protect this function from being called when the
+        // chord length is (near-)zero.
+        let scale = dt / chord.length_squared();
+        let h0 = Vec2::new(
+            q0.x * chord.x + q0.y * chord.y,
+            q0.y * chord.x - q0.x * chord.y,
+        );
+        let th0 = h0.atan2();
+        let d0 = h0.length() * scale;
+        let h1 = Vec2::new(
+            q1.x * chord.x + q1.y * chord.y,
+            q1.x * chord.y - q1.y * chord.x,
+        );
+        let th1 = h1.atan2();
+        let d1 = h1.length() * scale;
+        // Robustness note: we may want to clamp the magnitude of the angles to
+        // a bit less than pi. Perhaps here, perhaps downstream.
+        CubicParams { th0, th1, d0, d1 }
+    }
+
     pub fn from_cubic(c: CubicBez) -> Self {
         let chord = c.p3 - c.p0;
         // TODO: if chord is 0, we have a problem
@@ -64,11 +90,21 @@ impl CubicParams {
     // by chord.
     pub fn est_euler_err(&self) -> f64 {
         // Potential optimization: work with unit vector rather than angle
-        let e0 = (2. / 3.) / (1.0 + self.th0.cos());
-        let e1 = (2. / 3.) / (1.0 + self.th1.cos());
+        let cth0 = self.th0.cos();
+        let cth1 = self.th1.cos();
+        if cth0 * cth1 < 0.0 {
+            // Rationale: this happens when fitting a cusp or near-cusp with
+            // a near 180 degree u-turn. The actual ES is bounded in that case.
+            // Further subdivision won't reduce the angles if actually a cusp.
+            return 2.0;
+        }
+        let e0 = (2. / 3.) / (1.0 + cth0);
+        let e1 = (2. / 3.) / (1.0 + cth1);
         let s0 = self.th0.sin();
         let s1 = self.th1.sin();
-        let s01 = (s0 + s1).sin();
+        // Note: some other versions take sin of s0 + s1 instead. Those are incorrect.
+        // Strangely, calibration is the same, but more work could be done.
+        let s01 = cth0 * s1 + cth1 * s0;
         let amin = 0.15 * (2. * e0 * s0 + 2. * e1 * s1 - e0 * e1 * s01);
         let a = 0.15 * (2. * self.d0 * s0 + 2. * self.d1 * s1 - self.d0 * self.d1 * s01);
         let aerr = (a - amin).abs();
@@ -138,6 +174,11 @@ impl EulerParams {
         let v = Vec2::new(offset * th.sin(), offset * th.cos());
         self.eval(t) + v
     }
+
+    // Determine whether a render as a single cubic will be adequate
+    pub fn cubic_ok(&self) -> bool {
+        self.th0.abs() < 1.0 && self.th1.abs() < 1.0
+    }
 }
 
 impl EulerSeg {
@@ -178,6 +219,21 @@ impl EulerSeg {
     }
 }
 
+/// Evaluate both the point and derivative of a cubic bezier.
+fn eval_cubic_and_deriv(c: &CubicBez, t: f64) -> (Vec2, Vec2) {
+    let p0 = c.p0.to_vec2();
+    let p1 = c.p1.to_vec2();
+    let p2 = c.p2.to_vec2();
+    let p3 = c.p3.to_vec2();
+    let m = 1.0 - t;
+    let mm = m * m;
+    let mt = m * t;
+    let tt = t * t;
+    let p = p0 * (mm * m) + (p1 * (3.0 * mm) + p2 * (3.0 * mt) + p3 * tt) * t;
+    let q = (p1 - p0) * mm + (p2 - p1) * (2.0 * mt) + (p3 - p2) * tt;
+    (p, q)
+}
+
 impl Iterator for CubicToEulerIter {
     type Item = EulerSeg;
 
@@ -187,18 +243,33 @@ impl Iterator for CubicToEulerIter {
             return None;
         }
         loop {
-            let t1 = t0 + self.dt;
-            let cubic = self.c.subsegment(t0..t1);
-            let cubic_params = CubicParams::from_cubic(cubic);
+            let mut t1 = t0 + self.dt;
+            let p0 = self.last_p;
+            let q0 = self.last_q;
+            let (mut p1, mut q1) = eval_cubic_and_deriv(&self.c, t1);
+            if q1.length_squared() < DERIV_THRESH.powi(2) {
+                let (new_p1, new_q1) = eval_cubic_and_deriv(&self.c, t1 - DERIV_EPS);
+                q1 = new_q1;
+                if t1 < 1. {
+                    p1 = new_p1;
+                    t1 -= DERIV_EPS;
+                }
+            }
+            // TODO: robustness
+            let actual_dt = t1 - self.last_t;
+            let cubic_params = CubicParams::from_points_derivs(p0, p1, q0, q1, actual_dt);
             let est_err: f64 = cubic_params.est_euler_err();
-            let err = est_err * cubic.p0.distance(cubic.p3);
+            let err = est_err * (p0 - p1).hypot();
             if err <= self.tolerance {
                 self.t0 += 1;
                 let shift = self.t0.trailing_zeros();
                 self.t0 >>= shift;
                 self.dt *= (1 << shift) as f64;
                 let euler_params = EulerParams::from_angles(cubic_params.th0, cubic_params.th1);
-                let es = EulerSeg::from_params(cubic.p0, cubic.p3, euler_params);
+                let es = EulerSeg::from_params(p0.to_point(), p1.to_point(), euler_params);
+                self.last_p = p1;
+                self.last_q = q1;
+                self.last_t = t1;
                 return Some(es);
             }
             self.t0 *= 2;
@@ -207,13 +278,26 @@ impl Iterator for CubicToEulerIter {
     }
 }
 
+/// Threshold below which a derivative is considered too small.
+const DERIV_THRESH: f64 = 1e-6;
+/// Amount to nudge t when derivative is near-zero.
+const DERIV_EPS: f64 = 1e-6;
+
 impl CubicToEulerIter {
     pub fn new(c: CubicBez, tolerance: f64) -> Self {
+        let mut last_q = c.p1 - c.p0;
+        // TODO: tweak
+        if last_q.length_squared() < DERIV_THRESH.powi(2) {
+            last_q = eval_cubic_and_deriv(&c, DERIV_EPS).1;
+        }
         CubicToEulerIter {
             c,
             tolerance,
             t0: 0,
             dt: 1.0,
+            last_p: c.p0.to_vec2(),
+            last_q,
+            last_t: 0.0,
         }
     }
 }

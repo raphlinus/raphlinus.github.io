@@ -88,11 +88,21 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let mut spirals = vec![];
     const TOL: f64 = 1.0;
     for (i, es) in CubicToEulerIter::new(c, TOL).enumerate() {
-        for i in 0..10 {
-            let t = i as f64 * 0.1;
-            es.params.eval_th(t);
-        }
-        let path = es.to_cubic().into_path(1.0);
+        let path = if es.params.cubic_ok() {
+            es.to_cubic().into_path(1.0)
+        } else {
+            // Janky rendering, we should be more sophisticated
+            // and subdivide into cubics with appropriate bounds
+            let mut path = BezPath::new();
+            const N: usize = 20;
+            path.move_to(es.p0);
+            for i in 1..N {
+                let t = i as f64 / N as f64;
+                path.line_to(es.eval(t));
+            }
+            path.line_to(es.p1);
+            path
+        };
         let color = RAINBOW_PALETTE[(i * 7) % 12];
         spirals.push(path.stroke(color, stroke_thick.clone()).fill(NONE));
     }
