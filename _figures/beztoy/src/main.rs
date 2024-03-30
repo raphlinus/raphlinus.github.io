@@ -4,12 +4,23 @@
 //! An interactive toy for experimenting with rendering of Bézier paths,
 //! including Euler spiral based stroke expansion.
 
+mod arc;
 mod euler;
 mod flatten;
 
-use xilem_web::{svg::{kurbo::{Point, BezPath, CubicBez, PathEl, Circle, Line, Shape}, peniko::Color}, PointerMsg, View, App, elements::svg::{g, svg}, document_body, interfaces::*};
+use xilem_web::{
+    document_body,
+    elements::svg::{g, svg},
+    interfaces::*,
+    svg::{
+        kurbo::{Arc, BezPath, Circle, CubicBez, Line, PathEl, Point, Shape},
+        peniko::Color,
+    },
+    App, PointerMsg, View,
+};
 
 use crate::{
+    arc::euler_to_arcs,
     euler::{CubicParams, CubicToEulerIter},
     flatten::flatten_offset,
 };
@@ -73,12 +84,19 @@ const RAINBOW_PALETTE: [Color; 12] = [
     Color::rgb8(0x66, 0x33, 0x99),
 ];
 
+fn lerp_color(a: Color, b: Color, t: f64) -> Color {
+    let r = (a.r as f64 + (b.r as f64 - a.r as f64) * t) * (1. / 255.);
+    let g = (a.g as f64 + (b.g as f64 - a.g as f64) * t) * (1. / 255.);
+    let b = (a.b as f64 + (b.b as f64 - a.b as f64) * t) * (1. / 255.);
+    Color::rgb(r, g, b)
+}
+
 fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let mut path = BezPath::new();
     path.move_to(state.p0);
     path.curve_to(state.p1, state.p2, state.p3);
     let stroke = xilem_web::svg::kurbo::Stroke::new(2.0);
-    let stroke_thick = xilem_web::svg::kurbo::Stroke::new(8.0);
+    let stroke_thick = xilem_web::svg::kurbo::Stroke::new(15.0);
     let stroke_thin = xilem_web::svg::kurbo::Stroke::new(1.0);
     const NONE: Color = Color::TRANSPARENT;
     const HANDLE_RADIUS: f64 = 4.0;
@@ -104,33 +122,32 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
             path
         };
         let color = RAINBOW_PALETTE[(i * 7) % 12];
+        let color = lerp_color(color, Color::WHITE, 0.5);
         spirals.push(path.stroke(color, stroke_thick.clone()).fill(NONE));
     }
-    let offset = 40.0;
-    let flat = flatten_offset(CubicToEulerIter::new(c, TOL), offset);
-    let flat2 = flatten_offset(CubicToEulerIter::new(c, TOL), -offset);
     let mut flat_pts = vec![];
-    for seg in flat.elements().iter().chain(flat2.elements().iter()) {
-        match seg {
-            PathEl::MoveTo(p) | PathEl::LineTo(p) => {
-                let circle = Circle::new(*p, 2.0).fill(Color::BLACK);
-                flat_pts.push(circle);
+    let mut flat = BezPath::new();
+    flat.move_to(c.p0);
+    web_sys::console::log_1(&"---".into());
+    for es in CubicToEulerIter::new(c, TOL) {
+        for arc in euler_to_arcs(&es, 1.0) {
+            let circle = Circle::new(arc.to, 2.0).fill(Color::BLACK);
+            flat_pts.push(circle);
+            if let Some(arc) = Arc::from_svg_arc(&arc) {
+                flat.extend(arc.append_iter(0.1));
+            } else {
+                web_sys::console::log_1(&format!("conversion failed {arc:?}").into());
             }
-            _ => (),
         }
     }
     svg(g((
         g(spirals),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
-        flat.stroke(Color::BLUE, stroke_thin.clone()).fill(NONE),
-        flat2.stroke(Color::PURPLE, stroke_thin).fill(NONE),
+        flat.stroke(Color::RED, stroke_thin.clone()).fill(NONE),
         g(flat_pts),
-        Line::new(state.p0, state.p1)
-            .stroke(Color::BLUE, stroke.clone()),
-        Line::new(state.p2, state.p3)
-            .stroke(Color::BLUE, stroke.clone()),
-        Line::new((790., 300.), (790., 300. - 1000. * err))
-            .stroke(Color::RED, stroke.clone()),
+        Line::new(state.p0, state.p1).stroke(Color::BLUE, stroke.clone()),
+        Line::new(state.p2, state.p3).stroke(Color::BLUE, stroke.clone()),
+        Line::new((790., 300.), (790., 300. - 1000. * err)).stroke(Color::RED, stroke.clone()),
         g((
             Circle::new(state.p0, HANDLE_RADIUS)
                 .pointer(|s: &mut AppState, msg| s.grab.handle(&mut s.p0, &msg)),
