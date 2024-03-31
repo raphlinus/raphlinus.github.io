@@ -20,7 +20,7 @@ use xilem_web::{
 };
 
 use crate::{
-    arc::euler_to_arcs,
+    arc::{espc_to_arcs, euler_to_arcs},
     euler::{CubicParams, CubicToEulerIter},
     flatten::flatten_offset,
 };
@@ -125,12 +125,16 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         let color = lerp_color(color, Color::WHITE, 0.5);
         spirals.push(path.stroke(color, stroke_thick.clone()).fill(NONE));
     }
+    let offset = 100.0;
+    let flat_ref = flatten_offset(CubicToEulerIter::new(c, 0.01), offset, 0.01);
     let mut flat_pts = vec![];
     let mut flat = BezPath::new();
-    flat.move_to(c.p0);
     web_sys::console::log_1(&"---".into());
     for es in CubicToEulerIter::new(c, TOL) {
-        for arc in euler_to_arcs(&es, 1.0) {
+        if flat.is_empty() {
+            flat.move_to(es.eval_with_offset(0.0, offset));
+        }
+        for arc in espc_to_arcs(&es, offset, TOL) {
             let circle = Circle::new(arc.to, 2.0).fill(Color::BLACK);
             flat_pts.push(circle);
             if let Some(arc) = Arc::from_svg_arc(&arc) {
@@ -143,6 +147,7 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     svg(g((
         g(spirals),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
+        flat_ref.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
         flat.stroke(Color::RED, stroke_thin.clone()).fill(NONE),
         g(flat_pts),
         Line::new(state.p0, state.p1).stroke(Color::BLUE, stroke.clone()),

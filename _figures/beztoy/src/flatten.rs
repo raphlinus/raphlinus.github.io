@@ -9,7 +9,7 @@ use xilem_web::svg::kurbo::BezPath;
 
 use crate::euler::EulerSeg;
 
-pub fn flatten_offset(iter: impl Iterator<Item = EulerSeg>, offset: f64) -> BezPath {
+pub fn flatten_offset(iter: impl Iterator<Item = EulerSeg>, offset: f64, tol: f64) -> BezPath {
     let mut result = BezPath::new();
     let mut first = true;
     for es in iter {
@@ -17,7 +17,6 @@ pub fn flatten_offset(iter: impl Iterator<Item = EulerSeg>, offset: f64) -> BezP
             result.move_to(es.eval_with_offset(0.0, offset));
         }
         let scale = es.p0.distance(es.p1);
-        let tol = 1.0;
         let (k0, k1) = (es.params.k0 - 0.5 * es.params.k1, es.params.k1);
         // compute forward integral to determine number of subdivisions
         let dist_scaled = offset / scale;
