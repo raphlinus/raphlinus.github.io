@@ -147,7 +147,9 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     svg(g((
         g(spirals),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
-        flat_ref.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
+        flat_ref
+            .stroke(Color::BLACK, stroke_thin.clone())
+            .fill(NONE),
         flat.stroke(Color::RED, stroke_thin.clone()).fill(NONE),
         g(flat_pts),
         Line::new(state.p0, state.p1).stroke(Color::BLUE, stroke.clone()),
