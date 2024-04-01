@@ -39,7 +39,10 @@ pub fn euler_to_arcs(es: &EulerSeg, tol: f64) -> Vec<SvgArc> {
 
 pub fn espc_to_arcs(es: &EulerSeg, d: f64, tol: f64) -> Vec<SvgArc> {
     let arclen = es.p0.distance(es.p1) / es.params.ch;
-    let n_subdiv = ((1. / 120.) * arclen / tol * es.params.k1.abs()).cbrt();
+    // TODO: determine if there needs to be a scaling parameter on d. But this
+    // seems to work well empirically.
+    let est_err = (1. / 120.) / tol * es.params.k1.abs() * (arclen + d.abs());
+    let n_subdiv = est_err.cbrt();
     web_sys::console::log_1(&format!("n_subdiv = {n_subdiv}").into());
     let n = (n_subdiv.ceil() as usize).max(1);
     let dt = 1.0 / n as f64;
