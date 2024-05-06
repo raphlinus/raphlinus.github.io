@@ -8,19 +8,23 @@ mod arc;
 mod euler;
 mod flatten;
 
+use wasm_bindgen::JsCast;
 use xilem_web::{
     document_body,
-    elements::svg::{g, svg},
+    elements::{
+        html::{div, input},
+        svg::{g, svg},
+    },
     interfaces::*,
     svg::{
-        kurbo::{Arc, BezPath, Circle, CubicBez, Line, PathEl, Point, Shape},
+        kurbo::{Arc, BezPath, Circle, CubicBez, Line, Point, Shape},
         peniko::Color,
     },
     App, PointerMsg, View,
 };
 
 use crate::{
-    arc::{espc_to_arcs, euler_to_arcs},
+    arc::espc_to_arcs,
     euler::{CubicParams, CubicToEulerIter},
     flatten::flatten_offset,
 };
@@ -32,6 +36,7 @@ struct AppState {
     p2: Point,
     p3: Point,
     grab: GrabState,
+    offset: f64,
 }
 
 #[derive(Default)]
@@ -125,7 +130,7 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         let color = lerp_color(color, Color::WHITE, 0.5);
         spirals.push(path.stroke(color, stroke_thick.clone()).fill(NONE));
     }
-    let offset = 100.0;
+    let offset = state.offset;
     let flat_ref = flatten_offset(CubicToEulerIter::new(c, 0.01), offset, 0.01);
     let mut flat_pts = vec![];
     let mut flat = BezPath::new();
@@ -144,7 +149,7 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
             }
         }
     }
-    svg(g((
+    let svg_el = svg(g((
         g(spirals),
         path.stroke(Color::BLACK, stroke_thin.clone()).fill(NONE),
         flat_ref
@@ -167,7 +172,25 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         )),
     )))
     .attr("width", 800)
-    .attr("height", 600)
+    .attr("height", 600);
+    let slider_el = input(())
+        .attr("type", "range")
+        .attr("min", "1")
+        .attr("max", "100")
+        .attr("value", "100")
+        .on_input(|state: &mut AppState, evt| {
+            if let Some(element) = evt
+                .target()
+                .and_then(|t| t.dyn_into::<web_sys::HtmlInputElement>().ok())
+            {
+                let value = element.value();
+                if let Ok(val_f64) = value.parse::<f64>() {
+                    state.offset = val_f64;
+                    //web_sys::console::log_1(&format!("got input event {val_f64}").into());
+                }
+            }
+        });
+    div((div("Offset"), slider_el, div(svg_el)))
 }
 
 pub fn main() {
@@ -177,6 +200,7 @@ pub fn main() {
     state.p1 = Point::new(300.0, 150.0);
     state.p2 = Point::new(500.0, 150.0);
     state.p3 = Point::new(700.0, 150.0);
+    state.offset = 100.0;
     let app = App::new(state, app_logic);
     app.run(&document_body());
 }
