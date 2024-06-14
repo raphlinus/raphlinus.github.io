@@ -37,6 +37,7 @@ struct AppState {
     p3: Point,
     grab: GrabState,
     offset: f64,
+    tolerance: f64,
 }
 
 #[derive(Default)]
@@ -109,8 +110,8 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let params = CubicParams::from_cubic(c);
     let err = params.est_euler_err();
     let mut spirals = vec![];
-    const TOL: f64 = 1.0;
-    for (i, es) in CubicToEulerIter::new(c, TOL).enumerate() {
+    let tol = state.tolerance;
+    for (i, es) in CubicToEulerIter::new(c, tol).enumerate() {
         let path = if es.params.cubic_ok() {
             es.to_cubic().into_path(1.0)
         } else {
@@ -135,11 +136,11 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
     let mut flat_pts = vec![];
     let mut flat = BezPath::new();
     web_sys::console::log_1(&"---".into());
-    for es in CubicToEulerIter::new(c, TOL) {
+    for es in CubicToEulerIter::new(c, tol) {
         if flat.is_empty() {
             flat.move_to(es.eval_with_offset(0.0, offset));
         }
-        for arc in espc_to_arcs(&es, offset, TOL) {
+        for arc in espc_to_arcs(&es, offset, tol) {
             let circle = Circle::new(arc.to, 2.0).fill(Color::BLACK);
             flat_pts.push(circle);
             if let Some(arc) = Arc::from_svg_arc(&arc) {
@@ -155,7 +156,7 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
         flat_ref
             .stroke(Color::BLACK, stroke_thin.clone())
             .fill(NONE),
-        flat.stroke(Color::RED, stroke_thin.clone()).fill(NONE),
+        flat.stroke(Color::GREEN, stroke_thin.clone()).fill(NONE),
         g(flat_pts),
         Line::new(state.p0, state.p1).stroke(Color::BLUE, stroke.clone()),
         Line::new(state.p2, state.p3).stroke(Color::BLUE, stroke.clone()),
@@ -190,7 +191,30 @@ fn app_logic(state: &mut AppState) -> impl View<AppState> {
                 }
             }
         });
-    div((div("Offset"), slider_el, div(svg_el)))
+    let tolerance_el = input(())
+        .attr("type", "range")
+        .attr("min", "1")
+        .attr("max", "100")
+        .attr("value", "10")
+        .on_input(|state: &mut AppState, evt| {
+            if let Some(element) = evt
+                .target()
+                .and_then(|t| t.dyn_into::<web_sys::HtmlInputElement>().ok())
+            {
+                let value = element.value();
+                if let Ok(val_f64) = value.parse::<f64>() {
+                    state.tolerance = val_f64 * 0.1;
+                    //web_sys::console::log_1(&format!("got input event {val_f64}").into());
+                }
+            }
+        });
+    div((
+        div("Offset"),
+        slider_el,
+        div("Tolerance"),
+        tolerance_el,
+        div(svg_el),
+    ))
 }
 
 pub fn main() {
@@ -201,6 +225,7 @@ pub fn main() {
     state.p2 = Point::new(500.0, 150.0);
     state.p3 = Point::new(700.0, 150.0);
     state.offset = 100.0;
+    state.tolerance = 1.0;
     let app = App::new(state, app_logic);
     app.run(&document_body());
 }

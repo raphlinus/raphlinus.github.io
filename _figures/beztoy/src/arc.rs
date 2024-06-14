@@ -7,6 +7,7 @@ use xilem_web::svg::kurbo::{SvgArc, Vec2};
 
 use crate::euler::EulerSeg;
 
+#[allow(unused)]
 pub fn euler_to_arcs(es: &EulerSeg, tol: f64) -> Vec<SvgArc> {
     let arclen = es.p0.distance(es.p1) / es.params.ch;
     let n_subdiv = ((1. / 120.) * arclen / tol * es.params.k1.abs()).cbrt();
