@@ -1,0 +1,15 @@
+<svg version="1.1" width="640" height="380" xmlns="http://www.w3.org/2000/svg">
+    <title>graphic showing point-line orientation, sweep line version</title>
+    <g transform="scale(0.8) translate(0, -60)">
+        <line x1="100" y1="100" x2="700" y2="500" stroke="#006" />
+        <line x1="100" y1="100" x2="700" y2="500" stroke="#fe0" opacity="0.4" stroke-width="40" stroke-linecap="round" />
+        <path d="M20 100 L80 100 A20 20 0 0 0 89.5 117 L664 500 20 500" fill="#c00" opacity="0.3" />
+        <path d="M780 100 L136 100 710.5 483 A20 20 0 0 1 720 500L780 500" fill="#0a0" opacity="0.3" />
+        <line x1="20" y1="100" x2="100" y2="100" stroke="#c00" />
+        <line x1="20" y1="500" x2="700" y2="500" stroke="#c00" />
+        <line x1="780" y1="100" x2="100" y2="100" stroke="#0a0" />
+        <line x1="780" y1="500" x2="700" y2="500" stroke="#0a0" />
+        <circle cx="100" cy="100" r="3" fill="#00c" />
+        <circle cx="700" cy="500" r="3" fill="#00c" />
+    </g>
+</svg>
