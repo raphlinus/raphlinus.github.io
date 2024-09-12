@@ -1,0 +1,11 @@
+[package]
+name = "beztoy"
+license = "Apache-2.0"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2.87"
+web-sys = "0.3.64"
+xilem_web = { git = "https://github.com/linebender/xilem", rev = "1ef39fc562d969cfc8548d16b2b72202a5d2196d" }
