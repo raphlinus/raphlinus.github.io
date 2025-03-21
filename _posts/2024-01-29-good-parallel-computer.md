@@ -1,10 +1,10 @@
 ---
 layout: post
 title:  "I want a good parallel computer"
-date:   2025-03-17 10:30:42 -0700
+date:   2025-03-21 10:30:42 -0700
 categories: [gpu]
 ---
-The GPU in your computer is about 10 times more powerful than the CPU. For real-time graphics rendering and machine learning, you are enjoying that power, and doing those workloads on a CPU is not viable. Why aren't we exploiting that power for other workloads? What prevents a GPU from being a more general purpose computer?
+The GPU in your computer is about 10 to 100 times more powerful than the CPU, depending on workload. For real-time graphics rendering and machine learning, you are enjoying that power, and doing those workloads on a CPU is not viable. Why aren't we exploiting that power for other workloads? What prevents a GPU from being a more general purpose computer?
 
 I believe there are two main things holding it back. One is an impoverished execution model, which makes certain tasks difficult or impossible to do efficiently; GPUs excel at big blocks of data with predictable shape, such as dense matrix multiplication, but struggle when the workload is dynamic. Second, our languages and tools are inadequate. Programming a parallel computer is just a lot harder.
 
@@ -22,9 +22,9 @@ The problem is that the buffers for the intermediate results need to be allocate
 
 The details of the specific problem are interesting but beyond the scope of this blog post. The interested reader is directed to the [Potato] design document, which explores the question of how far you can get doing scheduling on CPU, respecting bounded GPU resources, while using the GPU for actual pixel wrangling. It also touches on several more recent extensions to the standard GPU execution model, all of which are complex and non-portable, and none of which quite seem to solve the problem.
 
-Fundamentally, it shouldn't be necessary to allocate large buffers to store intermediate results. Since they will be consumed by downstream stages, it's far more efficient to put them in queues, sized large enough to keep enough items in flight to exploit available parallelism. Many GPU operations internally work as queues (the classic vertex shader / fragment shader / rasterop pipeline being the classic example), so it's a question of exposing that underlying functionality to applications. The [GRAMPS] paper from 2009 suggests this direction, as did the [Brook] project, a predecessor to CUDA.
+Fundamentally, it shouldn't be necessary to allocate large buffers to store intermediate results. Since they will be consumed by downstream stages, it's far more efficient to put them in queues, sized large enough to keep enough items in flight to exploit available parallelism. Many GPU operations internally work as queues (the standard vertex shader / fragment shader / rasterop pipeline being the classic example), so it's a question of exposing that underlying functionality to applications. The [GRAMPS] paper from 2009 suggests this direction, as did the [Brook] project, a predecessor to CUDA.
 
-There are a lot of potential solutions to running Vello-like algorithms in bounded memory; most have a fatal flaw on hardware today. It's interesting to speculate about changes that would unlock the capability.
+There are a lot of potential solutions to running Vello-like algorithms in bounded memory; most have a fatal flaw on hardware today. It's interesting to speculate about changes that would unlock the capability. It's worth emphasizing, I'm not feeling held back by the amount of parallelism I can exploit, as my approach of breaking the problem into variants of prefix sum easily scales to hundreds of thousands of threads. Rather, it's the inability to organize the overall as stages operating in parallel, connected through queues tuned to use only the amount of buffer memory needed to keep everything smoothly, as opposed to the compute shader execution model of large dispatches separated by pipeline barriers.
 
 ## Parallel computers of the past
 
@@ -36,7 +36,8 @@ I'm listing this not because it's a particularly promising design, but because i
 
 Perhaps more than anything else, the CM spurred tremendous research into parallel algorithms. The pioneering work by Blelloch on [prefix sum] was largely done on the Connection Machine, and I find early paper on [sorting on CM-2] to be quite fascinating.
 
-[TODO: image; there’s a good one in the GPC slide deck]
+![Photo of Connection Machine 1 computer, with lots of flashing red LEDs](/assets/teco_connection_machine.jpg) \
+[Connection Machine 1 (1985) at KIT / Informatics / TECO] • by KIT TECO • CC0
 
 ### Cell
 
@@ -52,17 +53,19 @@ The Cell had approximately 200 GFLOPS of total throughput, which was impressive 
 
 Perhaps the most poignant road not taken in the history of GPU design is the Larrabee. The [2008 SIGGRAPH paper][Larrabee paper] makes a compelling case, but ultimately the project failed. It's hard to say why exactly, but I think it's possible it was just poor execution on Intel's part, and with more persistence and a couple of iterations to improve the shortcomings in the original version, it might well have succeeded. At heart, Larrabee is a standard x86 computer with wide (512 bit) SIMD units and just a bit of special hardware to optimize graphics tasks. Most graphics functions are implemented in software. If it had succeeded, it would very easily fulfill my wishes; work creation and queuing is done in software and can be entirely dynamic at a fine level of granularity.
 
-Bits of Larrabee live on. The upcoming AVX10 instruction set is an evolution of Larrabee's AVX-512, and supports 32 lanes of f16 operations. In fact, Tom Forsyth, one of its creators, argues that [Larrabee did not indeed fail][Why didn't Larrabee fail?] but that its legacy is a success. Another valuable facet of legacy is ISPC, and Matt Pharr's blog on [The story of ispc] sheds light on the Larrabee project, as does this [spicy take][bsn Larrabee story].
+Bits of Larrabee live on. The upcoming AVX10 instruction set is an evolution of Larrabee's AVX-512, and supports 32 lanes of f16 operations. In fact, Tom Forsyth, one of its creators, argues that [Larrabee did not indeed fail][Why didn't Larrabee fail?] but that its legacy is a success. Another valuable facet of legacy is ISPC, and Matt Pharr's blog on [The story of ispc] sheds light on the Larrabee project.
 
 Likely one of the problems of Larrabee was power consumption, which has emerged as one of the limiting factors in parallel computer performance. The fully coherent (total store order) memory hierarchy, while making software easier, also added to the cost of the system, and since then we've gained a lot of knowledge in how to write performant software in weaker memory models.
 
-There are many, many parallel computer designs in history, as it’s long been clear that parallelism is the only path to performance at huge scale. One other design I remember fondly is the [Transputer], a network of fairly conventional CPU designs connected by an explicitly message-passing network.
+Another aspect that definitely held Larrabee back was the software, which is always challenging, especially for new directions. The drivers didn't expose the special capabilities of the highly programmable hardware, and performance on traditional triangle-based 3D graphics scenes was underwhelming, but even with a standard OpenGL interface it did quite well on CAD workloads involving lots of antialiased lines.
 
 ## The changing workload
 
 Even within games, compute is becoming a much larger fraction of the total workload (for AI, it's everything). Recent analysis of [Starfield] by Chips and Cheese shows that about half the time is in compute. The [Nanite] renderer also uses compute even for rasterization of small triangles, as hardware is only more efficient for triangles above a certain size. As games do more image filtering, global illumination, and primitives such as Gaussian splatting, the trend will almost certainly continue.
 
-In 2009, Tim Sweeney gave a thought-provoking talk entitled [The end of the GPU roadmap], in which he proposed that the concept of GPU would go away entirely, replaced by a highly parallel general purpose computer. That has not come to pass, though there has been some movement in that direction: the Larrabee project (as described above), the groundbreaking [cudaraster] paper from 2011 implemented the traditional 3D rasterization pipeline entirely in compute, and found (simplifying quite a bit) that it was about 2x slower than using fixed function hardware, and more recent academic GPU designs based on grids of RISC-V cores.
+In 2009, Tim Sweeney gave a thought-provoking talk entitled [The end of the GPU roadmap], in which he proposed that the concept of GPU would go away entirely, replaced by a highly parallel general purpose computer. That has not come to pass, though there has been some movement in that direction: the Larrabee project (as described above), the groundbreaking [cudaraster] paper from 2011 implemented the traditional 3D rasterization pipeline entirely in compute, and found (simplifying quite a bit) that it was about 2x slower than using fixed function hardware, and more recent academic GPU designs based on grids of RISC-V cores. It's worth noting, a more recent [update from Tellusim] suggests that cudaraster-like rendering in compute is closer to parity.
+
+An excellent 2017 presentation, [Future Directions for Compute-for-Graphics] by Andrew Lauritzen, highlighted many of the challenges of incorporating advanced compute techniques into graphics pipelines. There's been some progress since then, but it speaks to many of the same problems I'm raising in this blog post. Also see [comments by Josh Barczak], which also links the [GRAMPS] work discusses issues with language support.
 
 ## Paths forward
 
@@ -96,8 +99,6 @@ While exciting, and very likely useful for an increasing range of graphics tasks
 
 The lack of an ordering guarantee is particularly frustrating, because the traditional 3D pipeline *does* maintain ordering, among other reasons, to prevent Z-fighting artifacts (for a fascinating discussion of how GPU hardware preserves the blend order guarantee, see [A trip through the Graphics Pipeline part 9]). It is not possible to faithfully emulate the traditional vertex/fragment pipeline using the new capability. Obviously, maintaining ordering guarantees in parallel systems is expensive, but ideally there is a way to opt in when needed, or at least couple work graphs with another mechanism (some form of sorting, which is possible to implement efficiently on GPUs) to re-establish ordering as needed. Thus, I see work graphs as two steps forward, one step back.
 
-A fascinating look into actual implementation of work graphs on real GPU hardware is Hans Kristian's notes on [Workgraphs in vkd3d-proton].
-
 ### CPU convergent evolution
 
 In theory, when running highly parallel workloads, a traditional multi-core CPU design is doing the same thing as a GPU, and if fully optimized for efficiency, should be competitive. That, arguably, is the design brief for Larrabee, and also motivation for more recent academic work like [Vortex]. Probably the biggest challenge is power efficiency. As a general trend, CPU designs are diverging into those optimizing single-core performance (performance cores) and those optimizing power efficiency (efficiency cores), with cores of both types commonly present on the same chip. As E-cores become more prevalent, algorithms designed to exploit parallelism at scale may start winning, incentivizing provision of even larger numbers of increasingly efficient cores, no matter how underpowered each may be at single-threaded tasks.
@@ -105,6 +106,14 @@ In theory, when running highly parallel workloads, a traditional multi-core CPU 
 An advantage of this approach is that it doesn’t change the execution model, so existing languages and tools can still be used. Unfortunately, most existing languages are poor at expressing and exploiting parallelism at both the SIMD and thread level – shaders have a more limited execution model but at least it’s clear how to execute them in parallel efficiently. And for thread-level parallelism, avoiding performance loss from context switches is challenging. Hopefully, newer languages such as [Mojo] will help, and potentially can be adapted to GPU-like execution models as well.
 
 I’m skeptical this approach will actually become competitive with GPUs and AI accelerators, as there is just a huge gap in throughput per watt compared with GPUs – about an order of magnitude. Also, GPUs (and AI accelerators) won’t be standing still either.
+
+### Maybe the hardware is already there?
+
+It's possible that there is hardware currently shipping that meets my criteria for a good parallel computer, but its potential is held back by software. GPUs generally have a "command processor" onboard, which, in cooperation with the host-side driver, breaks down the rendering and compute commands into chunks to be run by the actual execution units. Invariably, this command processor is hidden and cannot run user code. Opening that up could be quite interesting. A taste of that is in Hans-Kristian Arntzen's notes on implementing work graphs in open source drivers: [Workgraphs in vkd3d-proton].
+
+GPU designs vary in how much is baked into the hardware and how much is done by a command processor. Programmability is a good way to make things more flexible. The main limiting factor is the secrecy around such designs. Even in GPUs with open source drivers, the firmware (which is what runs on the command processor) is very locked down. Of course, a related challenge is security; opening up the command processor to user code increases the vulnerability surface area considerably. But from a research perspective, it should be interesting to explore what's possible aside from security concerns.
+
+Another interesting direction is the rise of "Accelerated Processing Units" which integrate GPUs and powerful CPUs in the same address space. Conceptually, these are similar to integrated graphics chips, but those rarely have enough performance to be interesting. From what I've seen, running existing APIs on this hardware (Vulkan for compute shaders, or one of the modern variants of OpenCL) would also not have good latency for synchronizing work back to the CPU, due to context switching overhead, but it's possible a high priority or dedicated thread might quickly process items placed in a queue by GPU-side tasks. The key idea is queues running at full throughput, rather than async remote procedure calls with potentially huge latency.
 
 ## Complexity
 
@@ -124,7 +133,7 @@ In the past, there were economic pressures towards replacing special-purpose cir
 
 ## Conclusion
 
-In his talk shortly before retirement, Nvidia GPU architect Erik Lindholm [said][Erik Lindholm talk] (in the context of work creation and queuing systems), "my career has been about making things more flexible, more programmable. It's not finished yet. There's one more step that I feel that needs to be done, and I've been pursuing this at Nvidia Research for many years." I agree, and my own work would benefit greatly. Now that he has retired, it is not clear who will take up the mantle. It may be Nvidia disrupting their previous product line with a new approach as they have in the past. It may be an upstart AI accelerator making a huge grid of low power processors with vector units, that just happens to be programmable. It might be CPU efficiency cores evolving to become so efficient they compete with GPUs. Unlikely but perhaps not impossible, Intel might even ship Larrabee.
+In his talk shortly before retirement, Nvidia GPU architect Erik Lindholm [said][Erik Lindholm talk] (in the context of work creation and queuing systems), "my career has been about making things more flexible, more programmable. It's not finished yet. There's one more step that I feel that needs to be done, and I've been pursuing this at Nvidia Research for many years." I agree, and my own work would benefit greatly. Now that he has retired, it is not clear who will take up the mantle. It may be Nvidia disrupting their previous product line with a new approach as they have in the past. It may be an upstart AI accelerator making a huge grid of low power processors with vector units, that just happens to be programmable. It might be CPU efficiency cores evolving to become so efficient they compete with GPUs.
 
 Or it might not happen at all. On the current trajectory, GPUs will squeeze out incremental improvements on existing graphics workloads at the cost of increasing complexity, and AI accelerators will focus on improving the throughput of slop generation to the exclusion of everything else.
 
@@ -149,7 +158,7 @@ Progress on a good parallel computer would help my own little sliver of work, tr
 [Jim Keller AI hardware summit talk]: https://www.youtube.com/watch?v=lPX1H3jW8ZQ
 [Transputer]: https://en.wikipedia.org/wiki/Transputer
 
-[stroke expansion]: TODO
+[stroke expansion]: https://linebender.org/gpu-stroke-expansion-paper/
 [GRAMPS]: https://dl.acm.org/doi/10.1145/1477926.1477930
 [Brook]: https://graphics.stanford.edu/papers/brookgpu/brookgpu.pdf
 
@@ -163,7 +172,6 @@ Progress on a good parallel computer would help my own little sliver of work, tr
 [Larrabee paper]: https://web.archive.org/web/20210307230536/https://software.intel.com/sites/default/files/m/9/4/9/larrabee_manycore.pdf
 [Potato]: https://docs.google.com/document/d/1gEqf7ehTzd89Djf_VpkL0B_Fb15e0w5fuv_UzyacAPU/edit?usp=sharing
 [Why didn't Larrabee fail?]: https://tomforsyth1000.github.io/blog.wiki.html#%5B%5BWhy%20didn%27t%20Larrabee%20fail%3F%5D%5D
-[bsn Larrabee story]: https://brightsideofnews.com/blog/an-inconvenient-truth-intel-larrabee-story-revealed/
 [The story of ispc]: https://pharr.org/matt/blog/2018/04/18/ispc-origins
 [Erik Lindholm talk]: https://ubc.ca.panopto.com/Panopto/Pages/Viewer.aspx?id=880a1d92-30d7-4683-80e7-b1e000f501d3
 [UCSC Colloquium]: https://www.youtube.com/watch?v=c52ziyKOArc
@@ -174,3 +182,7 @@ Progress on a good parallel computer would help my own little sliver of work, tr
 [device graph launch]: https://developer.nvidia.com/blog/enabling-dynamic-control-flow-in-cuda-graphs-with-device-graph-launch/
 [Mojo]: https://en.wikipedia.org/wiki/Mojo_(programming_language)
 [work graphs]: https://devblogs.microsoft.com/directx/d3d12-work-graphs/
+[Future Directions for Compute-for-Graphics]: https://openproblems.realtimerendering.com/s2017/index.html
+[comments by Josh Barczak]: http://www.joshbarczak.com/blog/?p=1317
+[update from Tellusim]: https://tellusim.com/compute-raster/
+[Connection Machine 1 (1985) at KIT / Informatics / TECO]: https://www.flickr.com/photos/teco_kit/24095266110/
