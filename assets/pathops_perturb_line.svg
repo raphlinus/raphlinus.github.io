@@ -1,0 +1,16 @@
+<svg version="1.1" width="640" height="200" xmlns="http://www.w3.org/2000/svg">
+    <title>TODO</title>
+
+    <line x1="50" y1="60" x2="250" y2="140" stroke="#fda" stroke-width="20" stroke-linecap="round" />
+    <circle cx="50" cy="60" r="3" />
+    <circle cx="250" cy="140" r="3" />
+    <line x1="50" y1="60" x2="250" y2="140" stroke="#000"  />
+
+    <line x1="300" y1="60" x2="500" y2="140" stroke="#fda" stroke-width="20" stroke-linecap="round" />
+    <line x1="300" y1="60" x2="500" y2="140" stroke="#000" opacity="0.4" />
+    <circle cx="300" cy="60" r="3" />
+    <circle cx="500" cy="140" r="3" />
+    <circle cx="400" cy="93" r="2" />
+    <circle cx="450" cy="127" r="2" />
+    <path d="M300 60 L400 93 450 127 500 140" stroke="#000" fill="none" />
+</svg>
